@@ -1,7 +1,6 @@
 using NonLinearReactionAdvectionDiffusionWithFrontData
 using Test
-
-include("mesh.jl")
+using Documenter
 
 @testset "Initial condition" begin
     N = 20;
@@ -11,4 +10,8 @@ include("mesh.jl")
     @test length(Y) == N+1
     @test isapprox(Y[1], -8, rtol=0.001)
     @test isapprox(Y[end], 4, rtol=0.001)
+end
+
+@testset "DocTests" begin
+#    doctest(NonLinearReactionAdvectionDiffusionWithFrontData)
 end

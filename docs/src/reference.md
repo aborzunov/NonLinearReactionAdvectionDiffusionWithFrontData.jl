@@ -1,0 +1,5 @@
+# Справочник
+
+```@autodocs
+Modules = [NonLinearReactionAdvectionDiffusionWithFrontData]
+```
