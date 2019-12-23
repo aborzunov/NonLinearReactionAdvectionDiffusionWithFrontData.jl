@@ -11,7 +11,11 @@ export u_init, f, solve!, make_gif;
     u_init(x::Real; ε = 0.2) -> Real
 
 Начальные условия в виде $(x^2 - x -2) -6 \tanh( -3 \xi)$, где $\xi = \frac{x - 0.25}{ε}$.
-Граничные условия для этих начальных условий должны быть заданы как `(-8, 4)`.
+!!! warning
+    Граничные условия для этих начальных условий должны быть заданы как `(-8, 4)`.
+
+!!! note
+    Вы вольны устанавливать начальные условия на свое усмотрения, эта функция внесена в модуль для удобства повествования.
 
 # Example
 ```jldoctest
@@ -231,7 +235,12 @@ function jacobian(y, t, Xₙ, ε, u_l, u_r)
 end
 
 # {{{
-function make_gif(u::Matrix, Xn, Tm; frames_to_write::Int = -1, frame_skip::Int=1, name="solution.gif", analitic::Function = nothing)
+@doc raw"""
+    make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector; frames_to_write::Int = -1, frame_skip::Int=1, name="solution.gif")
+
+Рисует gif анимацию решения каждый `frame_skip` кадр, вплоть по `frames_to_write`-ый кадр, сохраняет под именем `name`.
+"""
+function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector; frames_to_write::Int = -1, frame_skip::Int=1, name="solution.gif")
     N,M = size(u)
     if frames_to_write < 0
         frames_to_write = M;
@@ -242,15 +251,15 @@ function make_gif(u::Matrix, Xn, Tm; frames_to_write::Int = -1, frame_skip::Int=
     a = Animation()
     for m in 1:frame_skip:frames_to_write
 
-        plot(Xn, u[:,m], xlabel="x", ylabel="u(x)", ylims=yl, label="u(x,t)", color=:blue)
-        plot!(Xn, u[:,1], line=:dash, label="u_inital")
-        scatter!(Xn, u[:,m], color=:blue, label="", markersize=3)
-        scatter!(Xn, [0 for i in 1:N], color=:black, label="", markersize=2)
-        annotate!(0.0, -6, Plots.text(@sprintf("t = %.2f",Tm[m]), 16, :left ))
+        plot(Xₙ, u[:,m], xlabel="x", ylabel="u(x)", ylims=yl, label="u(x,t)", color=:blue)
+        plot!(Xₙ, u[:,1], line=:dash, label="u_inital")
+        scatter!(Xₙ, u[:,m], color=:blue, label="", markersize=3)
+        scatter!(Xₙ, [0 for i in 1:N], color=:black, label="", markersize=2)
+        annotate!(0.0, -6, Plots.text(@sprintf("t = %.2f",Tₘ[m]), 16, :left ))
 
         frame(a)
     end
-    return gif(a, name);
+    gif(a, name, show_msg = false);
 end
 # }}}
 

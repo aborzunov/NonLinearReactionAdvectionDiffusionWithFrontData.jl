@@ -1,6 +1,8 @@
 using NonLinearReactionAdvectionDiffusionWithFrontData
 using Test
 using Documenter
+using ForwardDiff
+using LinearAlgebra
 
 @testset "Initial condition" begin
     N = 20;
@@ -15,3 +17,5 @@ end
 @testset "DocTests" begin
 #    doctest(NonLinearReactionAdvectionDiffusionWithFrontData)
 end
+
+include("direct_with_model.jl")
