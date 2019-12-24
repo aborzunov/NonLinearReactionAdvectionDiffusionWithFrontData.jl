@@ -41,7 +41,22 @@ end
 
 @doc raw"""
     f(y::Array{<:Real, 1}, t::Real, Xₙ::Array{<:Real, 1},
-      N::Int, ε::Real, u_l::Function, u_r::Function, q::Function) -> ::Array{<:Real, 1}
+      N::Int, ε::Real, u_l::Function, u_r::Function, q::Function)
+
+Задает `qₙ = [ q(x) for x in Xₙ[2:N-1] ]` и вызывает [`f`](@ref).
+"""
+function f(y::Array{<:Real, 1}, t::Real, Xₙ::Array{<:Real, 1}, N::Int, ε::Real, u_l::Function, u_r::Function, q::Function)
+    @assert length(Xₙ) == N+1   # Сетка по `x` размера N+1
+    @assert length(y)  == N-1   # Проверка длины вектор-функции решения на текущем временном шаге.
+
+    qₙ = [ q(x) for x in Xₙ[2:N] ]
+
+    f(y, t, Xₙ, N, ε, u_l::Function, u_r::Function, qₙ)
+end
+
+@doc raw"""
+    f(y::Vector, 1}, t::Real, Xₙ::Vector, 1},
+      N::Int, ε::Real, u_l::Function, u_r::Function, qₙ::Vector) -> ::Vector
 
 Функция вычисляет вектор правой части с помощью конечно-разностной аппроксимации пространственных производных.
 
@@ -75,38 +90,55 @@ $u_init(x_n)$ вычисляется с помощью [`u_init(x)`](@ref).
 ```
 
 # Arguments
-- `y::Array{<:Real, 1}`:  Вектор решения системы в текущий момент времени.
+- `y::Array{<:Real, 1}`:  Вектор размера `N-1` решения системы в текущий момент времени
 - `t::Real`:  Текущий момент времени.
 - `Xₙ::Array{<:Real, 1}`: Пространственная сетка по `x`.
 - `N::Int`: Число -интервалов- сеткию
 - `ε::Real`: Малый параметр при старшей производной.
 - `u_l::Function`: Функция левого ГУ.
 - `u_r::Function`: Функция правого ГУ.
-- `q::Function`: Функция "неоднородности", см. постановку задачи.
+- `q::Vector`: Вектор размера `N-1` представляющий "неоднородность", см. постановку задачи.
 
 !!! note
     Длина вектора `length(Xₙ)` равняется `N+1`, сетка передается полностью, вместе с граничными точками.
 !!! warning
     Функция работает по формулам для *равномерной* сетки!.
 """
-function f(y::Array{<:Real, 1}, t::Real, Xₙ::Array{<:Real, 1}, N::Int, ε::Real, u_l::Function, u_r::Function, q::Function)
+function f(y::Array{<:Real, 1}, t::Real, Xₙ::Array{<:Real, 1}, N::Int, ε::Real, u_l::Function, u_r::Function, qₙ::Vector)
     @assert length(Xₙ) == N+1   # Сетка по `x` размера N+1
     @assert length(y)  == N-1   # Проверка длины вектор-функции решения на текущем временном шаге.
+    @assert length(qₙ) == N-1   # Проверка длины вектора "неоднородности"
     RP = similar(y)              # Создаем вектор того же типа и размера
     h = Xₙ[2] - Xₙ[1];          # Нижестоящие формулы приведены для равномерной сетки. Вычислим её шаг.
 
-    RP[1]        = ε * (y[2]   - 2*y[1]   + u_l(t))/(h^2) + y[1]   * (y[2]   - u_l(t))/(2*h) - y[1]   * q( Xₙ[1+1] )
+    RP[1]        = ε * (y[2]   - 2*y[1]   + u_l(t))/(h^2) + y[1]   * (y[2]   - u_l(t))/(2*h) - y[1]   * qₙ[1]
     for n in 2:N-2
-        RP[n]    = ε * (y[n+1] - 2*y[n]   + y[n-1])/(h^2) + y[n]   * (y[n+1] - y[n-1])/(2*h) - y[n]   * q( Xₙ[n+1] )
+        RP[n]    = ε * (y[n+1] - 2*y[n]   + y[n-1])/(h^2) + y[n]   * (y[n+1] - y[n-1])/(2*h) - y[n]   * qₙ[n]
     end
-    RP[N-1]      = ε * (u_r(t) - 2*y[N-1] + y[N-2])/(h^2) + y[N-1] * (u_r(t) - y[N-2])/(2*h) - y[N-1] * q( Xₙ[N-1 + 1] )
+    RP[N-1]      = ε * (u_r(t) - 2*y[N-1] + y[N-2])/(h^2) + y[N-1] * (u_r(t) - y[N-2])/(2*h) - y[N-1] * qₙ[N-1]
 
     return RP
 end
 
 @doc raw"""
     solve!(y::Array{<:Real, 1}, Xₙ::Array{<:Real, 1}, Tₘ::Array{<:Real, 1}, N::Int,
-            M::Int, ε::Real, u_l::Function, u_r::Function, q::Function) -> Array{Float64,2}
+                M::Int, ε::Real, u_l::Function, u_r::Function, qₙ::Vector; α::Complex = complex(0.5, 0.5))
+
+Alias для вызова `solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ, f, j); `,
+где `f = NonLinearReactionAdvectionDiffusionWithFrontData.f`,
+`j(y, t, Xₙ, N, ε, u_l, u_r, q) = ForwardDiff.jacobian( z -> f(z, t, Xₙ, N, ε, u_l, u_r, qₙ), y)`.
+"""
+function solve!(y::Array{<:Real, 1}, Xₙ::Array{<:Real, 1}, Tₘ::Array{<:Real, 1}, N::Int,
+                M::Int, ε::Real, u_l::Function, u_r::Function, qₙ::Vector; α::Complex = complex(0.5, 0.5))
+
+    j(y, t, Xₙ, N, ε, u_l, u_r, q) = ForwardDiff.jacobian( z -> f(z, t, Xₙ, N, ε, u_l, u_r, qₙ), y)
+    solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ, f, j);
+end
+
+@doc raw"""
+    solve!(y::Array{<:Real, 1}, Xₙ::Array{<:Real, 1}, Tₘ::Array{<:Real, 1}, N::Int,
+                M::Int, ε::Real, u_l::Function, u_r::Function, qₙ::Vector,
+                RP::Function, jac::Function ; α::Complex = complex(0.5, 0.5)) -> Matrix
 
 Функция, которая находит решение с помощью одностадийной схемы Розенброка с комплексным коэффициентом.
 
@@ -119,7 +151,7 @@ end
 где ``W_1`` находится из
 ```math
 \begin{aligned}
-    &\left[\mathbf{\textbf{E}} - \dfrac{1 + i}{2} \, (t_{m + 1} - t_m) \, \mathbf{\textbf{f}}_\mathbf{\textbf{y}}\Big(\mathbf{\textbf{y}}(t_m),t_m\Big)\right] \, \mathbf{\textbf{w}}_1 = \\
+    &\left[\mathbf{\textbf{E}} - \alpha \, (t_{m + 1} - t_m) \, \mathbf{\textbf{f}}_\mathbf{\textbf{y}}\Big(\mathbf{\textbf{y}}(t_m),t_m\Big)\right] \, \mathbf{\textbf{w}}_1 = \\
     &\qquad\qquad\qquad\qquad\quad = \mathbf{\textbf{f}} \, \Big(\mathbf{\textbf{y}}(t_m),\frac{t_{m + 1} + t_m}{2}\Big).
 \end{aligned}
 ```
@@ -127,19 +159,17 @@ end
 ``\mathbf{f}_\mathbf{y}(\mathbf{y}(t_m), t_m)`` — якобиан функции [`f`](@ref) по вектору ``y`` (в момент времени ``t_m``) в момент времени ``t\_m``.
 Эта матрица Якоби имеет следущие ненулевые элементы.
 ```math
-\begin{align}
-    \left(f_y\right)_{1,1} \equiv \frac{\partial f_1}{\partial y_1} = &\varepsilon\dfrac{-2}{h^2} - \dfrac{y_{2} - u_{left}(t)}{2h} + \dfrac{\partial B}{\partial u}(y_1,x_1,t),
+\begin{aligned}
+    & \left(f_y\right)_{1,1}  & \equiv & \frac{\partial f_1}{\partial y_1} & = & \varepsilon\dfrac{-2}{h^2} - \dfrac{y_{2} - u_{left}(t)}{2h} + q(x_1), \\
 
-    \left(f_y\right)_{n,n - 1} \equiv \frac{\partial f_n}{\partial y_{n - 1}} = &\varepsilon \dfrac{1}{h^2} + \dfrac{y_{n}}{2h}, \quad n=\overline{2, N-1}},
+     & \left(f_y\right)_{n,n - 1}  & \equiv & \frac{\partial f_n}{\partial y_{n - 1}} & = & \varepsilon \dfrac{1}{h^2} + \dfrac{y_{n}}{2h}, \quad n=\overline{2, N-1},\\
 
-    \left(f_y\right)_{n,n} & \equiv \frac{\partial f_n}{\partial y_{n}} = \varepsilon \dfrac{-2}{h^2} - \dfrac{y_{n + 1} - y_{n - 1}}{2h} + \\
-    & + \dfrac{\partial B}{\partial u}(y_n,x_n,t), \quad n=\overline{2, N-2}},
+     & \left(f_y\right)_{n,n}  & \equiv & \frac{\partial f_n}{\partial y_{n}} & = &  -\varepsilon \dfrac{2}{h^2} - \dfrac{y_{n+1} - y_{n-1}}{2h} + q(x_n), \quad n=\overline{2, N-2},\\
 
-    \left(f_y\right)_{n,n + 1} \equiv \frac{\partial f_n}{\partial y_{n + 1}} = &\varepsilon \dfrac{1}{h^2} - \dfrac{y_{n}}{2h}, \quad n=\overline{1, N-2}},
+     & \left(f_y\right)_{n,n + 1}  & \equiv & \frac{\partial f_n}{\partial y_{n + 1}} & = & \varepsilon \dfrac{1}{h^2} - \dfrac{y_{n}}{2h}, \quad n=\overline{1, N-2},\\
 
-    \left(f_y\right)_{N - 1,N - 1} & \equiv \frac{\partial f_{N - 1}}{\partial y_{N - 1}} = \varepsilon \dfrac{-2}{h^2} - \dfrac{u_{right}(t) - y_{N - 2}}{2h} + \\
-    & + \dfrac{\partial B}{\partial u}(y_{N - 1},x_{N - 1},t).
-\end{align}
+     & \left(f_y\right)_{N - 1,N - 1}  & \equiv & \frac{\partial f_{N - 1}}{\partial y_{N - 1}} & = &  \varepsilon \dfrac{-2}{h^2} - \dfrac{u_{right}(t) - y_{N - 2}}{2h} + q(x_N).
+\end{aligned}
 ```
 
 
@@ -152,9 +182,10 @@ end
 - `ε::Real`: Малый параметр при старшей производной.
 - `u_l::Function`: Функция левого ГУ.
 - `u_r::Function`: Функция правого ГУ.
-- `q::Function`: Функция "неоднородности", см. постановку задачи.
-- `α::Complex`: Коэффициент схемы. При `α = 0` — схема Эйлера,
-при `α = complex(0.5, 0.5)` — схема Розенброка с комплексным коэффициентом.
+- `qₙ::Vector`: Вектор размера `N-1` представляющий "неоднородность", см. постановку задачи.
+- `RP::Function`: Функция вычисления вектора ``f`` правой части.
+- `jac::Function`: Якобиан функции вычисления правой части по вектору `y` — ``f_y``.
+- `α::Complex`: Коэффициент схемы. При `α = 0` — схема Эйлера, при `α = complex(0.5, 0.5)` — схема Розенброка с комплексным коэффициентом.
 
 # Return
 Матрицу `N+1, M+1` с искомой функцией на каждом временном шаге.
@@ -166,20 +197,19 @@ end
     Длина вектора `length(Tₘ)` равняется `M+1`, сетка передается полностью, вместе с граничными точками.
 """
 function solve!(y::Array{<:Real, 1}, Xₙ::Array{<:Real, 1}, Tₘ::Array{<:Real, 1}, N::Int,
-                M::Int, ε::Real, u_l::Function, u_r::Function, q::Function; α::Complex = 0, RP::Function = f)
+                M::Int, ε::Real, u_l::Function, u_r::Function, qₙ::Vector,
+                RP::Function, jac::Function ; α::Complex = complex(0.5, 0.5))
 
     # `u` – матрица содержащая искомую функцию на каждом временном шаге
     u = zeros(N+1, M+1);
     # Запишем граничные условия в матрицу `u` для нулевого шага по времени.
-    u[1, 1]   = u_l(Tₘ[1]);
-    u[N+1, 1] = u_r(Tₘ[1]);
+    u[1, 1]   = u_l(Tₘ[1]); u[N+1, 1] = u_r(Tₘ[1]);
     # Запишем искомый вектор, здесь он соответствует начальным условиям переданным внутрь функции
     u[2:N, 1] = y;
 
-    j(y, t, Xₙ, N, ε, u_l, u_r, q) = ForwardDiff.jacobian( z -> RP(z, t, Xₙ, N, ε, u_l, u_r, q), y)
     for m in 1:M
 
-        W = (I - α * (Tₘ[m+1] - Tₘ[m]) * j(y, Tₘ[m], Xₙ, N, ε, u_l, u_r, q)) \ f(y, (Tₘ[m+1] + Tₘ[m])/2, Xₙ, N, ε, u_l, u_r, q)
+        W = (I - α * (Tₘ[m+1] - Tₘ[m]) * jac(y, Tₘ[m], Xₙ, N, ε, u_l, u_r, qₙ)) \ RP(y, (Tₘ[m+1] + Tₘ[m])/2, Xₙ, N, ε, u_l, u_r, qₙ)
         y = y .+ (Tₘ[m+1] - Tₘ[m])  * real(W);
 
         # Запишем найденный вектор.
@@ -194,6 +224,7 @@ function solve!(y::Array{<:Real, 1}, Xₙ::Array{<:Real, 1}, Tₘ::Array{<:Real,
     return u;
 end
 
+# {{{
 @doc raw"""
 
 !!! warning
@@ -233,50 +264,47 @@ function jacobian(y, t, Xₙ, ε, u_l, u_r)
 
     return out
 end
+# }}}
 
-# {{{
 @doc raw"""
-    make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector; frames_to_write::Int = -1, frame_skip::Int=1, name="solution.gif")
+    make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector, analitical=nothing;
+            frames_to_write::Int = -1, frame_skip::Int=-1, name="solution.gif")
 
 Рисует gif анимацию решения каждый `frame_skip` кадр, вплоть по `frames_to_write`-ый кадр, сохраняет под именем `name`.
+
+Так же рисует аналитическое решение `analitic(x,t)`, если таково передано.
 """
-function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector; frames_to_write::Int = -1, frame_skip::Int=1, name="solution.gif")
+function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector, analitical=nothing; frames_to_write::Int = -1, frame_skip::Int=-1, name="solution.gif")
     N,M = size(u)
     if frames_to_write < 0
         frames_to_write = M;
+    end
+    if frame_skip < 0
+        frame_skip = div(frames_to_write, 80) + 1
     end
 
     yl = extrema(u[:,1:frames_to_write]).*1.05;
 
     a = Animation()
     for m in 1:frame_skip:frames_to_write
-
-        plot(Xₙ, u[:,m], xlabel="x", ylabel="u(x)", ylims=yl, label="u(x,t)", color=:blue)
+        # График, оси, подписи осей и пр.
+        plot(size=(800, 600), xlabel="x", ylabel="u(x)", ylims=yl)
+        # Найденное решение
+        plot!(Xₙ, u[:,m], label="u(x,t)", color=:blue)
+        # Начальное условие
         plot!(Xₙ, u[:,1], line=:dash, label="u_inital")
+        # Точки сетки на найденной функции и их проекция на ось Х
         scatter!(Xₙ, u[:,m], color=:blue, label="", markersize=3)
-        scatter!(Xₙ, [0 for i in 1:N], color=:black, label="", markersize=2)
-        annotate!(0.0, -6, Plots.text(@sprintf("t = %.2f",Tₘ[m]), 16, :left ))
-
+        scatter!(Xₙ, [0 for i in 1:N+1], color=:black, label="", markersize=2)
+        # Надпись слева внизу с текущим временем
+        annotate!(0.0, 0.9*first(yl), Plots.text(@sprintf("t = %.2f",Tₘ[m]), 16, :left ))
+        # Аналитическое решение
+        if analitical != nothing
+            plot!(Xₙ, analitical.(Xₙ, Tₘ[m]), label="analitical(x,t)", color=:green, linewidth = 5, alpha=0.3)
+        end
         frame(a)
     end
-    gif(a, name, show_msg = false);
-end
-# }}}
-
-"""
-    f(x)
-
-Returns \$x^2\$.
-
-# Example
-```jldoctest
-julia> f(2)
-ERROR: DomainError with -16.0:
-[...]
-```
-"""
-function f(x)
-    return abs(sqrt(-x^4))
+    gif(a, name);
 end
 
 end # module

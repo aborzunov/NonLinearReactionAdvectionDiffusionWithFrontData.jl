@@ -26,7 +26,6 @@ g_d(x,t) = 2 \sin(\pi x) - \varepsilon \pi^2 (1 - 2t) \sin(\pi x) +
 \right.
 ```
 
-
 Найдем решение следующим образом:
 ```math
     \begin{aligned}
@@ -36,3 +35,5 @@ g_d(x,t) = 2 \sin(\pi x) - \varepsilon \pi^2 (1 - 2t) \sin(\pi x) +
     \end{aligned}
 ```
 где ``g_d(\mathbf{X_n})`` — значения ``g_d`` на сетке ``x_1, x_x, \ldots, x_N``, т.е. на сетке ``\mathbf{X\_n}`` без граничных точек.
+
+Такая проверка корректности решения применяется в юнит тесте `"tests/direct_with_model.jl"`.

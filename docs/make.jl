@@ -12,7 +12,6 @@ makedocs(;
     repo="https://github.com/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl/blob/{commit}{path}#L{line}",
     sitename="NonLinearReactionAdvectionDiffusionWithFrontData.jl",
     authors="Andrey Borzunov",
-    assets=String[],
 )
 
 deploydocs(;
