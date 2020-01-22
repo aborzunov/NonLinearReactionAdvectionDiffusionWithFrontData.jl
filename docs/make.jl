@@ -7,6 +7,8 @@ makedocs(;
     pages=[
         "Главная" => "index.md",
         "Проверка на модельном решении" => "model.md",
+        "Вырожденные решения" => "degenerated.md",
+        "Сопряженная задача" => "adjoint.md",
         "Справочник" => "reference.md",
     ],
     repo="https://github.com/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl/blob/{commit}{path}#L{line}",
