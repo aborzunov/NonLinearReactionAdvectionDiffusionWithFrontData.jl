@@ -2,6 +2,8 @@ module NonLinearReactionAdvectionDiffusionWithFrontData
 
 using ForwardDiff
 using LinearAlgebra
+using Dierckx
+using LaTeXStrings
 using Plots
 using Printf
 
@@ -224,6 +226,159 @@ function solve!(y::Array{<:Real, 1}, Xₙ::Array{<:Real, 1}, Tₘ::Array{<:Real,
     return u;
 end
 
+@doc raw"""
+    delta(x, Xₙ, x₀) -> ::Number
+
+Вычисляет конечно разностную аппроксимацию дельта функции ``\delta(x; x₀)`` на сетке `Xₙ` исходя из ``\int\limits_a^b \delta(x; x₀) dx = 1``.
+"""
+function delta(x, Xₙ, x₀)
+    @assert Xₙ[1] <= x <= Xₙ[end]
+    @assert Xₙ[1] <= x₀ <= Xₙ[end]
+
+    N = length(Xₙ) - 1
+    out = 0;
+
+    for n in 1:N
+        if ( x >= Xₙ[n]) && ( x < Xₙ[n+1] )
+            if ( x₀ >= Xₙ[n] ) && ( x₀ < Xₙ[n+1])
+                out = 1 / ( Xₙ[n+1] - Xₙ[n] )
+            end
+        end
+    end
+    return out;
+end
+
+@doc raw"""
+    phidetermination(q, u, u_border, Xₙ, N::Int)
+
+Решает ОДУ для нахождения вырожденных корней.
+"""
+function phidetermination(q, u, u_border, Xₙ, N::Int)
+    @assert length(Xₙ) == N + 1
+
+    phi = similar(Xₙ);
+    phi[1] = u_border;
+
+    for n = 1:N
+        phi[n+1] = phi[n] + (Xₙ[n+1] - Xₙ[n]) * ( q[n+1] + q[n] ) / 2;
+    end
+
+    return phi
+end
+
+@doc raw"""
+    f1(ϕ, u, Xₙ, N, M)
+
+Находит значение искомой функции на переходном слое ``f_1(t) = u(x_{t.p.}, t)`` путем поиска точки пересечения ``u(x,t)`` и ``ϕ(x)``.
+
+Точка пересечения находится путем интерполяции функции ``u(x,t) - ϕ(x) = 0``.
+"""
+function f1(ϕ, u, Xₙ, N, M)
+    @assert length(Xₙ) == N+1
+    @assert size(u) == (N+1, M+1)
+
+
+    f1 = zeros(M+1);
+
+    # Необходимо найти абсциссу пересечения Φ и u(x, t), т.е. аргумент х на каждом временном шаге
+    for m in 1:M+1
+        # Начальные условия при разработки программы заданы таким образом,
+        # что в начале массива `V` образуются отрицательные элементы,
+        # в конце — положительные
+        V = u[:,m] - ϕ
+        @assert V[1] < 0
+        @assert V[end] > 0
+
+        k = 1;
+        # Найдем номер элемента, после которого будут стоять положительный элемент
+        for n in 1:N
+            if V[n]*V[n+1] < 0
+                k = n;
+                break;
+            end
+        end
+
+        # try-catch Заглушка, на случай если разбиений по Х мало,
+        # а переходный слой подошел слишком близко к границе
+        # тогда k + 3 > N
+        try
+            # Выберем 8 ближайших элементов, по К.Р.А. от нуля функции
+            x = Xₙ[k-3:k+4]
+            y = V[k-3:k+4]
+
+            # Теперь построим функцию ``x = v(y)``, она задана сеточными значениями выше
+            # С помощью интерполяции найдем ``v(0)``
+            # WARN интерполяция производится на неравномерной сетке: см массив `y`
+
+            spl = Spline1D(y, x)
+
+            f1[m] =spl(0);
+
+        catch e
+            isa(e, BoundsError) || rethrow(e)
+            @warn "Bound Error" m k
+            break
+        end
+
+    end
+
+    return f1
+end
+
+function f2(f1, u, Xₙ, N, M)
+    @assert size(u) == (N+1, M+1)
+    @assert length(f1) == M+1;
+
+    f2 = similar(f1);
+
+    # находим ординату на каждом временном шаге
+    for m in 1:M+1
+        k = 1;
+
+        # ищем место в массивах
+        for n in 1:N+1
+            if Xₙ[n] > f1[m]
+                k = n
+                break
+            end
+        end
+
+        # try-catch Заглушка, на случай если разбиений по Х мало,
+        # а переходный слой подошел слишком близко к границе
+        # тогда k + 3 > N
+        try
+        x = Xₙ[k-3:k+4]
+        y = u[k-3:k+4,m]
+
+        spl = Spline1D(x, y)
+
+        f2[m] = spl(f1[m])
+
+        catch e
+            isa(e, BoundsError) || rethrow(e)
+            @warn "Bound Error" m k
+            break
+        end
+    end
+
+    return f2
+end
+
+@doc raw"""
+    Φ(ϕ_l::Vector, ϕ_r::Vector, N::Int) -> ::Vector
+
+Вычисляет значение функции на переходном слое ``(\phi_l - \phi_r)/2`` с помощью левого ``\phi_l`` и правого ``\phi_r`` вырожденного корня.
+"""
+function Φ(ϕ_l::Vector, ϕ_r::Vector, N::Int)
+    @assert length(ϕ_l) == N+1
+    @assert length(ϕ_r) == N+1
+
+    Φ = similar(ϕ_l)
+    Φ = abs.(ϕ_l - ϕ_r)/2 + ϕ_l
+
+    return Φ;
+end
+
 # {{{
 @doc raw"""
 
@@ -273,9 +428,12 @@ end
 Рисует gif анимацию решения каждый `frame_skip` кадр, вплоть по `frames_to_write`-ый кадр, сохраняет под именем `name`.
 
 Так же рисует аналитическое решение `analitic(x,t)`, если таково передано.
+
+TODO: Fix doc
 """
-function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector, analitical=nothing; frames_to_write::Int = -1, frame_skip::Int=-1, name="solution.gif")
-    N,M = size(u)
+function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector, analitical=nothing, ϕ_l=nothing, ϕ_r=nothing, f1 = nothing, f2 = nothing;
+                  frames_to_write::Int = -1, frame_skip::Int=-1, name="solution.gif", convert2mp4 = false)
+    N,M = size(u) .-1
     if frames_to_write < 0
         frames_to_write = M;
     end
@@ -302,9 +460,28 @@ function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector, analitical=nothing; fra
         if analitical != nothing
             plot!(Xₙ, analitical.(Xₙ, Tₘ[m]), label="analitical(x,t)", color=:green, linewidth = 5, alpha=0.3)
         end
+
+        if ( ϕ_l != nothing ) && ( ϕ_r != nothing) &&( f1 != nothing ) && ( f2 != nothing)
+            ϕ = Φ(ϕ_l, ϕ_r, N);
+            plot!(Xₙ, ϕ_l, label=L"\phi_l", color=:darkgoldenrod)
+            plot!(Xₙ, ϕ_r, label=L"\phi_r", color=:darkgoldenrod)
+            plot!(Xₙ, ϕ, label=L"\widetilde{\Phi}", color=:gold)
+
+            # Плавающая вслед за пунктиром надпись
+            annotate!(0.0, f2[m] + 0.5, Plots.text(@sprintf("f2(t) = %.2f",f2[m]), 16, :left ))
+            plot!([0, f1[m]], [f2[m], f2[m]], line=:dash, color=:black, label="")
+
+            # Плавающая вслед за пунктиром надпись
+            annotate!(f1[m] + 0.01, 0.9 * first(yl), Plots.text(@sprintf("f1(t) = %.2f",f1[m]), 16, :left ))
+            plot!([f1[m], f1[m]], [yl[1], f2[m]], line=:dash, color=:black, label="")
+        end
         frame(a)
     end
     gif(a, name);
+
+    if convert2mp4
+        run(`gif2mp4 $(name) $(replace(name, "gif" => "mp4"))`)
+    end
 end
 
 end # module
