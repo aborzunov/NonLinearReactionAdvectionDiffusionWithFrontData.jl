@@ -51,7 +51,7 @@ qₙ = [ q(x) for x in Xₙ[2:N] ];
 Решим задачу [`solve!`](@ref) и построим gif решения [`make_gif`](@ref)
 ```@example demo
 u= solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ)
-make_gif(u, Xₙ, Tₘ; frame_skip = div(M,30), frames_to_write=80, name="solution.gif");
+make_gif(u, Xₙ, Tₘ; frame_skip = div(M,50), frames_to_write=80, name="solution.gif");
 nothing # hide
 ```
 

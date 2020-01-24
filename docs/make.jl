@@ -1,10 +1,10 @@
 using Documenter, NonLinearReactionAdvectionDiffusionWithFrontData
 
 DocMeta.setdocmeta!( NonLinearReactionAdvectionDiffusionWithFrontData, :DocTestSetup, :(using NonLinearReactionAdvectionDiffusionWithFrontData); recursive=true)
-makedocs(;
+makedocs(
     modules=[NonLinearReactionAdvectionDiffusionWithFrontData],
     format=Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
-    pages=[
+    pages= Any[
         "Главная" => "index.md",
         "Проверка на модельном решении" => "model.md",
         "Генерирование априорной информации" => "apriordata.md",

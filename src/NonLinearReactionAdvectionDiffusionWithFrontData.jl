@@ -477,11 +477,10 @@ function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector, analitical=nothing, ϕ_
         end
         frame(a)
     end
-    gif(a, name);
 
-    if convert2mp4
-        run(`gif2mp4 $(name) $(replace(name, "gif" => "mp4"))`)
-    end
+    convert2mp4  && run(`gif2mp4 $(name) $(replace(name, "gif" => "mp4")) \&`)
+
+    gif(a, name, show_msg=false);
 end
 
 end # module

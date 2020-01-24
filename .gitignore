@@ -2,9 +2,10 @@
 *.jl.cov
 *.jl.mem
 .DS_Store
-/Manifest.toml
 /dev/
 /docs/build/
 /docs/site/
+/docs/Manifest.toml
 *.gif
 *.mp4
+news.md
