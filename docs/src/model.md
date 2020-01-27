@@ -78,5 +78,6 @@ u= solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ, RP, j);
 
 Сохраним анимацию решения на модельной функции.
 ```@example test
-make_gif(u, Xₙ, Tₘ, g; frame_skip = div(M,30), frames_to_write=80, name="solution_model.gif")
+d = [missing, missing]
+make_gif(u, Xₙ, Tₘ, d, d, d, d, g; frame_skip = div(M,30), frames_to_write=80, name="solution_model.gif")
 ```

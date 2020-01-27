@@ -18,7 +18,7 @@ y = u_init.( Xₙ[n] for n in 2:N );
 qₙ = [ q(x) for x in Xₙ[2:N] ];
 u= solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ)
 
-make_gif(u, Xₙ, Tₘ; frame_skip = div(M,30), frames_to_write=80);
+make_gif(u, Xₙ, Tₘ; frame_skip = div(M,50), frames_to_write=80)
 
 # Вырожденные корни
 qn = [q(x) for x in Xₙ]
@@ -33,7 +33,9 @@ f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M)
 # Значение функции на переходном слое
 f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M)
 
-make_gif(u, Xₙ, Tₘ, nothing, q_low, q_top, f1, f2; frame_skip = div(M,50), frames_to_write=80, convert2mp4 = true);
+make_plot(u, Xₙ, Tₘ, 5, q_low, q_top, f1, f2)
+
+make_gif(u, Xₙ, Tₘ, q_low, q_top, f1, f2; frame_skip = div(M,50), frames_to_write=80, convert2mp4 = true)
 
 # Delta function
 NonLinearReactionAdvectionDiffusionWithFrontData.delta(0.1, Xₙ,  0.1)

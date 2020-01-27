@@ -6,8 +6,10 @@ using Dierckx
 using LaTeXStrings
 using Plots
 using Printf
+using Missings
 
-export u_init, f, solve!, make_gif;
+export u_init, f, solve!;
+export make_plot, make_gif;
 
 @doc raw"""
     u_init(x::Real; ε = 0.2) -> Real
@@ -370,9 +372,6 @@ end
 Вычисляет значение функции на переходном слое ``(\phi_l - \phi_r)/2`` с помощью левого ``\phi_l`` и правого ``\phi_r`` вырожденного корня.
 """
 function Φ(ϕ_l::Vector, ϕ_r::Vector, N::Int)
-    @assert length(ϕ_l) == N+1
-    @assert length(ϕ_r) == N+1
-
     Φ = similar(ϕ_l)
     Φ = abs.(ϕ_l - ϕ_r)/2 + ϕ_l
 
@@ -431,56 +430,77 @@ end
 
 TODO: Fix doc
 """
-function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector, analitical=nothing, ϕ_l=nothing, ϕ_r=nothing, f1 = nothing, f2 = nothing;
-                  frames_to_write::Int = -1, frame_skip::Int=-1, name="solution.gif", convert2mp4 = false)
+function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector,
+                  ϕ_l::Vector = missings(2), ϕ_r::Vector = missings(2),
+                  f1::Vector = missings(2), f2::Vector = missings(2),
+                  analitical = nothing;
+                  frames_to_write::Int = -1, frame_skip::Int=-1,
+                  name = "solution.gif", convert2mp4 = false)
     N,M = size(u) .-1
     if frames_to_write < 0
         frames_to_write = M;
     end
     if frame_skip < 0
-        frame_skip = div(frames_to_write, 80) + 1
+        frame_skip = div(frames_to_write, 40) + 1
     end
-
-    yl = extrema(u[:,1:frames_to_write]).*1.05;
 
     a = Animation()
     for m in 1:frame_skip:frames_to_write
-        # График, оси, подписи осей и пр.
-        plot(size=(800, 600), xlabel="x", ylabel="u(x)", ylims=yl)
-        # Найденное решение
-        plot!(Xₙ, u[:,m], label="u(x,t)", color=:blue)
-        # Начальное условие
-        plot!(Xₙ, u[:,1], line=:dash, label="u_inital")
-        # Точки сетки на найденной функции и их проекция на ось Х
-        scatter!(Xₙ, u[:,m], color=:blue, label="", markersize=3)
-        scatter!(Xₙ, [0 for i in 1:N+1], color=:black, label="", markersize=2)
-        # Надпись слева внизу с текущим временем
-        annotate!(0.0, 0.9*first(yl), Plots.text(@sprintf("t = %.2f",Tₘ[m]), 16, :left ))
-        # Аналитическое решение
-        if analitical != nothing
-            plot!(Xₙ, analitical.(Xₙ, Tₘ[m]), label="analitical(x,t)", color=:green, linewidth = 5, alpha=0.3)
-        end
-
-        if ( ϕ_l != nothing ) && ( ϕ_r != nothing) &&( f1 != nothing ) && ( f2 != nothing)
-            ϕ = Φ(ϕ_l, ϕ_r, N);
-            plot!(Xₙ, ϕ_l, label=L"\phi_l", color=:darkgoldenrod)
-            plot!(Xₙ, ϕ_r, label=L"\phi_r", color=:darkgoldenrod)
-            plot!(Xₙ, ϕ, label=L"\widetilde{\Phi}", color=:gold)
-
-            # Плавающая вслед за пунктиром надпись
-            annotate!(0.0, f2[m] + 0.5, Plots.text(@sprintf("f2(t) = %.2f",f2[m]), 16, :left ))
-            plot!([0, f1[m]], [f2[m], f2[m]], line=:dash, color=:black, label="")
-
-            # Плавающая вслед за пунктиром надпись
-            annotate!(f1[m] + 0.01, 0.9 * first(yl), Plots.text(@sprintf("f1(t) = %.2f",f1[m]), 16, :left ))
-            plot!([f1[m], f1[m]], [yl[1], f2[m]], line=:dash, color=:black, label="")
-        end
+        make_plot(u, Xₙ, Tₘ, m, ϕ_l, ϕ_r, f1, f2)
         frame(a)
     end
 
+    g = gif(a, name, show_msg=false)
     convert2mp4  && run(`gif2mp4 $(name) $(replace(name, "gif" => "mp4")) \&`)
 
-    gif(a, name, show_msg=false);
+    return g
+end
+
+function make_plot(u::Matrix, Xₙ::Vector, Tₘ::Vector, m::Int,
+                   ϕ_l::Vector = missings(2), ϕ_r::Vector = missings(2),
+                   f1::Vector = missings(2), f2::Vector = missings(2),
+                   analitical = nothing)
+
+    yl = extrema(u[:,:]).*1.05;
+
+    # График, оси, подписи осей и пр.
+    pl = plot(size=(800, 600), xlabel="x", ylabel="u(x)", ylims=yl)
+
+    # Начальное условие
+    plot!(Xₙ, u[:,1], line=:dash, label="u_inital")
+
+    # Найденное решение
+    plot!(Xₙ, u[:,m], label="u(x,t)", color=:blue)
+
+    # Точки сетки на найденной функции и их проекция на ось Х
+    scatter!(Xₙ, u[:,m], color=:blue, label="", markersize=3)
+    scatter!(Xₙ, [0 for x in Xₙ], color=:black, label="", markersize=2)
+
+    # Надпись слева внизу с текущим временем
+    annotate!(0.0, 0.9*first(yl), Plots.text(@sprintf("t = %.2f",Tₘ[m]), 16, :left ))
+
+    check(x::Vector) = !any(ismissing.(x))
+    if ( check(ϕ_l) ) && ( check(ϕ_r)) && ( check(f1) ) && ( check(f2) )
+        ϕ = Φ(ϕ_l, ϕ_r, length(Xₙ)-1);
+        plot!(Xₙ, ϕ_l, label=L"\phi_l", color=:darkgoldenrod)
+        plot!(Xₙ, ϕ_r, label=L"\phi_r", color=:darkgoldenrod)
+        plot!(Xₙ, ϕ, label=L"\widetilde{\Phi}", color=:gold)
+
+        # Плавающая вслед за пунктиром надпись
+        annotate!(0.0, f2[m] + 0.5, Plots.text(@sprintf("f2(t) = %.2f",f2[m]), 16, :left ))
+        plot!([0, f1[m]], [f2[m], f2[m]], line=:dash, color=:black, label="")
+
+        # Плавающая вслед за пунктиром надпись
+        annotate!(f1[m] + 0.01, 0.9 * first(yl), Plots.text(@sprintf("f1(t) = %.2f",f1[m]), 16, :left ))
+        plot!([f1[m], f1[m]], [yl[1], f2[m]], line=:dash, color=:black, label="")
+    end
+
+    # Аналитическое решение
+    if analitical != nothing && typeof( analitical ) <: Function
+        plot!(Xₙ, analitical.(Xₙ, Tₘ[m]), label="analitical(x,t)", color=:green, linewidth = 5, alpha=0.3)
+    end
+
+    return pl
 end
 
 end # module
