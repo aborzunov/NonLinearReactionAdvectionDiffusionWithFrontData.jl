@@ -1,6 +1,7 @@
 ```@meta
 DocTestSetup = quote
     using NonLinearReactionAdvectionDiffusionWithFrontData
+    using Plots
 end
 
 ```# Главная
@@ -19,46 +20,3 @@ end
 \end{aligned}
 \right.
 ```
-
-# Пример решения прямой задачи
-
-Зададим параметры.
-```@example demo
-using NonLinearReactionAdvectionDiffusionWithFrontData
-using Plots
-
-u_l(t) = -8
-u_r(t) = 4
-ε = 0.2;
-a, b = 0, 1;
-t₀, T = 0, 1;
-N, M = 40, 80;
-h = (b-a)/N;
-τ = (T-t₀)/M;
-Xₙ = [a  + n*h for n in 0:N];
-Tₘ = [t₀ + m*τ for m in 0:M];
-q(x) = sin(3 * π * x);
-u = zeros(M+1, N+1);
-nothing #hide
-```
-
-Зададим начальное приближение [`u_init`](@ref)
-```@example demo
-y = u_init.( Xₙ[n] for n in 2:N );
-qₙ = [ q(x) for x in Xₙ[2:N] ];
-```
-
-Решим задачу [`solve!`](@ref) и построим gif решения [`make_gif`](@ref)
-```@example demo
-u= solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ)
-make_gif(u, Xₙ, Tₘ; frame_skip = div(M,50), frames_to_write=80, name="solution.gif")
-```
-
-# Вставка полученной gif через md
-![](solution.gif)
-
-# Вставка png из assets
-![](./assets/make_plot.png)
-
-# Тестируем mp4
-![](./assets/solution.mp4)

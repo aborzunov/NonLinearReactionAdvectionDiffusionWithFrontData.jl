@@ -10,6 +10,8 @@ using Missings
 
 export u_init, f, solve!;
 export make_plot, make_gif;
+export phidetermination, Φ, f1, f2;
+export delta, adjointRP, solve_adjoint;
 
 @doc raw"""
     u_init(x::Real; ε = 0.2) -> Real
@@ -125,6 +127,93 @@ function f(y::Array{<:Real, 1}, t::Real, Xₙ::Array{<:Real, 1}, N::Int, ε::Rea
 end
 
 @doc raw"""
+function adjointRP(y, m::Int, t, Xₙ, N, Tₘ, M, ε, qₙ, u, f1, f2)
+
+!!! note
+    `u`, `Xₙ` передаются как есть, вместе с граничными точками, внутри функции они локально модифицируются,
+    для сохранения индексации
+"""
+function adjointRP(y, m::Int,
+                   Xₙ::Vector, N::Int,
+                   Tₘ::Vector, M::Int,
+                   ε::Real, qₙ::Vector,
+                   u::Matrix, f1::Vector, f2::Vector)
+
+    # ВНИМАНИЕ! Выбрасываем первый и последний элемент из сетки Xₙ, для сохранения одинаковой индексации
+    Xₙ = Xₙ[2:end-1]
+    # Внимание! Выбрасываем первый и последний элемент на каждом временном слое из матрицы `u` для сохранения индексации
+    u = u[2:end-1, :]
+
+    @assert size(u)     == (N-1, M+1)
+
+    @assert length(Xₙ)  == N-1   # Модифицированная Сетка по `x` размера N-1
+    @assert length(y)   == N-1   # Проверка длины вектор-функции решения на текущем временном шаге.
+    @assert length(qₙ)  == N-1   # Проверка длины вектора "неоднородности"
+
+    @assert length(f1)  == M+1
+    @assert length(f2)  == M+1
+
+    RP = similar(y)             # Создаем вектор того же типа и размера
+    h = Xₙ[2] - Xₙ[1];          # Нижестоящие формулы приведены для равномерной сетки. Вычислим её шаг.
+
+    RP[1]        = - ε * (y[2]   - 2*y[1] )/(h^2) + u[1, m]   * (y[2] )/(2*h) + y[1]   * qₙ[1] - 2 * delta( Xₙ[1], Xₙ, f1[m]) * ( u[1, m] - f2[m] )
+    for n in 2:N-2
+        RP[n]    = - ε * (y[n+1] - 2*y[n] + y[n-1])/(h^2) + u[n, m]   * (y[n+1] - y[n-1])/(2*h) + y[n]   * qₙ[n] - 2 * delta( Xₙ[n], Xₙ, f1[m]) * ( u[n, m] - f2[m] )
+    end
+    RP[N-1]      = - ε * (2*y[N-1] + y[N-2])/(h^2) + u[N-1, m] * ( -y[N-2] )/(2*h) + y[N-1] * qₙ[N-1] - 2 * delta( Xₙ[N-1], Xₙ, f1[m]) * ( u[N-1, m] - f2[m] )
+
+    return RP;
+end
+
+@doc raw"""
+
+!!! warning
+    Массивы `Xₙ`, `Tₘ`, `u`, `f1`, `f2` Передаются **как есть**!
+    Они переварачиваются внутри функции локально.
+"""
+function solve_adjoint(y₀::Vector, Xₙ::Vector, N::Int,
+                       Tₘ::Vector, M::Int,
+                       ε::Real, qₙ::Vector,
+                       u::Matrix, f1::Vector, f2::Vector;
+                       α::Complex = complex(0.5, 0.5))
+
+    if Tₘ[end] - Tₘ[1] < 0
+        throw(ArgumentError("Time mesh should be passed in default direction [0, T], not in reversed"))
+    end
+
+    Tₘ = reverse(Tₘ);
+    f1 = reverse(f1);
+    f2 = reverse(f2);
+    u = u[:,end:-1:1]
+
+    # `u` – матрица содержащая искомую функцию на каждом временном шаге
+    u = zeros(N+1, M+1);
+    # Запишем граничные условия в матрицу `u` для нулевого шага по времени.
+    u[1, :]   .= 0.0;
+    u[N+1, :] .= 0.0;
+    # Запишем искомый вектор, здесь он соответствует начальным условиям переданным внутрь функции
+    u[2:N, M+1] = y₀;
+
+    y = y₀;
+    # Создаем якобиан, через замыкание функции
+    j(y, m, Xₙ, N, Tₘ, M, ε, qₙ, u, f1, f2) = ForwardDiff.jacobian( z -> adjointRP(z, m, Xₙ, N, Tₘ, M, ε, qₙ, u, f1, f2), y)
+
+    for m in 1:M
+
+        W = (I - α * (Tₘ[m+1] - Tₘ[m]) * j(y, m, Xₙ, N, Tₘ, M, ε, qₙ, u, f1, f2)) \ adjointRP(y, m, Xₙ, N, Tₘ, M, ε, qₙ, u, f1, f2)
+        y = y .+ (Tₘ[m+1] - Tₘ[m])  * real(W);
+
+        # Запишем найденный вектор.
+        # Запишем граничные условия в матрицу `u` для нулевого шага по времени.
+        # Т.к. `u` имеет размеры (N+1, M+1), то как и для Tₘ не забудем сместить нумерацию на 1.
+        u[2:N, m+1] = y
+
+    end
+
+    return u
+end
+
+@doc raw"""
     solve!(y::Array{<:Real, 1}, Xₙ::Array{<:Real, 1}, Tₘ::Array{<:Real, 1}, N::Int,
                 M::Int, ε::Real, u_l::Function, u_r::Function, qₙ::Vector; α::Complex = complex(0.5, 0.5))
 
@@ -200,7 +289,7 @@ end
 
     Длина вектора `length(Tₘ)` равняется `M+1`, сетка передается полностью, вместе с граничными точками.
 """
-function solve!(y::Array{<:Real, 1}, Xₙ::Array{<:Real, 1}, Tₘ::Array{<:Real, 1}, N::Int,
+function solve!(y::Vector, Xₙ::Vector, Tₘ::Vector, N::Int,
                 M::Int, ε::Real, u_l::Function, u_r::Function, qₙ::Vector,
                 RP::Function, jac::Function ; α::Complex = complex(0.5, 0.5))
 
@@ -229,16 +318,16 @@ function solve!(y::Array{<:Real, 1}, Xₙ::Array{<:Real, 1}, Tₘ::Array{<:Real,
 end
 
 @doc raw"""
-    delta(x, Xₙ, x₀) -> ::Number
+    delta(x, Xₙ, x₀ = 0) -> ::Number
 
 Вычисляет конечно разностную аппроксимацию дельта функции ``\delta(x; x₀)`` на сетке `Xₙ` исходя из ``\int\limits_a^b \delta(x; x₀) dx = 1``.
 """
-function delta(x, Xₙ, x₀)
+function delta(x::Real, Xₙ::Vector, x₀::Real = 0)
     @assert Xₙ[1] <= x <= Xₙ[end]
     @assert Xₙ[1] <= x₀ <= Xₙ[end]
 
     N = length(Xₙ) - 1
-    out = 0;
+    out = 0.0;
 
     for n in 1:N
         if ( x >= Xₙ[n]) && ( x < Xₙ[n+1] )
@@ -420,6 +509,7 @@ function jacobian(y, t, Xₙ, ε, u_l, u_r)
 end
 # }}}
 
+# {{{ Plotting
 @doc raw"""
     make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector, analitical=nothing;
             frames_to_write::Int = -1, frame_skip::Int=-1, name="solution.gif")
@@ -489,10 +579,17 @@ function make_plot(u::Matrix, Xₙ::Vector, Tₘ::Vector, m::Int,
         # Плавающая вслед за пунктиром надпись
         annotate!(0.0, f2[m] + 0.5, Plots.text(@sprintf("f2(t) = %.2f",f2[m]), 16, :left ))
         plot!([0, f1[m]], [f2[m], f2[m]], line=:dash, color=:black, label="")
+        # красная точка слева, около подписи f2
+        scatter!( [0], [f2[m]], color=:red, label="")
 
         # Плавающая вслед за пунктиром надпись
-        annotate!(f1[m] + 0.01, 0.9 * first(yl), Plots.text(@sprintf("f1(t) = %.2f",f1[m]), 16, :left ))
+        annotate!(f1[m] + 0.01, 0.95 * first(yl), Plots.text(@sprintf("f1(t) = %.2f",f1[m]), 16, :left ))
         plot!([f1[m], f1[m]], [yl[1], f2[m]], line=:dash, color=:black, label="")
+        # красная точка, нормировочный коэффициент, чтобы влезло в кадр
+        scatter!( [f1[m]], [yl[1]*0.99], color=:red, label="")
+
+        # красная точка на пересечении пунктиров априорной информации
+        scatter!( [f1[m]], [f2[m]], color=:red, label="")
     end
 
     # Аналитическое решение
@@ -502,5 +599,7 @@ function make_plot(u::Matrix, Xₙ::Vector, Tₘ::Vector, m::Int,
 
     return pl
 end
+
+# }}}
 
 end # module

@@ -30,6 +30,6 @@
     # То, что он не зависит от добавления `g_d` можно убедиться изменением порядка этих двух строк, ну а так же на бумаге.
     j(y, t, Xₙ, N, ε, u_l, u_r, qₙ) = ForwardDiff.jacobian( z -> RP(z, t, Xₙ, N, ε, u_l, u_r, qₙ), y)
 
-    u= solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ, RP, j)
+    u = solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ, RP, j)
     @test isapprox(model, u, rtol = 1E-3)
 end

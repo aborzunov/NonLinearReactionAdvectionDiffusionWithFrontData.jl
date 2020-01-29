@@ -80,4 +80,7 @@ u= solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ, RP, j);
 ```@example test
 d = [missing, missing]
 make_gif(u, Xₙ, Tₘ, d, d, d, d, g; frame_skip = div(M,30), frames_to_write=80, name="solution_model.gif")
+nothing #hide
 ```
+
+![](assets/solution_model.mp4)

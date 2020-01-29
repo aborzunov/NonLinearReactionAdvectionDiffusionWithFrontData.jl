@@ -1,5 +1,8 @@
+# Решение прямой задачи
+
+```@example demo
 using NonLinearReactionAdvectionDiffusionWithFrontData
-using LinearAlgebra, ForwardDiff, Printf
+using Plots
 
 # Зададим параметры для прямой задачи
 u_l(t) = -8#*cos(2*π * t);
@@ -7,7 +10,7 @@ u_r(t) = 4# * (1 + sin(2*π * t));
 ε = 0.2;
 a, b = 0, 1; # Область по Х
 t₀, T = 0, 0.28;
-N, M = 500, 800;
+N, M = 40, 80;
 h = (b-a)/N;
 τ = (T-t₀)/M;
 Xₙ = [a  + n*h for n in 0:N];
@@ -20,10 +23,13 @@ y = u_init.( Xₙ[n] for n in 2:N );
 # Некоторая функция q, т.к. мы моделируем априорные данные f1, f2,
 # то она нам известна
 qₙ = [ q(x) for x in Xₙ[2:N] ];
-u = solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ)
+u = solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ);
+nothing #hide
+```
 
-make_gif(u, Xₙ, Tₘ; frame_skip = div(M,50), frames_to_write=80)
+# Генерирование априорной информации
 
+```@example demo
 # Вырожденные корни
 qn = [q(x) for x in Xₙ]
 q_low = NonLinearReactionAdvectionDiffusionWithFrontData.phidetermination(qn, y, u_l(0), Xₙ, N::Int);
@@ -35,32 +41,18 @@ q_top = q_top[end:-1:1];
 f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);
 # Значение функции на переходном слое
 f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);
+nothing #hide
+```
 
+# График и анимация решения
+
+```@xample demo
 make_plot(u, Xₙ, Tₘ, 50, q_low, q_top, f1, f2)
+```
 
+```@example demo
 make_gif(u, Xₙ, Tₘ, q_low, q_top, f1, f2; frame_skip = div(M,50), frames_to_write=80, convert2mp4 = true)
+nothing #hide
+```
 
-# Delta function
-NonLinearReactionAdvectionDiffusionWithFrontData.delta(0.1, Xₙ,  0.1)
-d = [ NonLinearReactionAdvectionDiffusionWithFrontData.delta(x, Xₙ, 0.1) for  x in Xₙ]
-plot(d)
-
-# Отрисовка дельта-функции
-make_gif( [ delta(Xₙ[n], Xₙ, f1[m])*(u[n, m] - f2[m]) for n in 1:N+1, m in 1:M], Xₙ, Tₘ; frame_skip = div(M,500), frames_to_write = 81, name="delta.gif", convert2mp4 = true)
-
-
-# Решение сопряженной задачи
-
-U = u; # Сохраним старую матрицу
-y₀ = [0.0 for i in 2:N];
-ψ_l = [0.0 for i in 1:M+1];
-ψ_r = [0.0 for i in 1:M+1];
-
-# Непосредственное вычисление якобиана и правой части сопряженной задачи
-j(y, m, Xₙ, N, Tₘ, M, ε, qₙ, u, f1, f2) = ForwardDiff.jacobian( z -> adjointRP(z, m, Xₙ, N, Tₘ, M, ε, qₙ, u, f1, f2), y)
-adjointRP(y₀, M, Xₙ, N, Tₘ, M, ε, qₙ, u, f1, f2)
-j(y₀, m, Xₙ, N, Tₘ, M, ε, qₙ, u, f1, f2)
-
-ψ = solve_adjoint(y₀, Xₙ, N, Tₘ, M, ε, qₙ, u, f1, f2)
-# На отрисовку, решение сопряженной задачи передадим в инвертированном времени.
-make_gif(ψ[:,end:-1:1], Xₙ, Tₘ[end:-1:1]; frame_skip = div(M,500), frames_to_write=81, name="adjoint.gif", convert2mp4 = true)
+![](./assets/solution.mp4)

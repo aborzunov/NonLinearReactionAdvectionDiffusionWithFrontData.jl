@@ -18,4 +18,5 @@ end
 #    doctest(NonLinearReactionAdvectionDiffusionWithFrontData)
 end
 
-include("direct_with_model.jl")
+include("direct_check.jl")
+include("adjoint_check.jl")
