@@ -11,6 +11,7 @@ makedocs(
         "Генерирование априорной информации" => "apriordata.md",
         "Сопряженная задача" => "adjoint.md",
         "Проверка корректности решения сопряженной задачи" => "adjoint_check.md",
+        "Функционал и его градиент" => "functional.md",
         "Справочник" => "reference.md",
     ],
     repo="https://github.com/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl/blob/{commit}{path}#L{line}",

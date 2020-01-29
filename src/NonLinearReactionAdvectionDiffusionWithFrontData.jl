@@ -467,6 +467,29 @@ function Φ(ϕ_l::Vector, ϕ_r::Vector, N::Int)
     return Φ;
 end
 
+@doc raw"""
+    J_q(uˢ::Matrix, ψˢ::Matrix,
+             Xₙ::Vector, N::Int,
+             Tₘ::Vector, M::Int) -> Vector
+
+"""
+function J_q(uˢ::Matrix, ψˢ::Matrix,
+             Xₙ::Vector, N::Int,
+             Tₘ::Vector, M::Int)
+
+    @assert length(Xₙ) == N+1
+    @assert length(Tₘ) == M+1
+
+    J_q = similar(Xₙ);
+
+    for m in 1:M+1
+        τ = Tₘ[m+1] - Tₘ[m]
+        J_q  += uˢ[:, m] * ψˢ[:, m] .* τ
+    end
+
+    return J_q
+end
+
 # {{{
 @doc raw"""
 
