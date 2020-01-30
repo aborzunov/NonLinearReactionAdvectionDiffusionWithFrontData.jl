@@ -6,6 +6,11 @@
 /docs/build/
 /docs/site/
 /docs/Manifest.toml
-*.mp4
-*.gif
+
+#results dir with gifs/mp4s
+# mp4s in docs/src/assets/ are being tracked further
+results/*
+
+# local working files
 news.md
+src/test_workflow.jl

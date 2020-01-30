@@ -66,7 +66,7 @@
         return arp .- d
     end
 
-    make_gif(ψ[:,end:-1:1], Xₙ, Tₘ[end:-1:1]; frame_skip = div(M,500), frames_to_write=81, name="adjoint.gif", convert2mp4 = true)
+    #make_gif(ψ[:,end:-1:1], Xₙ, Tₘ[end:-1:1]; frame_skip = div(M,500), frames_to_write=81, name="adjoint.gif", convert2mp4 = true)
 
     @test_broken isapprox(model, u, rtol = 1E-3)
 end
