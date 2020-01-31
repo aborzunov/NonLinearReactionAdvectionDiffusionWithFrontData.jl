@@ -6,9 +6,9 @@
 
     @testset "Initial condition" begin
 
-        @test length(Y) == N+1
-        @test isapprox(Y[1], -8, rtol=0.001)
-        @test isapprox(Y[end], 4, rtol=0.001)
+        @test length(u_init.(X)) == N+1
+        @test isapprox(u_init(X[1]), -8, rtol=0.001)
+        @test isapprox(u_init(X[end]), 4, rtol=0.001)
     end
 
     @testset "`strip_borderPoints`" begin

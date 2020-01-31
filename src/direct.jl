@@ -1,23 +1,11 @@
 # Файл содержит все, что касается решение прямой задачи
 
 @doc raw"""
-    f(y::Array{<:Real, 1}, t::Real, Xₙ::Array{<:Real, 1},
-      N::Int, ε::Real, u_l::Function, u_r::Function, q::Function)
-
-Задает `qₙ = [ q(x) for x in Xₙ[2:N-1] ]` и вызывает [`f`](@ref).
-"""
-function f(y::Vector, t::Real, Xₙ::Vector, N::Int, ε::Real, u_l::Function, u_r::Function, q::Function)
-    @assert length(Xₙ) == N+1   # Сетка по `x` размера N+1
-    @assert length(y)  == N-1   # Проверка длины вектор-функции решения на текущем временном шаге.
-
-    qₙ = [ q(x) for x in Xₙ[2:N] ]
-
-    f(y, t, Xₙ, N, ε, u_l::Function, u_r::Function, qₙ)
-end
-
-@doc raw"""
-    f(y::Vector, 1}, t::Real, Xₙ::Vector, 1},
-      N::Int, ε::Real, u_l::Function, u_r::Function, qₙ::Vector) -> ::Vector
+    directRP(y::Vector, m::Int,
+             Xₙ::Vector, N::Int,
+             ε::Real,
+             ulₙ::Vector, urₙ::Vector,
+             qₙ::Vector)
 
 Функция вычисляет вектор правой части с помощью конечно-разностной аппроксимации пространственных производных.
 
@@ -52,8 +40,8 @@ $u_init(x_n)$ вычисляется с помощью [`u_init(x)`](@ref).
 
 TODO: fix docs
 # Arguments
-- `y::Array{<:Real, 1}`:  Вектор размера `N-1` решения системы в текущий момент времени
-- `t::Real`:  Текущий момент времени.
+- `y::Vector`: Вектор размера `N-1` решения системы в текущий момент времени
+- `m::Int`:  номер шага в сетке по времени.
 - `Xₙ::Array{<:Real, 1}`: Пространственная сетка по `x`.
 - `N::Int`: Число -интервалов- сеткию
 - `ε::Real`: Малый параметр при старшей производной.
@@ -150,7 +138,7 @@ TODO: fix docs
 \end{aligned}
 ```
 
-``\mathbf{f}_\mathbf{y}(\mathbf{y}(t_m), t_m)`` — якобиан функции [`f`](@ref) по вектору ``y`` (в момент времени ``t_m``) в момент времени ``t\_m``.
+``\mathbf{f}_\mathbf{y}(\mathbf{y}(t_m), t_m)`` — якобиан функции [`directRP`](@ref) по вектору ``y`` (в момент времени ``t_m``) в момент времени ``t\_m``.
 Эта матрица Якоби имеет следущие ненулевые элементы.
 ```math
 \begin{aligned}

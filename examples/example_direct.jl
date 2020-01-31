@@ -1,4 +1,4 @@
-#' # Пример решения прямой задачи и генерирования априорной информации
+#' # Пример
 
 #' Зададим параметры для прямой задачи
 using NonLinearReactionAdvectionDiffusionWithFrontData
@@ -18,20 +18,22 @@ h = (b-a)/N;                    # шаг по X
 Xₙ = [a  + n*h for n in 0:N];   # Сетка по Х
 Tₘ = [t₀ + m*τ for m in 0:M];   # Сетка по Т
 qₙ =      q.(Xₙ);               # Сеточные значения коэффициента линейного усиления
-ulₙ= u_l.(Tₘ);                  # Сеточные значения левого  ГУ
-urₙ= u_r.(Tₘ);                  # Сеточные значения правого ГУ
+ulₙ=    u_l.(Tₘ);               # Сеточные значения левого  ГУ
+urₙ=    u_r.(Tₘ);               # Сеточные значения правого ГУ
 y₀ = u_init.(Xₙ);               # Начальные условия
+nothing #hide
 
 #' !!! note
 #'      Все массивы передаются полностью, вместе с граничными точками
 y = y₀;
-u = solve(y, Xₙ, N, Tₘ, M, ε, ulₙ, urₙ, qₙ)
+u = solve(y, Xₙ, N, Tₘ, M, ε, ulₙ, urₙ, qₙ);
+nothing #hide
 
 #' Запись gif только решения
 make_gif(u, Xₙ, Tₘ; frame_skip = div(M,50), frames_to_write=M, name="example_direct.gif")
 nothing #hide
 
-#' ![solution gif](results/example_direct.gif)
+#' ![solution gif](example_direct.gif)
 
 #' Вырожденные корни
 ϕl = phidetermination(qₙ, y, ulₙ, Xₙ, N::Int);
@@ -51,4 +53,4 @@ make_plot(u, Xₙ, Tₘ, 5, ϕl, ϕr, f1, f2)
 make_gif(u, Xₙ, Tₘ, ϕl, ϕr, f1, f2; frame_skip = div(M,50), frames_to_write=M, convert2mp4 = true, name="example_direct_with_f1_f2.gif")
 nothing #hide
 
-#' ![solution mp4 with degenerated](results/example_direct_with_f1_f2.mp4")
+#' ![solution mp4 with degenerated](example_direct_with_f1_f2.mp4)

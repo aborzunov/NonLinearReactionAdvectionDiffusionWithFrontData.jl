@@ -12,11 +12,11 @@ makedocs(
     format=Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     pages= Any[
         "Главная" => "index.md",
-        "Прямая заадча" => Any["direct.md",
-                               "generated/example_direct.md"
+        "Прямая задача" => Any["direct.md",
+                               "Генерирование априорной информации" => "apriordata.md",
+                               "generated/example_direct.md",
+                               "Проверка на модельном решении" => "direct_check.md",
                               ],
-        "Проверка на модельном решении" => "direct_check.md",
-        "Генерирование априорной информации" => "apriordata.md",
         "Сопряженная задача" => "adjoint.md",
         "Проверка корректности решения сопряженной задачи" => "adjoint_check.md",
         "Функционал и его градиент" => "functional.md",
