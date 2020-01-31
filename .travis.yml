@@ -26,8 +26,6 @@ after_success:
 
 jobs:
   include:
-      env:
-          - GKSwstype=100
     - stage: "Documentation"
       julia: 1.3
       os: linux
