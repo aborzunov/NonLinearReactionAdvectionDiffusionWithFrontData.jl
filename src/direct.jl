@@ -215,7 +215,7 @@ function solve(y₀::Vector, Xₙ::Vector, N::Int,
             -(Tₘ[m-1] - Tₘ[m]));
 
         j = jac(y, m, Xₙ, N, ε, ulₙ, urₙ, qₙ);
-        rp = directRP(y, m, Xₙ, N, ε, ulₙ, urₙ, qₙ);
+        rp = RP(y, m, Xₙ, N, ε, ulₙ, urₙ, qₙ);
 
         W = (I - α * τ * j) \ rp;
         y = y .+ τ * real(W);

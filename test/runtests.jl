@@ -10,6 +10,6 @@ end
 
 include("utils.jl")
 
+include("direct_check.jl")
 # TODO: they are broken due to changing signatures
-#include("direct_check.jl")
 #include("adjoint_check.jl")

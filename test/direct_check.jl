@@ -1,35 +1,55 @@
-@testset "Testing direct problem solving with model function" begin
+@testset "Direct check" begin
 
-    u_l(t) = 0
-    u_r(t) = 0
-    ε = 0.1;
-    a, b = 0, 1;
-    t₀, T = 0, 1;
-    N, M = 40, 80;
-    h = (b-a)/N;
-    τ = (T-t₀)/M;
-    Xₙ = [a  + n*h for n in 0:N];
-    Tₘ = [t₀ + m*τ for m in 0:M];
-    q(x) = sin(3 * π * x);
-    u = zeros(M+1, N+1);
+    # Зададим параметры для прямой задачи
+    u_l(t) = 0;                     # ГУ удовлетворяющие модельной функции
+    u_r(t) = 0;                     # ГУ удовлетворяющие модельной функции
+    q(x) = 4*sin(3 * π * x);        # Коэффициент линейного усиления
+    ε = 0.2;                        # Малый параметр при старшей производной
+    a, b = 0, 1;                    # Область по X
+    t₀, T = 0, 1;                # Область по T
+    N, M = 500, 800;                  # Кол-во разбиений по X, T
+    h = (b-a)/N;                    # шаг по X
+    τ = (T-t₀)/M;                   # шаг по T
+    Xₙ = [a  + n*h for n in 0:N];   # Сетка по Х
+    Tₘ = [t₀ + m*τ for m in 0:M];   # Сетка по Т
+    qₙ =      q.(Xₙ);               # Сеточные значения коэффициента линейного усиления
+    ulₙ= u_l.(Tₘ);                  # Сеточные значения левого  ГУ
+    urₙ= u_r.(Tₘ);                  # Сеточные значения правого ГУ
+
 
     # Зададим модельную функцию и невязку, получаемую после подстановки `g` в исходное уравнение
-    g(x, t) = (1 - 2t)*sin(π*x)
-    g_d(x,t) =  - ε * π^2 * (1 - 2t) * sin(π * x) + π * (1 - 2t)^2 * sin(π * x) * cos(π * x) - q(x) * (1 -2t) * sin(π * x) + 2 * sin(π * x)
+    function g(x, m)
+        t = Tₘ[m]
+        (1 - 2t)*sin(π*x)
+    end
+    function g_d(x::Real, m::Int)
+        t = Tₘ[m];
+        - ε * π^2 * (1 - 2t) * sin(π * x) + π * (1 - 2t)^2 * sin(π * x) * cos(π * x) - q(x) * (1 -2t) * sin(π * x) + 2 * sin(π * x)
+    end
 
-    y = g.( (Xₙ[n] for n in 2:N), 0 );
-    qₙ = [ q(x) for x in Xₙ[2:N] ];
-
+    y₀ = g.(Xₙ, 1);               # Начальные условия
     # Модельное решение найденное с помощью известного аналитического решения
-    model = [ g(x,t) for x in Xₙ, t in Tₘ]
+    u_model = [ g(x, m) for x in Xₙ, m in 1:M+1];
 
     # Создадим функцию, которая будет вычислять вектор правой части с добавлением невязки
-    RP(y, t, Xₙ, N, ε, u_l, u_r, qₙ) = f(y, t, Xₙ, N, ε, u_l, u_r, qₙ) - g_d.(Xₙ[2:N], t)
+    function RP(y, m, Xₙ, N, ε, ulₙ, urₙ, qₙ)
+        directRP(y, m, Xₙ, N, ε, ulₙ, urₙ, qₙ) - g_d.(Xₙ[2:N], m)
+    end
     # Хоть мы и конструируем якобиан с помощью автоматического дифференцирования, примите во внимание, что
     # Якобиан ``f_y`` при добавлении `g_d` останется без изменений, т.к. `g_d` зависит только от ``x,t``.
     # То, что он не зависит от добавления `g_d` можно убедиться изменением порядка этих двух строк, ну а так же на бумаге.
-    j(y, t, Xₙ, N, ε, u_l, u_r, qₙ) = ForwardDiff.jacobian( z -> RP(z, t, Xₙ, N, ε, u_l, u_r, qₙ), y)
+    j(y, m, Xₙ, N, ε, ulₙ, urₙ, qₙ) = ForwardDiff.jacobian( z -> RP(z, m, Xₙ, N, ε, ulₙ, urₙ, qₙ), y)
 
-    u = solve!(y, Xₙ, Tₘ, N, M, ε, u_l, u_r, qₙ, RP, j)
-    @test isapprox(model, u, rtol = 1E-3)
+    y = y₀;
+    u = solve(y, Xₙ, N, Tₘ, M, ε, ulₙ, urₙ, qₙ, RP, j);
+
+    # md d = [missing, missing];
+    # md make_gif(u, Xₙ, Tₘ, d, d, d, d, u_model; frame_skip = div(M,50), frames_to_write=M+1, name="direct_check.gif")
+
+    # md using LaTeXStrings
+    # md err = u - u_model
+    # md heatmap(Xₙ, Tₘ, err', xlabel=L"X_n", ylabel=L"T_m", title="Absolute Error", size=(1200, 800))
+
+    @test isapprox(u_model, u, rtol = 1E-3)
+
 end

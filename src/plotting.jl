@@ -30,7 +30,7 @@ function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector,
 
     a = Animation()
     for m in 1:frame_skip:frames_to_write
-        make_plot(u, Xₙ, Tₘ, m, ϕ_l, ϕ_r, f1, f2)
+        make_plot(u, Xₙ, Tₘ, m, ϕ_l, ϕ_r, f1, f2, analitical)
         frame(a)
     end
 
@@ -106,13 +106,13 @@ function make_plot(u::Matrix, Xₙ::Vector, Tₘ::Vector, m::Int,
     if analitical != nothing
         if typeof( analitical ) <: Function
             plot!(Xₙ, analitical.(Xₙ, Tₘ[m]), label="analitical(x,t)", color=:green, linewidth = 5, alpha=0.3)
-        elseif typeof( analitical) <: Vector
-            if length(analitical) != M+1
-                throw(ArgumentError("Размер `analitical` != $(M+1)"))
+        elseif typeof( analitical) <: Matrix
+            if size(analitical) != size(u)
+                throw(ArgumentError("Размер `analitical` != $(size(u))"))
             end
-            plot!(Xₙ, analitical, label="analitical(x,t)", color=:green, linewidth = 5, alpha=0.3)
+            plot!(Xₙ, analitical[:,m], label="analitical(x,t)", color=:green, linewidth = 5, alpha=0.3)
         else
-            throw(ArgumentError("Unknown typeof(analitical)"))
+            throw(ArgumentError("Unknown typeof(analitical): $(typeof(analitical))"))
         end
     end
 
