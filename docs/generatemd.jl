@@ -6,6 +6,7 @@ Generates `Documenter` compatible `.md`  files using `Weave` from
 package. Based on [ExampleWeaver](https://github.com/Evizero/Augmentor.jl).
 """
 module GenerateMD
+using Weave
 
 ##########################################################################################
 const EXAMPLES_DIR  = abspath(joinpath(@__DIR__, "..", "examples"))
