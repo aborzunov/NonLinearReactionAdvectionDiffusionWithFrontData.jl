@@ -36,13 +36,12 @@ function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector,
 
     path = joinpath(mkpath("results"), name)
     if convert2mp4
-        run(`gif2mp4 $(path) $(replace(path, "gif" => "mp4")) \&`)
-        path = replace(path, "gif" => "mp4")
+        g = mp4(a, replace(path, "gif" => "mp4"), show_msg=false)
     else
-        g = gif(a, path, show_msg=false)
+        g = mp4(a, path, show_msg=false)
     end
 
-    return path
+    return g
 end
 
 @doc raw"""

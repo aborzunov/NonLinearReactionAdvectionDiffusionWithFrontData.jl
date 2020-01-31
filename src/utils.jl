@@ -11,19 +11,19 @@
 
 # Example
 ```jldoctest
-julia> N = 10; a = rand(N+1);
+julia> N = 10; a = collect(1:N+1);
 
 julia> NonLinearReactionAdvectionDiffusionWithFrontData.strip_borderPoints(a, N)
-9-element Array{Float64,1}:
- 0.01692516943937017
- 0.8704971211042747
- 0.09264243610808842
- 0.24863463685945808
- 0.23032297967950588
- 0.35205424704951005
- 0.4762987020192815
- 0.6795780611594018
- 0.5171552197967035
+9-element Array{Int64,1}:
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
 ```
 """
 function strip_borderPoints(a::Vector, N)

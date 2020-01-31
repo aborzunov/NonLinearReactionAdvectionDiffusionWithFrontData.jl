@@ -1,12 +1,20 @@
 using Documenter, NonLinearReactionAdvectionDiffusionWithFrontData
 
+# Autogenerate documentation markdown for for all scripts
+# in "examples/" package subfolder
+# based on https://github.com/Evizero/Augmentor.jl
+include("generatemd.jl")
+GenerateMD.weave(overwrite=true)
+
 DocMeta.setdocmeta!( NonLinearReactionAdvectionDiffusionWithFrontData, :DocTestSetup, :(using NonLinearReactionAdvectionDiffusionWithFrontData); recursive=true)
 makedocs(
     modules=[NonLinearReactionAdvectionDiffusionWithFrontData],
     format=Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     pages= Any[
         "Главная" => "index.md",
-        "Прямая заадча" => "direct.md",
+        "Прямая заадча" => Any["direct.md",
+                               "generated/example_direct.md"
+                              ],
         "Проверка на модельном решении" => "direct_check.md",
         "Генерирование априорной информации" => "apriordata.md",
         "Сопряженная задача" => "adjoint.md",

@@ -7,6 +7,9 @@
 /docs/site/
 /docs/Manifest.toml
 
+# Generated files purposed to be created at deploy stage
+/docs/src/generated/*
+
 #results dir with gifs/mp4s
 # mp4s in docs/src/assets/ are being tracked further
 results/*

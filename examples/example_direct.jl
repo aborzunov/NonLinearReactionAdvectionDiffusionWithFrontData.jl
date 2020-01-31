@@ -1,6 +1,8 @@
+#' # Пример решения прямой задачи и генерирования априорной информации
+
+#' Зададим параметры для прямой задачи
 using NonLinearReactionAdvectionDiffusionWithFrontData
 
-# Зададим параметры для прямой задачи
 u_l(t) = -8 #+ cos(2*π * t);
 u_r(t) =  4 #+ (1 + sin(2*π * t));
 q(x) = 4*sin(3 * π * x);        # Коэффициент линейного усиления, который в обратной
@@ -20,13 +22,18 @@ ulₙ= u_l.(Tₘ);                  # Сеточные значения лево
 urₙ= u_r.(Tₘ);                  # Сеточные значения правого ГУ
 y₀ = u_init.(Xₙ);               # Начальные условия
 
+#' !!! note
+#'      Все массивы передаются полностью, вместе с граничными точками
 y = y₀;
 u = solve(y, Xₙ, N, Tₘ, M, ε, ulₙ, urₙ, qₙ)
 
-# Запись gif только решения
+#' Запись gif только решения
 make_gif(u, Xₙ, Tₘ; frame_skip = div(M,50), frames_to_write=M, name="example_direct.gif")
+nothing #hide
 
-# Вырожденные корни
+#' ![solution gif](results/example_direct.gif)
+
+#' Вырожденные корни
 ϕl = phidetermination(qₙ, y, ulₙ, Xₙ, N::Int);
 ϕr = phidetermination(qₙ, y, urₙ, Xₙ[end:-1:1], N::Int);
 ϕr = ϕr[end:-1:1];
@@ -40,5 +47,8 @@ f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);
 # Можно нарисовать пятый шаг по времени
 make_plot(u, Xₙ, Tₘ, 5, ϕl, ϕr, f1, f2)
 
-# Запись только mp4 вместе с вырожденными корнями
+#' Запись только mp4 вместе с вырожденными корнями
 make_gif(u, Xₙ, Tₘ, ϕl, ϕr, f1, f2; frame_skip = div(M,50), frames_to_write=M, convert2mp4 = true, name="example_direct_with_f1_f2.gif")
+nothing #hide
+
+#' ![solution mp4 with degenerated](results/example_direct_with_f1_f2.mp4")
