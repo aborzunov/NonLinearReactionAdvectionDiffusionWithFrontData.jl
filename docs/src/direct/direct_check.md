@@ -36,4 +36,4 @@ g_d(x,t) = 2 \sin(\pi x) - \varepsilon \pi^2 (1 - 2t) \sin(\pi x) +
 
 Такая проверка корректности решения применяется в юнит тесте `"tests/direct_with_model.jl"`.
 
-![](assets/solution_model.mp4)
+![](../assets/solution_model.mp4)

@@ -7,7 +7,7 @@
     ε = 0.2;                        # Малый параметр при старшей производной
     a, b = 0, 1;                    # Область по X
     t₀, T = 0, 1;                # Область по T
-    N, M = 500, 800;                  # Кол-во разбиений по X, T
+    N, M = 50, 80;                  # Кол-во разбиений по X, T
     h = (b-a)/N;                    # шаг по X
     τ = (T-t₀)/M;                   # шаг по T
     Xₙ = [a  + n*h for n in 0:N];   # Сетка по Х
@@ -33,15 +33,14 @@
 
     # Создадим функцию, которая будет вычислять вектор правой части с добавлением невязки
     function RP(y, m, Xₙ, N, ε, ulₙ, urₙ, qₙ)
-        directRP(y, m, Xₙ, N, ε, ulₙ, urₙ, qₙ) - g_d.(Xₙ[2:N], m)
+        NonLinearReactionAdvectionDiffusionWithFrontData.directRP(y, m, Xₙ, N, ε, ulₙ, urₙ, qₙ) - g_d.(Xₙ, m)
     end
     # Хоть мы и конструируем якобиан с помощью автоматического дифференцирования, примите во внимание, что
     # Якобиан ``f_y`` при добавлении `g_d` останется без изменений, т.к. `g_d` зависит только от ``x,t``.
     # То, что он не зависит от добавления `g_d` можно убедиться изменением порядка этих двух строк, ну а так же на бумаге.
     j(y, m, Xₙ, N, ε, ulₙ, urₙ, qₙ) = ForwardDiff.jacobian( z -> RP(z, m, Xₙ, N, ε, ulₙ, urₙ, qₙ), y)
 
-    y = y₀;
-    u = solve(y, Xₙ, N, Tₘ, M, ε, ulₙ, urₙ, qₙ, RP, j);
+    u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₙ, urₙ, qₙ, RP, j);
 
     # md d = [missing, missing];
     # md make_gif(u, Xₙ, Tₘ, d, d, d, d, u_model; frame_skip = div(M,50), frames_to_write=M+1, name="direct_check.gif")
@@ -50,6 +49,6 @@
     # md err = u - u_model
     # md heatmap(Xₙ, Tₘ, err', xlabel=L"X_n", ylabel=L"T_m", title="Absolute Error", size=(1200, 800))
 
-    @test isapprox(u_model, u, rtol = 1E-3)
+    @test all(isapprox.(u_model, u, atol = 0.01))
 
 end

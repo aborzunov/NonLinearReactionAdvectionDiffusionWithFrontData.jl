@@ -30,7 +30,7 @@ using Plots
 using Printf
 using Missings
 
-export u_init, directRP, solve;
+export u_init, solve;
 export make_plot, make_gif;
 export phidetermination, Φ;
 export delta, adjointRP, solve_adjoint;

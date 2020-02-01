@@ -113,4 +113,4 @@
     \end{aligned}
 ```
 
-![](assets/adjoint.mp4)
+![](../assets/adjoint.mp4)

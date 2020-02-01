@@ -16,8 +16,8 @@ h = (b-a)/N;                    # шаг по X
 Xₙ = [a  + n*h for n in 0:N];   # Сетка по Х
 Tₘ = [t₀ + m*τ for m in 0:M];   # Сетка по Т
 qₙ =      q.(Xₙ);               # Сеточные значения коэффициента линейного усиления
-ulₙ=    u_l.(Tₘ);               # Сеточные значения левого  ГУ
-urₙ=    u_r.(Tₘ);               # Сеточные значения правого ГУ
+ulₘ=    u_l.(Tₘ);               # Сеточные значения левого  ГУ
+urₘ=    u_r.(Tₘ);               # Сеточные значения правого ГУ
 y₀ = u_init.(Xₙ);               # Начальные условия
 nothing #hide
 
@@ -25,8 +25,7 @@ nothing #hide
 #' Все массивы передаются внутрь функции `solve` полностью, вместе с граничными точками.
 #' Внутри, они локально модифицируются, и на вход [`directRP`](@ref), [`∂directRP_∂y`](@ref)
 #' подаются без крайних точек.
-y = y₀;
-u = solve(y, Xₙ, N, Tₘ, M, ε, ulₙ, urₙ, qₙ);
+u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
 nothing #hide
 
 #' Запись gif только решения
@@ -37,9 +36,11 @@ nothing #hide
 
 #' ## Генерация априорной информации
 # Вырожденные корни
-ϕl = phidetermination(qₙ, y, ulₙ, Xₙ, N::Int);
+# TODO: FIX phidetermination
+y = u[:,1] # TMP FIXURE
+ϕl = phidetermination(qₙ, y, ulₘ, Xₙ, N::Int);
 # Разворачиваем сетку по Х, а после — решение
-ϕr = phidetermination(qₙ, y, urₙ, Xₙ[end:-1:1], N::Int);
+ϕr = phidetermination(qₙ, y, urₘ, Xₙ[end:-1:1], N::Int);
 ϕr = ϕr[end:-1:1];
 # Полуразность вырожденных корней
 ϕ = NonLinearReactionAdvectionDiffusionWithFrontData.Φ(ϕl, ϕr, N);
@@ -51,8 +52,9 @@ f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);
 # Можно нарисовать пятый шаг по времени
 make_plot(u, Xₙ, Tₘ, 5, ϕl, ϕr, f1, f2)
 
-#' Запись только mp4 вместе с вырожденными корнями
-make_gif(u, Xₙ, Tₘ, ϕl, ϕr, f1, f2; frame_skip = div(M,50), frames_to_write=M, convert2mp4 = true, name="example_direct_with_f1_f2.gif")
+#' Запись **только** mp4 вместе с вырожденными корнями
+make_gif(u, Xₙ, Tₘ, ϕl, ϕr, f1, f2; frame_skip = div(M,50), frames_to_write=M,
+         convert2mp4 = true, name="example_direct_with_f1_f2.gif")
 nothing #hide
 
 #' ![solution mp4 with degenerated](example_direct_with_f1_f2.mp4)
