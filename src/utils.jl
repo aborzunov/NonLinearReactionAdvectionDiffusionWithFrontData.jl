@@ -27,8 +27,13 @@ julia> NonLinearReactionAdvectionDiffusionWithFrontData.strip_borderPoints(a, N)
 ```
 """
 function strip_borderPoints(a::Vector, N)
-    @assert length(a) == N+1
+    @assert length(a) == N+1 "Размерность входного вектора отличается от $(N+1)"
     return a[2:N]
+end
+
+function strip_borderPoints(a::Matrix, N)
+    @assert size(a,1) == N+1 "Размерность входного вектора отличается от $(N+1)"
+    return a[2:N,:]
 end
 
 @doc raw"""

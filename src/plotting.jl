@@ -24,10 +24,10 @@ function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector,
                   frames_to_write::Int = -1, frame_skip::Int=-1,
                   name = "solution.gif", convert2mp4 = false)
     N,M = size(u) .-1
-    if frames_to_write < 0
-        frames_to_write = M;
+    if frames_to_write <= 0
+        frames_to_write = M+1;
     end
-    if frame_skip < 0
+    if frame_skip <= 0
         frame_skip = div(frames_to_write, 40) + 1
     end
 
