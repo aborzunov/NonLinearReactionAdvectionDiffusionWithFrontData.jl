@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Пример · NonLinearReactionAdvectionDiffusionWithFrontData.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">NonLinearReactionAdvectionDiffusionWithFrontData.jl</span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Главная</a></li><li><span class="tocitem">Прямая задача</span><ul><li><a class="tocitem" href="../../direct/direct/">Прямая задача</a></li><li><a class="tocitem" href="../../direct/apriordata/">Генерирование априорной информации</a></li><li><a class="tocitem" href="../example_direct/">Пример</a></li><li><a class="tocitem" href="../../direct/direct_check/">Проверка на модельном решении</a></li></ul></li><li><span class="tocitem">Сопряженная задача</span><ul><li><a class="tocitem" href="../../adjoint/adjoint/">Сопряженная задача</a></li><li class="is-active"><a class="tocitem" href>Пример</a><ul class="internal"><li><a class="tocitem" href="#Решение-прямой-задачи-1"><span>Решение прямой задачи</span></a></li><li><a class="tocitem" href="#Решение-сопряженной-задачи-1"><span>Решение сопряженной задачи</span></a></li></ul></li><li><a class="tocitem" href="../../adjoint/adjoint_check/">Проверка корректности решения сопряженной задачи</a></li></ul></li><li><span class="tocitem">Функционал, Градиент, Минимизация</span><ul><li><a class="tocitem" href="../../functional/functional/">Функционал</a></li></ul></li><li><a class="tocitem" href="../../reference/">Справочник</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Сопряженная задача</a></li><li class="is-active"><a href>Пример</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Пример</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl/blob/master/docs/src/generated/example_adjoint.md#L" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h2 id="Решение-прямой-задачи-1"><a class="docs-heading-anchor" href="#Решение-прямой-задачи-1">Решение прямой задачи</a><a class="docs-heading-anchor-permalink" href="#Решение-прямой-задачи-1" title="Permalink"></a></h2><p>Сопряженная задача определяется для сеточного решения некоторой прямой задачи, и некоторых априорных данных.</p><pre><code class="language-julia">using NonLinearReactionAdvectionDiffusionWithFrontData</code></pre><p>Сначала, сгенирируем априорные данные, на увеличенном количестве узлов.</p><pre><code class="language-julia">u_l(t) = -8 #+ cos(2*π * t);
+u_r(t) =  4 #+ (1 + sin(2*π * t));
+q(x) = 4*sin(3 * π * x);        # Коэффициент линейного усиления, который в обратной
+                                # задаче необходимо определить, но при генерации априорной
+                                # информации мы задаем некоторый коэффициент, который,
+                                # собственно, после имея априорную информацию и будем определять.
+ε = 0.2;                        # Малый параметр при старшей производной
+a, b = 0, 1;                    # Область по X
+t₀, T = 0, 0.28;                # Область по T
+N, M = 250, 400;                # Увеличенное Кол-во разбиений по X, T
+h = (b-a)/N;                    # шаг по X
+τ = (T-t₀)/M;                   # шаг по T
+Xₙ = [a  + n*h for n in 0:N];   # Сетка по Х
+Tₘ = [t₀ + m*τ for m in 0:M];   # Сетка по Т
+qₙ =      q.(Xₙ);               # Сеточные значения коэффициента линейного усиления
+ulₙ=    u_l.(Tₘ);               # Сеточные значения левого  ГУ
+urₙ=    u_r.(Tₘ);               # Сеточные значения правого ГУ
+y₀ = u_init.(Xₙ);               # Начальные условия
+
+u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₙ, urₙ, qₙ);
+
+# Вырожденные корни
+# TODO: FIX PHIDETERMINATION
+y = u[:,1]
+ϕl = phidetermination(qₙ, y, ulₙ, Xₙ, N::Int);
+# Разворачиваем сетку по Х, а после — решение
+ϕr = phidetermination(qₙ, y, urₙ, Xₙ[end:-1:1], N::Int);
+ϕr = ϕr[end:-1:1];
+# Полуразность вырожденных корней
+ϕ = NonLinearReactionAdvectionDiffusionWithFrontData.Φ(ϕl, ϕr, N);
+# Положение переходного слоя
+f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);
+# Значение функции на переходном слое
+f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);</code></pre><pre><code class="language-none">401-element Array{Float64,1}:
+ -1.684427048075664 
+ -1.6803511006882343
+ -1.6763635665569168
+ -1.672465783689844 
+ -1.6686596492961718
+ -1.6649433350885607
+ -1.6613186700766027
+ -1.6577850425286509
+ -1.6543412664134425
+ -1.6509886953692734
+  ⋮                 
+ -2.206281003523048 
+ -2.200912217649108 
+ -2.1955118244903633
+ -2.190081718188703 
+ -2.184623603186435 
+ -2.179138225860651 
+ -2.1736278391026165
+ -2.16809338824206  
+ -2.1625363019567114</code></pre><h2 id="Решение-сопряженной-задачи-1"><a class="docs-heading-anchor" href="#Решение-сопряженной-задачи-1">Решение сопряженной задачи</a><a class="docs-heading-anchor-permalink" href="#Решение-сопряженной-задачи-1" title="Permalink"></a></h2><pre><code class="language-">Uₙₘ = u; # Сохраним старую матрицу
+y₀ = [0.0 for i in 1:N+1];
+ψl = [0.0 for i in 1:M+1];
+ψr = [0.0 for i in 1:M+1];
+
+# tmp vars
+# X = Xₙ[2:N];
+# q_ = qₙ[2:N];
+# y = y₀[2:N];
+# T = Tₘ[end:-1:1];
+# U = Uₙₘ[2:N, :];
+# NonLinearReactionAdvectionDiffusionWithFrontData.adjointRP(y, 1, X, N, T, M, ε, ψl, ψr, q_, U, f1, f2)
+# NonLinearReactionAdvectionDiffusionWithFrontData.∂adjointRP_∂y(y, 1, X, N, T, M, ε, ψl, ψr, q_, U, f1, f2)
+
+ψ = solve_adjoint(y₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1, f2)
+
+# На отрисовку, решение сопряженной задачи передадим в инвертированном времени.
+make_gif(ψ[:,end:-1:1], Xₙ, Tₘ[end:-1:1]; frame_skip = div(M, 350), frames_to_write=81, name=&quot;adjoint.gif&quot;, convert2mp4 = true)
+
+![](adjoint.mp4)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../adjoint/adjoint/">« Сопряженная задача</a><a class="docs-footer-nextpage" href="../../adjoint/adjoint_check/">Проверка корректности решения сопряженной задачи »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 3 February 2020 10:48">Monday 3 February 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
