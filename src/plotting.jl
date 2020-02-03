@@ -12,6 +12,9 @@
 
 Так же рисует аналитическое решение `analitic(x,t)`, если таково передано.
 
+!!! tip
+    Pass an empty string to avoid saving at disk.
+
 TODO: Fix doc
 """
 function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector,
@@ -34,10 +37,12 @@ function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector,
         frame(a)
     end
 
-    if convert2mp4
-        g = mp4(a, replace(name, "gif" => "mp4"), show_msg=false)
-    else
-        g = gif(a, name, show_msg=false)
+    if name != ""
+        if convert2mp4
+            g = mp4(a, replace(name, "gif" => "mp4"), show_msg=false)
+        else
+            g = gif(a, name, show_msg=false)
+        end
     end
 
     return g

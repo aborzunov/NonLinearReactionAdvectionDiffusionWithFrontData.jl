@@ -32,8 +32,27 @@ g_d(x,t) = 2 \sin(\pi x) - \varepsilon \pi^2 (1 - 2t) \sin(\pi x) +
         &\qquad\qquad\qquad\qquad\quad = \mathbf{\textbf{f}} \, \Big(\mathbf{\textbf{y}}(t_m),\frac{t_{m + 1} + t_m}{2}\Big) + g_d(\mathbf{X_n},\frac{t_{m + 1} + t_m}{2}).
     \end{aligned}
 ```
-где ``g_d(\mathbf{X_n})`` — значения ``g_d`` на сетке ``x_1, x_x, \ldots, x_N``, т.е. на сетке ``\mathbf{X\_n}`` без граничных точек.
+где ``g_d(\mathbf{X_n})`` — значения ``g_d`` на сетке ``x_1, x_x, \ldots, x_N``, т.е. на сетке ``\mathbf{X_n}`` без граничных точек.
+Решение будем находить с помощью функции [`solve`](@ref), но перед этим сконструируем функцию правой части и её якобиан и передадим их в качестве аргументов.
 
 Такая проверка корректности решения применяется в юнит тесте `"tests/direct_with_model.jl"`.
+Файл содержит один `@testset`, внутри него реализовано решение вышеописанной системы, проверка его корректности
+через `@test`. А так же, `@testset` возвращает `u, u_model, Xₙ, Tₘ`, что соответствует решению, аналитическому
+решению, сетке по X, T.
 
-![](../assets/solution_model.mp4)
+```@example test_direct_check
+using NonLinearReactionAdvectionDiffusionWithFrontData, Test, ForwardDiff
+u, u_model, Xₙ, Tₘ = include("../../../test/direct_check.jl")
+nothing #hide
+```
+
+```@example test_direct_check
+d = [missing, missing];
+make_gif(u, Xₙ, Tₘ, d, d, d, d, u_model; convert2mp4=true)
+```
+
+```@example test_direct_check
+using LaTeXStrings, Plots
+err = u .- u_model
+heatmap(Xₙ, Tₘ, err', xlabel=L"X_n", ylabel=L"T_m", title="Absolute Error", size=(1200, 800))
+```

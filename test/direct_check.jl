@@ -1,3 +1,5 @@
+# Юнит тест проверяет корректность решения прямой задачи. Алгоритм описан в /docs/src/direct/direct_check.md
+# Возвращает решение, аналитическое решение, сетку по X, сетку по T.
 @testset "Direct check" begin
 
     # Зададим параметры для прямой задачи
@@ -42,13 +44,7 @@
 
     u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₙ, urₙ, qₙ, RP, j);
 
-    # md d = [missing, missing];
-    # md make_gif(u, Xₙ, Tₘ, d, d, d, d, u_model; frame_skip = div(M,50), frames_to_write=M+1, name="direct_check.gif")
-
-    # md using LaTeXStrings
-    # md err = u - u_model
-    # md heatmap(Xₙ, Tₘ, err', xlabel=L"X_n", ylabel=L"T_m", title="Absolute Error", size=(1200, 800))
-
     @test all(isapprox.(u_model, u, atol = 0.01))
 
+    return (u, u_model, Xₙ, Tₘ)
 end
