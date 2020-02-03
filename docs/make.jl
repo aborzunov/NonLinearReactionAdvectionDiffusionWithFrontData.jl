@@ -1,4 +1,5 @@
 using Documenter, NonLinearReactionAdvectionDiffusionWithFrontData
+using ForwardDiff, LaTeXStrings, Plots
 
 # Autogenerate documentation markdown for for all scripts
 # in "examples/" package subfolder

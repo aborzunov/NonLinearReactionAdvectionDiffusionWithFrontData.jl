@@ -61,4 +61,4 @@ y₀ = [0.0 for i in 1:N+1];
 # На отрисовку, решение сопряженной задачи передадим в инвертированном времени.
 make_gif(ψ[:,end:-1:1], Xₙ, Tₘ[end:-1:1]; frame_skip = div(M, 350), frames_to_write=81, name="adjoint.gif", convert2mp4 = true)
 
-![](adjoint.mp4)
+#' ![](adjoint.mp4)
