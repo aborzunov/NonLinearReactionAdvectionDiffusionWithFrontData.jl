@@ -1,4 +1,0 @@
-docs/src/assets/make_plot.png filter=lfs diff=lfs merge=lfs -text
-docs/src/assets/adjoint.mp4 filter=lfs diff=lfs merge=lfs -text
-docs/src/assets/solution.mp4 filter=lfs diff=lfs merge=lfs -text
-docs/src/assets/solution_model.mp4 filter=lfs diff=lfs merge=lfs -text

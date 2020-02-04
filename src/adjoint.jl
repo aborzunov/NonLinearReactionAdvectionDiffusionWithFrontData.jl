@@ -152,8 +152,8 @@ function solve_adjoint(y₀::Vector, Xₙ::Vector, N::Int,
     for m in 1:M
         τ = (Tₘ[m+1] - Tₘ[m]);
 
-        rp = adjointRP(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
-        j = ∂adjointRP_∂y(y, 1, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
+        rp = RP(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
+        j = jac(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
 
         W = (I - α * τ * j) \ rp;
         y = y .+ τ * real(W);

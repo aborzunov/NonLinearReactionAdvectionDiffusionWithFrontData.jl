@@ -39,6 +39,7 @@ y = u[:,1]
 f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);
 # Значение функции на переходном слое
 f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);
+nothing #hide
 
 #' ## Решение сопряженной задачи
 
@@ -47,18 +48,7 @@ y₀ = [0.0 for i in 1:N+1];
 ψl = [0.0 for i in 1:M+1];
 ψr = [0.0 for i in 1:M+1];
 
-# tmp vars
-# X = Xₙ[2:N];
-# q_ = qₙ[2:N];
-# y = y₀[2:N];
-# T = Tₘ[end:-1:1];
-# U = Uₙₘ[2:N, :];
-# NonLinearReactionAdvectionDiffusionWithFrontData.adjointRP(y, 1, X, N, T, M, ε, ψl, ψr, q_, U, f1, f2)
-# NonLinearReactionAdvectionDiffusionWithFrontData.∂adjointRP_∂y(y, 1, X, N, T, M, ε, ψl, ψr, q_, U, f1, f2)
-
 ψ = solve_adjoint(y₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1, f2)
 
 # На отрисовку, решение сопряженной задачи передадим в инвертированном времени.
-make_gif(ψ[:,end:-1:1], Xₙ, Tₘ[end:-1:1]; frame_skip = div(M, 350), frames_to_write=81, name="adjoint.gif", convert2mp4 = true)
-
-#' ![](adjoint.mp4)
+make_gif(ψ[:,end:-1:1], Xₙ, Tₘ[end:-1:1]; frame_skip = div(M+1, 40), name="", convert2mp4 = true)
