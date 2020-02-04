@@ -5,10 +5,12 @@
                   ϕ_l::Vector = missings(2), ϕ_r::Vector = missings(2),
                   f1::Vector = missings(2), f2::Vector = missings(2),
                   analitical = nothing;
-                  frames_to_write::Int = -1, frame_skip::Int=-1,
-                  name = "solution.gif", convert2mp4 = false)
+                  frames_to_write::Int = -1,
+                  name = "solution.gif",
+                  convert2mp4 = false)
 
-Рисует gif анимацию решения каждый `frame_skip` кадр, вплоть по `frames_to_write`-ый кадр, сохраняет как "results/`name`".
+Рисует gif анимацию решения.
+вплоть по `frames_to_write`-ый кадр, сохраняет как "results/`name`".
 
 Так же рисует аналитическое решение `analitic(x,t)`, если таково передано.
 `label`::String — LaTeX строка подписи искомой функции с экранирование спец. символов.
@@ -22,28 +24,23 @@ function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector,
                   ϕ_l::Vector = missings(2), ϕ_r::Vector = missings(2),
                   f1::Vector = missings(2), f2::Vector = missings(2),
                   analitical = nothing;
-                  frames_to_write::Int = -1, frame_skip::Int=-1,
-                  name = "solution.gif", convert2mp4 = false, label=L"u")
+                  frames_to_write::Vector = Vector(),
+                  name = "solution.gif", convert2mp4 = false, label="u")
     N,M = size(u) .-1
-    if frames_to_write <= 0
-        frames_to_write = M+1;
-    end
-    if frame_skip <= 0
-        frame_skip = div(frames_to_write, 40) + 1
+    if frames_to_write == Vector()
+        frames_to_write = collect(1:M+1);
     end
 
     a = Animation()
-    for m in 1:frame_skip:frames_to_write
+    for m in frames_to_write
         make_plot(u, Xₙ, Tₘ, m, ϕ_l, ϕ_r, f1, f2, analitical; label=label)
         frame(a)
     end
 
-    if name != ""
-        if convert2mp4
-            g = mp4(a, replace(name, "gif" => "mp4"), show_msg=false)
-        else
-            g = gif(a, name, show_msg=false)
-        end
+    if convert2mp4
+        g = mp4(a, replace(name, "gif" => "mp4"), show_msg=false)
+    else
+        g = gif(a, name, show_msg=false)
     end
 
     return g
@@ -114,11 +111,13 @@ function make_plot(u::Matrix, Xₙ::Vector, Tₘ::Vector, m::Int,
         scatter!( [f1[m]], [f2[m]], color=:red, label="")
     end
 
-    # Аналитическое решение
+    # Если передали аналитическое решение
     if analitical != nothing
+        # В виде функции, применяем её к нашим сеткам
         if typeof( analitical ) <: Function
             plot!(Xₙ, analitical.(Xₙ, Tₘ[m]), label="analitical(x,t)", color=:green, linewidth = 5, alpha=0.3)
         elseif typeof( analitical) <: Matrix
+            # В виде матрицы сеточных значений, рисуем m-ый шаг по времени их неё
             if size(analitical) != size(u)
                 throw(ArgumentError("Размер `analitical` != $(size(u))"))
             end

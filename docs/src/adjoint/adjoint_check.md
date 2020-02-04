@@ -26,3 +26,26 @@ u(x,t) \pi (1 - 2t) \cos(\pi x) + q(x) (1 - 2t) \sin(\pi x) - 2 \delta( x - f_1(
 ```
 
 
+Такая проверка корректности решения применяется в юнит тесте `"tests/adjoint_check.jl"`.
+Файл содержит один `@testset`, внутри него реализовано решение вышеописанной системы, проверка его корректности
+через `@test`. А так же, `@testset` возвращает `ψ, ψ_model, Xₙ, Tₘ`, что соответствует решению, аналитическому
+решению, сетке по X, T.
+
+```@example test_direct_check
+using NonLinearReactionAdvectionDiffusionWithFrontData, Test, ForwardDiff
+ψ, ψ_model, Xₙ, Tₘ = include("../../../test/direct_check.jl")
+nothing #hide
+```
+
+```@example test_direct_check
+d = [missing, missing];
+@info "$( splitdir(@__FILE__)[2] ) Рисует решение сопряженной задачи на модельной функции."
+    make_gif(ψ, Xₙ, Tₘ[end:-1:1], d, d, d, d, ψ_model;
+            name="adjoint_check.gif", frames_to_write=[1:80; 81:10:length(Tₘ)], convert2mp4=true)
+```
+
+```@example test_direct_check
+using LaTeXStrings, Plots
+err = ψ .- ψ_model
+heatmap(Xₙ, Tₘ, err', xlabel=L"X_n", ylabel=L"T_m", title="Absolute Error", size=(1200, 800))
+```

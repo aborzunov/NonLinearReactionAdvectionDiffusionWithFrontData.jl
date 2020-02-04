@@ -21,18 +21,15 @@ urₘ=    u_r.(Tₘ);               # Сеточные значения прав
 y₀ = u_init.(Xₙ);               # Начальные условия
 nothing #hide
 
-#' ## Нахождение решения
 #' Все массивы передаются внутрь функции `solve` полностью, вместе с граничными точками.
-#' Внутри, они локально модифицируются, и на вход [`directRP`](@ref), [`∂directRP_∂y`](@ref)
+#'
+#' Внутри, они локально модифицируются, и на вход
+#' [`NonLinearReactionAdvectionDiffusionWithFrontData.directRP`](@ref),
+#' [`NonLinearReactionAdvectionDiffusionWithFrontData.∂directRP_∂y`](@ref)
 #' подаются без крайних точек.
 u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
 nothing #hide
 
-#' Запись gif только решения
-make_gif(u, Xₙ, Tₘ; frame_skip = div(M,50), frames_to_write=M, name="example_direct.gif")
-nothing #hide
-
-#' ![solution gif](example_direct.gif)
 
 #' ## Генерация априорной информации
 # Вырожденные корни
@@ -49,12 +46,15 @@ f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);
 # Значение функции на переходном слое
 f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);
 
-# Можно нарисовать пятый шаг по времени
+#' ## Визуализация
+
+#' Нарисовать пятый шаг по времени
 make_plot(u, Xₙ, Tₘ, 5, ϕl, ϕr, f1, f2)
 
-#' Запись **только** mp4 вместе с вырожденными корнями
-make_gif(u, Xₙ, Tₘ, ϕl, ϕr, f1, f2; frame_skip = div(M,50), frames_to_write=M,
-         convert2mp4 = true, name="example_direct_with_f1_f2.gif")
-nothing #hide
+#' Запись gif одного только решения
+@info "$( splitdir(@__FILE__)[2] ) Рисует решение прямой задачи."
+make_gif(u, Xₙ, Tₘ; name="example_direct.gif")
 
-#' ![solution mp4 with degenerated](example_direct_with_f1_f2.mp4)
+#' Запись **только** mp4 вместе с вырожденными корнями
+@info "$( splitdir(@__FILE__)[2] ) Рисует решение с вырожденными корнями и информации о переходном слое."
+make_gif(u, Xₙ, Tₘ, ϕl, ϕr, f1, f2; convert2mp4 = true, name="example_direct_with_f1_f2.gif")

@@ -112,5 +112,3 @@
         &\qquad\qquad\qquad\qquad\quad = \mathbf{\textbf{ARP}} \, \Big(\mathbf{\textbf{y}}(t_m), t_{m}\Big).
     \end{aligned}
 ```
-
-![](../assets/adjoint.mp4)

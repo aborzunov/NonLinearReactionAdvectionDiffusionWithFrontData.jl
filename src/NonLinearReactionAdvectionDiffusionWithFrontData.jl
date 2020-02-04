@@ -33,7 +33,7 @@ using Missings
 export u_init, solve;
 export make_plot, make_gif;
 export phidetermination, Φ;
-export delta, adjointRP, solve_adjoint;
+export delta, solve_adjoint;
 export J, J_q;
 
 

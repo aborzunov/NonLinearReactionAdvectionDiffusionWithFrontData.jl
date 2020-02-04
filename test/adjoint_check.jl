@@ -11,7 +11,7 @@
     ε = 0.2;                        # Малый параметр при старшей производной
     a, b = 0, 1;                    # Область по X
     t₀, T = 0.0, 1.0;               # Область по T
-    N, M = 250, 80;                 # Увеличенное Кол-во разбиений по X, T
+    N, M = 250, 500;                 # Увеличенное Кол-во разбиений по X, T
     h = (b-a)/N;                    # шаг по X
     τ = (T-t₀)/M;                   # шаг по T
     Xₙ = [a  + n*h for n in 0:N];   # Сетка по Х
@@ -118,7 +118,8 @@
     j(y, m, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, U, f1, f2) = ForwardDiff.jacobian( z -> adjointRP(z, m, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, U, f1, f2), y)
 
     ψ = solve_adjoint(y₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1, f2, RP, j)
-    make_gif(ψ, Xₙ, Tₘ[end:-1:1], d, d, d, d, model; frame_skip = 1, frames_to_write=81, name="adjoint_check.gif")
 
     @test_broken isapprox(model, u, rtol = 1E-3)
+
+    return (ψ, model, Xₙ, Tₘ)
 end

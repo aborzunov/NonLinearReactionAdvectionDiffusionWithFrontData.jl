@@ -42,7 +42,7 @@
 \end{aligned}
 ```
 
-``\mathbf{f}_\mathbf{y}(\mathbf{y}(t_m), t_m)`` — якобиан функции [`directRP(...)`](@ref) по вектору ``y`` (в момент времени ``t_m``) в момент времени ``t\_m``.
+``\mathbf{f}_\mathbf{y}(\mathbf{y}(t_m), t_m)`` — якобиан функции [`NonLinearReactionAdvectionDiffusionWithFrontData.directRP`](@ref) по вектору ``y`` (в момент времени ``t_m``) в момент времени ``t\_m``.
 Эта матрица Якоби имеет следущие ненулевые элементы.
 ```math
 \begin{aligned}
@@ -57,5 +57,3 @@
      & \left(f_y\right)_{N - 1,N - 1}  & \equiv & \frac{\partial f_{N - 1}}{\partial y_{N - 1}} & = &  \varepsilon \dfrac{-2}{h^2} - \dfrac{u_{right}(t) - y_{N - 2}}{2h} + q(x_N).
 \end{aligned}
 ```
-
-![](../assets/solution.mp4)
