@@ -14,5 +14,4 @@ ENV["GKSwstype"] = "100"
 include("utils.jl")
 
 include("direct_check.jl")
-# TODO: they are broken due to changing signatures
-#include("adjoint_check.jl")
+include("adjoint_check.jl")
