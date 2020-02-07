@@ -1,48 +1,64 @@
 # Вычисление вырожденных корней
 
 @doc raw"""
-    phidetermination(q, u, u_border, Xₙ, N::Int)
+    phidetermination(q::Vector, ub::Vector,
+                     Xₙ::Vector, N::Int,
+                     Tₘ::Vector, M::Int)
 
-Решает ОДУ для нахождения вырожденных корней.
-
-!!! danger
-    Функция некорректно обрабатыет непостоянные ГУ.
+Решает ОДУ для нахождения вырожденного корня.
 """
-function phidetermination(q::Vector, u::Vector,
-                          u_border::Vector, Xₙ::Vector, N::Int)
+function phidetermination(q::Vector, ub::Vector,
+                          Xₙ::Vector, N::Int,
+                          Tₘ::Vector, M::Int)
+    @assert length(q ) == N + 1
     @assert length(Xₙ) == N + 1
 
-    phi = similar(Xₙ);
-    phi[1] = u_border[1];
+    @assert length(ub) == M + 1
+    @assert length(Tₘ) == M + 1
 
-    for n = 1:N
-        phi[n+1] = phi[n] + (Xₙ[n+1] - Xₙ[n]) * ( q[n+1] + q[n] ) / 2;
+    phi = zeros(N + 1, M + 1);
+
+    for m in 1:M+1
+
+        # Граничное условие на ϕ
+        phi[1,m] = ub[m];
+
+        for n = 1:N
+            phi[n+1, m ] = phi[n, m ] + (Xₙ[n+1] - Xₙ[n]) * ( q[n+1] + q[n] ) / 2;
+        end
     end
 
     return phi
 end
 
 @doc raw"""
-    Φ(ϕ_l::Vector, ϕ_r::Vector, N::Int) -> ::Vector
+    Φ(ϕ_l::Matrix, ϕ_r::Matrix, N::Int, M::Int) -> ::Vector
 
-Вычисляет значение функции на переходном слое ``|\phi_l - \phi_r|/2`` с помощью левого ``\phi_l`` и правого ``\phi_r`` вырожденного корня.
+Вычисляет значение функции на переходном слое на каждом шаге по времени `m`
+``|\phi_l^m - \phi_r^m|/2`` с помощью матриц вырожденных решений ``\phi_l`` и
+``\phi_r`` вырожденного корня.
+
 """
-function Φ(ϕ_l::Vector, ϕ_r::Vector, N::Int)
+function Φ(ϕ_l::Matrix, ϕ_r::Matrix, N::Int, M::Int)
+    @assert size(ϕ_l) == (N+1, M+1)
+    @assert size(ϕ_r) == (N+1, M+1)
+
     Φ = similar(ϕ_l)
-    Φ = abs.(ϕ_l - ϕ_r)/2 + ϕ_l
+    Φ = [ abs(ϕ_l[n, m] - ϕ_r[n, m])/2 + ϕ_l[n, m] for n in 1:N+1, m in 1:M+1]
     return Φ;
 end
 
 @doc raw"""
-    f1(ϕ::Vector, u::Matrix, Xₙ::Vector, N::Int, M::Int)
+    f1(ϕ::Matrix, u::Matrix, Xₙ::Vector, N::Int, M::Int)
 
 Находит значение искомой функции на переходном слое ``f_1(t) = u(x_{t.p.}, t)`` путем поиска точки пересечения ``u(x,t)`` и ``ϕ(x)``.
 
 Точка пересечения находится путем интерполяции функции ``u(x,t) - ϕ(x) = 0``.
 """
-function f1(ϕ::Vector, u::Matrix, Xₙ::Vector, N::Int, M::Int)
+function f1(ϕ::Matrix, u::Matrix, Xₙ::Vector, N::Int, M::Int)
     @assert length(Xₙ) == N+1
     @assert size(u) == (N+1, M+1)
+    @assert size(ϕ) == (N+1, M+1)
 
 
     f1 = zeros(M+1);
@@ -52,7 +68,7 @@ function f1(ϕ::Vector, u::Matrix, Xₙ::Vector, N::Int, M::Int)
         # Начальные условия при разработки программы заданы таким образом,
         # что в начале массива `V` образуются отрицательные элементы,
         # в конце — положительные
-        V = u[:,m] - ϕ
+        V = u[:,m] - ϕ[:,m]
         @assert V[1] < 0
         @assert V[end] > 0
 

@@ -2,7 +2,7 @@
 
 @doc raw"""
     make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector,
-                  ϕ_l::Vector = missings(2), ϕ_r::Vector = missings(2),
+                  ϕ_l::Matrix = missings(2), ϕ_r::Matrix = missings(2),
                   f1::Vector = missings(2), f2::Vector = missings(2),
                   analitical = nothing;
                   frames_to_write::Int = -1,
@@ -21,7 +21,7 @@
 TODO: Fix doc
 """
 function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector,
-                  ϕ_l::Vector = missings(2), ϕ_r::Vector = missings(2),
+                  ϕ_l::Matrix = missings(2), ϕ_r::Matrix = missings(2),
                   f1::Vector = missings(2), f2::Vector = missings(2),
                   analitical = nothing;
                   frames_to_write::Vector = Vector(),
@@ -48,7 +48,7 @@ end
 
 @doc raw"""
     make_plot(u::Matrix, Xₙ::Vector, Tₘ::Vector, m::Int,
-                   ϕ_l::Vector = missings(2), ϕ_r::Vector = missings(2),
+                   ϕ_l::Matrix = missings(2), ϕ_r::Matrix = missings(2),
                    f1::Vector = missings(2), f2::Vector = missings(2),
                    analitical = nothing;
                    label::String = "u")
@@ -60,11 +60,12 @@ end
 `label`::String — LaTeX строка подписи искомой функции с экранирование спец. символов.
 """
 function make_plot(u::Matrix, Xₙ::Vector, Tₘ::Vector, m::Int,
-                   ϕ_l::Vector = missings(2), ϕ_r::Vector = missings(2),
+                   ϕ_l::Matrix = missings(2), ϕ_r::Matrix = missings(2),
                    f1::Vector = missings(2), f2::Vector = missings(2),
                    analitical = nothing;
                    label = "u")
 
+    N, M = size(u) .- 1;
     yl = extrema(u[:,:]).*1.05;
 
     # График, оси, подписи осей и пр.
@@ -83,12 +84,12 @@ function make_plot(u::Matrix, Xₙ::Vector, Tₘ::Vector, m::Int,
     # Надпись слева внизу с текущим временем
     annotate!(0.0, 0.85*first(yl), Plots.text(@sprintf("t = %.2f",Tₘ[m]), 14, :left ))
 
-    check(x::Vector) = !any(ismissing.(x))
+    check(x::Array) = !any(ismissing.(x))
     if ( check(ϕ_l) ) && ( check(ϕ_r)) && ( check(f1) ) && ( check(f2) )
-        ϕ = Φ(ϕ_l, ϕ_r, length(Xₙ)-1);
-        plot!(Xₙ, ϕ_l, label=L"\phi_l", color=:darkgoldenrod)
-        plot!(Xₙ, ϕ_r, label=L"\phi_r", color=:darkgoldenrod)
-        plot!(Xₙ, ϕ, label=L"\widetilde{\Phi}", color=:gold)
+        ϕ = Φ(ϕ_l, ϕ_r, N, M);
+        plot!(Xₙ, ϕ_l[:, m], label=L"\phi_l", color=:darkgoldenrod)
+        plot!(Xₙ, ϕ_r[:, m], label=L"\phi_r", color=:darkgoldenrod)
+        plot!(Xₙ, ϕ[:, m], label=L"\widetilde{\Phi}", color=:gold)
 
         # Плавающая по оси Y вслед за пунктиром надпись
         buff = latexstring("f_2", @sprintf("(t) = %.2f",f2[m]));
