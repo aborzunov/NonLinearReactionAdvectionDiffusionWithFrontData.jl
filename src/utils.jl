@@ -78,8 +78,8 @@ function delta(x::Real, Xₙ::Vector, x₀::Real = 0)
     if ! (Xₙ[1] <= x <= Xₙ[end])
         throw(DomainError("`x` находится вне `Xₙ`"))
     end
-    if ! (Xₙ[1] <= x₀ <= Xₙ[end])
-        throw(DomainError("`x₀` находится вне `Xₙ`"))
+    if ! (Xₙ[1] <= x₀ < Xₙ[end])
+        throw(DomainError("`x₀` находится вне полуоткрытого отрезка ``[Xₙ[1], Xₙ[end])``"))
     end
 
     N = length(Xₙ) - 1
