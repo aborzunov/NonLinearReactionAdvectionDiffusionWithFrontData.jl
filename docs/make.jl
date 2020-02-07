@@ -5,6 +5,10 @@ using ForwardDiff, LaTeXStrings, Plots
 # in "examples/" package subfolder
 # based on https://github.com/Evizero/Augmentor.jl
 include("generatemd.jl")
+
+# workaround GR warnings
+# activates null device as output for GR
+ENV["GKSwstype"] = "100"
 GenerateMD.weave(overwrite=true)
 
 DocMeta.setdocmeta!( NonLinearReactionAdvectionDiffusionWithFrontData, :DocTestSetup, :(using NonLinearReactionAdvectionDiffusionWithFrontData); recursive=true)
@@ -23,6 +27,7 @@ makedocs(
                                     "Проверка корректности решения сопряженной задачи" => "adjoint/adjoint_check.md",
                                    ],
         "Функционал, Градиент, Минимизация" => Any["Функционал" => "functional/functional.md",
+                                                   "Пример" => "generated/example_functional.md",
                                                   ],
         "Справочник" => "reference.md",
     ],

@@ -29,12 +29,13 @@ using LaTeXStrings
 using Plots
 using Printf
 using Missings
+using ProgressMeter
 
 export u_init, solve;
 export make_plot, make_gif;
 export phidetermination, Φ;
 export delta, solve_adjoint;
-export J, J_q;
+export J, J_q, minimize;
 
 
 include("utils.jl")
