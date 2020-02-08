@@ -2,7 +2,7 @@
 
 using NonLinearReactionAdvectionDiffusionWithFrontData
 using LaTeXStrings
-using Plots; pyplot()
+using Plots; gr()
 using ProgressMeter
 #
 u_l(t) = -8 #+ cos(2*π * t);
@@ -26,19 +26,12 @@ u₀ = u_init.(Xₙ);               # Начальные условия
 nothing #hide
 
 u = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
-# Вырожденные корни
-# TODO: FIX phidetermination
-y = u[:,1] # TMP FIXURE
-ϕl = phidetermination(qₙ, y, ulₘ, Xₙ, N::Int);
-# Разворачиваем сетку по Х, а после — решение
-ϕr = phidetermination(qₙ, y, urₘ, Xₙ[end:-1:1], N::Int);
-ϕr = ϕr[end:-1:1];
-# Полуразность вырожденных корней
-ϕ = NonLinearReactionAdvectionDiffusionWithFrontData.Φ(ϕl, ϕr, N);
-# Положение переходного слоя
-f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);
-# Значение функции на переходном слое
-f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);
+ϕl = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                               # Левый вырожденный корень
+ϕr = phidetermination(qₙ, urₘ, reverse(Xₙ), N, Tₘ, M);                      # Нужно подать инвертированную сетку
+ϕr = reverse(ϕr, dims=1);                                                   # А после — инвертировать решение по X
+ϕ = NonLinearReactionAdvectionDiffusionWithFrontData.Φ(ϕl, ϕr, N, M);       # Серединный корень
+f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);   # Положение переходного слоя
+f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);  # Значение функции на переходном слое
 nothing #hide
 #########################################################################################
 
@@ -47,7 +40,7 @@ q₀ = [ 0 for i in 1:N+1];
 ψl = zeros(M+1);
 ψr = zeros(M+1);
 S = 500;
-β = 0.000001;
+β = 0.00001;
 qf, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, ψ₀, ψl, ψr, Xₙ, N, Tₘ, M, ε, f1, f2, S = S, β = β)
 
 frames_to_write = collect(1:div(S, 50):S);
