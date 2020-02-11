@@ -1,4 +1,4 @@
-#' ## Решение прямой задачи
+#' ## Решение прямой задачи для генерации априорной информации
 #' Сопряженная задача определяется для сеточного решения некоторой прямой задачи,
 #' и некоторых априорных данных. Поэтому, сначала необходимо сгенерировать
 #' априорные данные и некоторую матрицу `u`.
@@ -28,20 +28,13 @@ nothing #hide
 
 u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₙ, urₙ, qₙ);
 
-# Вырожденные корни
-# TODO: FIX PHIDETERMINATION
-y = u[:,1]
-ϕl = phidetermination(qₙ, y, ulₙ, Xₙ, N::Int);
-# Разворачиваем сетку по Х, а после — решение
-ϕr = phidetermination(qₙ, y, urₙ, Xₙ[end:-1:1], N::Int);
-ϕr = ϕr[end:-1:1];
-# Полуразность вырожденных корней
-ϕ = NonLinearReactionAdvectionDiffusionWithFrontData.Φ(ϕl, ϕr, N);
-# Положение переходного слоя
-f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);
-# Значение функции на переходном слое
-f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);
-nothing #hide
+#' ## Генерация априорной информации
+ϕl = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                               # Левый вырожденный корень
+ϕr = phidetermination(qₙ, urₘ, reverse(Xₙ), N, Tₘ, M);                      # Нужно подать инвертированную сетку
+ϕr = reverse(ϕr, dims=1);                                                   # А после — инвертировать решение по X
+ϕ = NonLinearReactionAdvectionDiffusionWithFrontData.Φ(ϕl, ϕr, N, M);       # Серединный корень
+f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);   # Положение переходного слоя
+f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);  # Значение функции на переходном слое
 
 #' ## Решение сопряженной задачи
 
@@ -51,6 +44,8 @@ y₀ = [0.0 for i in 1:N+1];      # Нулевые начальные услов
 ψr = [0.0 for i in 1:M+1];      # Нулевые ГУ
 
 ψ = solve_adjoint(y₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1, f2)
+
+#' ## Визуализация
 
 # На отрисовку, решение сопряженной задачи передадим в инвертированном времени.
 # Передадим свою подпись к графиками с помощью keyword `label="\\psi"`,
