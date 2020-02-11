@@ -41,8 +41,9 @@ nothing #hide
 Анимация решения нарисуем с неравномерным течением времени: первые 80 кадров, а потом каждый десятый.
 ```@example test_direct_check
 d = [missing, missing];
+dd = [missing missing; missing missing];
 @info "$( splitdir(@__FILE__)[2] ) Рисует решение сопряженной задачи на модельной функции."
-make_gif(ψ, Xₙ, Tₘ[end:-1:1], d, d, d, d, ψ_model;
+make_gif(ψ, Xₙ, Tₘ[end:-1:1], dd, dd, d, d, ψ_model;
             name="adjoint_check.gif", label="\\psi", frames_to_write=[1:80; 81:10:length(Tₘ)], convert2mp4=true)
 ```
 

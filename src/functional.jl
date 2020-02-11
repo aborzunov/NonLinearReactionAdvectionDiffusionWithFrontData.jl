@@ -13,11 +13,16 @@ function J_q(uˢ::Matrix, ψˢ::Matrix,
     @assert length(Xₙ) == N+1
     @assert length(Tₘ) == M+1
 
-    J_q = similar(Xₙ);
+    J_q = zeros(N+1);
 
-    for m in 1:M
-        τ = Tₘ[m+1] - Tₘ[m]
-        J_q  += (( uˢ[:, m] .* ψˢ[:, m] ) + ( uˢ[:, m+1] .* ψˢ[:, m+1] )).* τ / 2
+    for m in 1:M+1
+        if m != M+1
+            τ = Tₘ[m+1] - Tₘ[m]
+            J_q  += (( uˢ[:, m] .* ψˢ[:, m] ) + ( uˢ[:, m+1] .* ψˢ[:, m+1] )).* τ / 2
+        else
+            τ = -Tₘ[m-1] + Tₘ[m]
+            J_q  += (( uˢ[:, m] .* ψˢ[:, m] ) + ( uˢ[:, m-1] .* ψˢ[:, m-1] )).* τ / 2
+        end
     end
 
     return -J_q
@@ -87,7 +92,7 @@ function minimize(q₀, u₀, ul, ur,
     J_values = zeros(S);                    # История значений градиента.
     Q_values = zeros(N+1, S);               # История вектора `q`.
 
-    @showprogress "Iterating minimization loop..." for s in 1:S
+    @showprogress "Iterating minimization loop S=$(S)... " for s in 1:S
 
         Q_values[:, s] .= qˢ; # Сохраним вектор q на текущей итерации
 
@@ -104,7 +109,7 @@ function minimize(q₀, u₀, ul, ur,
 
         J_values[s] = J(uˢ, Xₙ, N, Tₘ, M, f1, f2, qˢ);
 
-        ∇J = J_q(uˢ, ψˢ, Xₙ, N, Tₘ, M);
+        ∇J = J_q(uˢ, ψˢ[:,end:-1:1], Xₙ, N, Tₘ, M);
 
         qˢ = qˢ - β * ∇J;
 

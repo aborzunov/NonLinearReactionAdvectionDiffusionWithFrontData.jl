@@ -21,7 +21,7 @@
 TODO: Fix doc
 """
 function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector,
-                  ϕ_l::Matrix = missings(2), ϕ_r::Matrix = missings(2),
+                  ϕ_l::Matrix = missings(2,2), ϕ_r::Matrix = missings(2,2),
                   f1::Vector = missings(2), f2::Vector = missings(2),
                   analitical = nothing;
                   frames_to_write::Vector = Vector(),

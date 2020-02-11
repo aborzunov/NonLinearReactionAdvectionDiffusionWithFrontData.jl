@@ -48,8 +48,9 @@ nothing #hide
 
 ```@example test_direct_check
 d = [missing, missing];
+dd = [missing missing; missing missing];
 @info "$( @__FILE__ ) Рисует решение прямой задачи на модельной функции"
-make_gif(u, Xₙ, Tₘ, d, d, d, d, u_model; convert2mp4=true)
+make_gif(u, Xₙ, Tₘ, dd, dd, d, d, u_model; convert2mp4=true)
 ```
 
 ```@example test_direct_check

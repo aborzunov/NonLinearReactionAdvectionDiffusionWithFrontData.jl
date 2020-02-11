@@ -2,6 +2,34 @@
 # Функция вычисления            правой части сопряженной задачи         |adjointRP|
 # Функция вычисления якобиана   правой части сопряженной задачи         |∂adjointRP_∂y|
 # Функция нахождения решения сопряженной задачи                         |solve_adjoint|
+#
+
+@doc raw"""
+    heterogenety(n::Int, m::Int,
+                Xₙ::Vector, N::Int,
+                Tₘ::Vector, M::Int,
+                Uₙₘ::Matrix,
+                f1::Vector, f2::Vector)
+
+Неоднородность выражающая невязку текущего решения с искомым.
+`` 2 \delta( x - f_1(t) ) ( u^s(x,t) - f_2(t) ) ``.
+"""
+function heterogenety(n::Int, m::Int,
+                      Xₙ::Vector, N::Int,
+                      Tₘ::Vector, M::Int,
+                      Uₙₘ::Matrix,
+                      f1::Vector, f2::Vector)
+
+    @assert length(Xₙ) == N-1
+
+    @assert length(Tₘ) == M+1
+    @assert length(f1) == M+1
+    @assert length(f2) == M+1
+
+    @assert size(Uₙₘ) == (N-1, M+1)
+
+    return 2 * delta( Xₙ[n], Xₙ, f1[m]) * ( Uₙₘ[n, m] - f2[m] )
+end
 
 @doc raw"""
 function adjointRP(y, m::Int, t, Xₙ, N, Tₘ, M, ε, qₙ, u, f1, f2)
@@ -35,11 +63,11 @@ function adjointRP(y::Vector, m::Int,
     RP = similar(y)             # Создаем вектор того же типа и размера
     h = Xₙ[2] - Xₙ[1];          # Нижестоящие формулы приведены для равномерной сетки. Вычислим её шаг.
 
-    RP[1]        = - ε * (y[2]   - 2*y[1] + ulₘ[m])/(h^2) + Uₙₘ[1, m]   * (y[2] - ulₘ[m])/(2*h) + y[1]        * qₙ[1] - 2 * delta( Xₙ[1], Xₙ, f1[m]) * ( Uₙₘ[1, m] - f2[m] )
+    RP[1]        = - ε * (y[2]   - 2*y[1] + ulₘ[m])/(h^2)   + Uₙₘ[1, m]   * (y[2] - ulₘ[m])/(2*h) + y[1]        * qₙ[1]     - heterogenety(1, m, Xₙ, N, Tₘ, M, Uₙₘ, f1, f2)
     for n in 2:N-2
-        RP[n]    = - ε * (y[n+1] - 2*y[n] + y[n-1])/(h^2) + Uₙₘ[n, m]   * (y[n+1] - y[n-1])/(2*h) + y[n]      * qₙ[n] - 2 * delta( Xₙ[n], Xₙ, f1[m]) * ( Uₙₘ[n, m] - f2[m] )
+        RP[n]    = - ε * (y[n+1] - 2*y[n] + y[n-1])/(h^2)   + Uₙₘ[n, m]   * (y[n+1] - y[n-1])/(2*h) + y[n]      * qₙ[n]     - heterogenety(n, m, Xₙ, N, Tₘ, M, Uₙₘ, f1, f2)
     end
-    RP[N-1]      = - ε * (urₘ[m] - 2*y[N-1] + y[N-2])/(h^2) + Uₙₘ[N-1, m] * (urₘ[m] - y[N-2] )/(2*h) + y[N-1] * qₙ[N-1] - 2 * delta( Xₙ[N-1], Xₙ, f1[m]) * ( Uₙₘ[N-1, m] - f2[m] )
+    RP[N-1]      = - ε * (urₘ[m] - 2*y[N-1] + y[N-2])/(h^2) + Uₙₘ[N-1, m] * (urₘ[m] - y[N-2] )/(2*h) + y[N-1]   * qₙ[N-1]   - heterogenety(N-1, m, Xₙ, N, Tₘ, M, Uₙₘ, f1, f2)
 
     return RP;
 end
