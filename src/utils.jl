@@ -65,7 +65,7 @@ julia> NonLinearReactionAdvectionDiffusionWithFrontData.u_init.(0:0.1:1)
 ```
 """
 function u_init(x::Real; ε::Real = 0.2)
-    ξ = (x - 0.25) / ε;
+    ξ = (x - 0.15) / ε;
     return ((x^2 - x - 2) - 6 * tanh(-3 * ξ))
 end
 
@@ -79,7 +79,7 @@ function delta(x::Real, Xₙ::Vector, x₀::Real = 0)
         throw(DomainError("`x` находится вне `Xₙ`"))
     end
     if ! (Xₙ[1] <= x₀ < Xₙ[end])
-        throw(DomainError("`x₀` находится вне полуоткрытого отрезка ``[Xₙ[1], Xₙ[end])``"))
+        throw(DomainError("`x₀` находится вне полуоткрытого отрезка ``[Xₙ[1], Xₙ[end])`` [$(Xₙ[1]), $(Xₙ[end]))"))
     end
 
     N = length(Xₙ) - 1

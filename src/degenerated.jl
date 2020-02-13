@@ -112,7 +112,7 @@ function f2(f1::Vector, u::Matrix, Xₙ::Vector, N::Int, M::Int)
     @assert size(u) == (N+1, M+1)
     @assert length(f1) == M+1;
 
-    f2 = similar(f1);
+    f2 = zeros(M+1);
 
     # находим ординату на каждом временном шаге
     for m in 1:M+1

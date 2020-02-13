@@ -32,7 +32,7 @@ function make_gif(u::Matrix, Xₙ::Vector, Tₘ::Vector,
     end
 
     a = Animation()
-    for m in frames_to_write
+    @showprogress "Plotting animation..." for m in frames_to_write
         make_plot(u, Xₙ, Tₘ, m, ϕ_l, ϕ_r, f1, f2, analitical; label=label)
         frame(a)
     end
