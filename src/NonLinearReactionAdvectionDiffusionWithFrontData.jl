@@ -32,11 +32,12 @@ using Missings
 using ProgressMeter
 
 export u_init, solve;
-export make_plot, make_gif;
+export make_plot, make_gif, make_minimzation_gif;
 export phidetermination, Φ;
 export delta, solve_adjoint;
 export J, J_q, minimize;
 
+ENV["GKS_ENCODING"] = "utf-8"
 
 include("utils.jl")
 include("direct.jl")

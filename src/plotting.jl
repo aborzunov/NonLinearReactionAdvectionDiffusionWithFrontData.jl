@@ -130,3 +130,53 @@ function make_plot(u::Matrix, Xₙ::Vector, Tₘ::Vector, m::Int,
 
     return pl
 end
+
+@doc raw"""
+    make_minimzation_gif(Js::Vector, Qs::Matrix,
+                         qₙ::Vector, Xₙ::Vector;
+                         frames_to_write::Vector = Vector(),
+                         name = "solution.gif", convert2mp4 = false,
+                         β::Real = 0.0)
+
+Сохраняет анимацию процесса минимизации.
+"""
+function make_minimzation_gif(Js::Vector, Qs::Matrix,
+                              qₙ::Vector, Xₙ::Vector;
+                              frames_to_write::Vector = Vector(),
+                              name = "solution.gif", convert2mp4 = false,
+                              β::Real = 0.0)
+
+    S = length(Js)
+    if frames_to_write == Vector()
+        frames_to_write = collect(1:S);
+    end
+
+    yl = extrema([Qs qₙ])
+
+    a = Animation()
+    @showprogress "Composing minimization.." for s in frames_to_write
+        pQs = plot(xlabel = "x", ylabel="q(x)", ylims=yl, size = (800, 800) )
+        pQs = plot!(Xₙ, qₙ, label="q(x)")
+        pQs = scatter!(Xₙ, Qs[:,s], title="Искомая qˢ(x) при s = $(s)", label=L"q^s(x)")
+        pQs = plot!(Xₙ, Qs[:,1], line = :dash, label=L"q^0(x)")
+
+        pJs = plot(title="Значение функционала на шаге s = $(s)", size = (800, 800),
+                   xlabel = "s", ylabel=L"J", xlims = (1,S), ylimits = extrema(Js))
+        pJs = plot!(yaxis=:log, xaxis=:log)
+        pJs = plot!(1:s, Js[1:s], label=L"J(q^s)")
+
+        β == 0 || (pJs = annotate!(S/10, minimum(Js)*1.2, "\\beta = $(β)"))
+        #pJs = annotate!(S/10, minimum(Js)*1.5, "S = $(S)")
+
+        p = plot(pQs, pJs, size = (1600, 800) )
+        frame(a);
+    end
+
+    if convert2mp4
+        g = mp4(a, replace(name, "gif" => "mp4"), show_msg=false)
+    else
+        g = gif(a, name, show_msg=false)
+    end
+    return g
+
+end

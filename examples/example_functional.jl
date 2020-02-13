@@ -13,8 +13,8 @@ q(x) = sin(3 * π * x);        # Коэффициент линейного ус�
                                 # собственно, после имея априорную информацию и будем определять.
 ε = 0.2;                        # Малый параметр при старшей производной
 a, b = 0, 1;                    # Область по X
-t₀, T = 0, 0.28;                # Область по T
-N, M = 250, 80;                  # Кол-во разбиений по X, T
+t₀, T = 0, 0.36;                # Область по T
+N, M = 100, 80;                 # Кол-во разбиений по X, T
 h = (b-a)/N;                    # шаг по X
 τ = (T-t₀)/M;                   # шаг по T
 Xₙ = [a  + n*h for n in 0:N];   # Сетка по Х
@@ -35,29 +35,13 @@ f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);  # 
 nothing #hide
 #########################################################################################
 
-q₀ = [ x for x in qₙ];
+q₀ = [ 0 for x in qₙ];
 ψ₀ = zeros(N+1);
 ψl = zeros(M+1);
 ψr = zeros(M+1);
 S = 100;
-β = 0.01;
+β = 0.1;
 qf, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, ψ₀, ψl, ψr, Xₙ, N, Tₘ, M, ε, f1, f2, S = S, β = β)
-
-
-frames_to_write = [1:40; 41:div(S,50):S]
-frames_to_write = collect(1:div(S, 50):S);
-yl = extrema(qf)
-a = Animation()
-@showprogress "Composing mp4.." for s in frames_to_write
-    pQs = plot(xlabel = "x", ylabel="q(x)", ylims=yl, size = (800, 800) )
-    pQs = plot!(Xₙ, qₙ, label="q(x)")
-    pQs = scatter!(Xₙ, Qs[:,s], title="Искомая qˢ(x) при s = $(s)", label=L"q^s(x)")
-    pJs = plot(title="Значение функционала на шаге s = $(s)", size = (800, 800))
-    pJs = plot!(1:s, Js[1:s], xlims = (1,S), xlabel = "s", ylabel="J(q)", ylimits = (0, maximum(Js)))
-    pJs = annotate!(div(S, 10), maximum(Js)*0.1, "β = $(β)")
-    pJs = annotate!(div(S, 10), maximum(Js)*0.05, "S = $(S)")
-    p = plot(pQs, pJs, size = (1600, 800) )
-    frame(a);
-end
-g = gif(a, "Minimization.gif")
-
+frames = [1:20; 21:div(S,50):S];    # Первые двадцать без пропусков
+frames = collect(1:div(S, 50):S);   # С пропусками, чтобы всего было 50 кадров
+make_minimzation_gif(Js, Qs, qₙ, Xₙ, name = "Minimization.gif", frames_to_write = frames, β = β)
