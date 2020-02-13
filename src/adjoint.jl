@@ -28,7 +28,7 @@ function heterogenety(n::Int, m::Int,
 
     @assert size(Uₙₘ) == (N-1, M+1)
 
-    return 2 * delta( Xₙ[n], Xₙ, f1[m]) * ( Uₙₘ[n, m] - f2[m] )
+    return 2 * deltaw( n, f1[m], Xₙ, N) * ( Uₙₘ[n, m] - f2[m] )
 end
 
 @doc raw"""

@@ -94,3 +94,35 @@ function delta(x::Real, Xₙ::Vector, x₀::Real = 0)
     end
     return out;
 end
+
+@doc raw"""
+    deltaw(n::Int, x₀::Real, Xₙ::Vector, N::Int)
+
+Вычисляет ``\delta(x - x₀)``, где `x = Xₙ[n]`.
+`n` — номер узла в сетке `Xₙ`(без граничных точек).
+Использует более точную конечно разностную аппроксимацию дельта функции [`δw`](@ref).
+"""
+function deltaw(n::Int, x₀::Real, Xₙ::Vector, N::Int)
+
+    @assert length(Xₙ) == N-1
+
+    out = δw(Xₙ[n] - x₀)
+
+    return out;
+end
+
+@doc raw"""
+    δw(x::Real; ω = 0.001)
+
+Линейная аппроксимация ``δ(x)``, `ω` — эвристический парамет.
+Подбирается так, чтобы невязка сопряженной задачи
+``2 \delta( x - f_1(t)) ( u(x,t) - f_2(t))`` при подстановке
+в неё `u(x,t;q)` истинного `q` обнулялась почти везде, **но не всюду**.
+"""
+function δw(x::Real; ω = 0.001)
+    if abs(x/ω) <= 1
+        return ( 1 - abs(x/ω))/ω
+    else
+        return 0.0
+    end
+end
