@@ -12,3 +12,4 @@ include("utils.jl")
 
 include("direct_check.jl")
 include("adjoint_check.jl")
+include("gradient_check.jl")
