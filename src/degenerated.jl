@@ -43,7 +43,7 @@ function Φ(ϕ_l::Matrix, ϕ_r::Matrix, N::Int, M::Int)
     @assert size(ϕ_l) == (N+1, M+1)
     @assert size(ϕ_r) == (N+1, M+1)
 
-    Φ = similar(ϕ_l)
+    Φ = zeros(size(ϕ_l))
     Φ = [ abs(ϕ_l[n, m] - ϕ_r[n, m])/2 + ϕ_l[n, m] for n in 1:N+1, m in 1:M+1]
     return Φ;
 end
