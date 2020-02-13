@@ -53,8 +53,8 @@ function J(uˢ::Matrix, Xₙ::Vector, N::Int,
         end
 
         # Выбираем 8 элементов значений аппроксимируемой функции и сетки по X
-        y =  uˢ[k-3:k+4, m]
-        x = Xₙ[k-3:k+4]
+        y =  uˢ[k-4:k+3, m]
+        x = Xₙ[k-4:k+3]
 
         spl = Spline1D(x, y)
 
@@ -62,14 +62,9 @@ function J(uˢ::Matrix, Xₙ::Vector, N::Int,
         ξ[m] = spl(f1[m])
     end
 
-    for m in 1:M+1
-        if m != M+1
+    for m in 1:M
             τ = Tₘ[m+1] - Tₘ[m];
             J += ( (ξ[m] - f2[m])^2 + (ξ[m+1] - f2[m+1])^2) * τ / 2
-        else
-            τ = -Tₘ[m-1] + Tₘ[m];
-            J += ( (ξ[m] - f2[m])^2 + (ξ[m-1] - f2[m-1])^2) * τ / 2
-        end
     end
 
     return J
