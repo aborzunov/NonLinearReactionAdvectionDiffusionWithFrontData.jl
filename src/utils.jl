@@ -105,6 +105,7 @@ end
 function deltaw(n::Int, x₀::Real, Xₙ::Vector, N::Int)
 
     @assert length(Xₙ) == N-1
+    @assert 1 <= n <= N-1 "`n` вне корректного отрезка"
 
     out = δw(Xₙ[n] - x₀)
 
