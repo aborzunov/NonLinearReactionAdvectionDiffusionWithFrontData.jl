@@ -40,6 +40,7 @@ function directRP(y::Vector, m::Int,
     @assert length(Xₙ) == N-1
     @assert length(qₙ) == N-1
     @assert length(y)  == N-1
+    @assert m < length(ulₘ)
 
 
     RP = zero(y)                    # Создаем нулевой вектор того же типа и размера
@@ -52,6 +53,83 @@ function directRP(y::Vector, m::Int,
     RP[N-1]      = ε * (urₘ[m] - 2*y[N-1] + y[N-2])/(h^2) + y[N-1] * (urₘ[m] - y[N-2])/(2*h) - y[N-1] * qₙ[N-1]
 
     return RP
+end
+
+@doc raw""""
+    f_y(y::Int, m::Int,
+        Xₙ::Vector, N::Int,
+        ε::Real,
+        ulₘ::Vector, urₘ::Vector,
+        qₙ::Vector) -> (::Vector, ::Vector, ::Vector)
+
+Возращает три диагонали якоибана правой части прямой задачи.
+
+# Return
+Возвращает три вектора `dl`, `d`, `dl` элементов якоибана.
+Нижняя и верхняя диагонали длины ``N-2``, главная — ``N-1``.
+```
+    [ d[1]  du[1]                         ]
+    [ dl[1] d[2]  du[2]                   ]
+    [ 0     dl[2] d[3] du[3]              ]
+    [           ...  ...  ...             ]
+    [                ...  ...     du[N-2] ]
+    [                     dl[N-2] d[N-1]  ]
+```
+
+!!! warning
+    Работает по формулам равномерной сетки.
+"""
+function f_y(y::Vector, m::Int,
+             Xₙ::Vector, N::Int,
+             ε::Real,
+             ulₘ::Vector, urₘ::Vector,
+             qₙ::Vector)
+
+    @assert length(Xₙ) == N-1
+    @assert length(qₙ) == N-1
+    @assert length(y) == N-1
+    @assert m < length(ulₘ)
+
+    d = zeros(N-1);
+    dl = zeros(N-2);
+    du = zeros(N-2);
+
+    # Вычислим шаг равномерной сетки
+    h = Xₙ[2] - Xₙ[1];
+
+
+    d[1] = - 2 * ε / h^2 + (y[2] - ulₘ[m])/(2*h) - qₙ[1]
+    du[1] = ε / h^2      + y[1] / (2*h)
+
+    # Сдвиг индексов для `du` — см # Return документации функции
+    for n in 2:N-2
+        dl[n - 1]   = ε / h^2      - y[n] / (2*h)
+        d[n]        = -2 * ε /h^2 + (y[n+1] - y[n-1]) / (2h) - qₙ[n]
+        du[n]   = ε / h^2      + y[n] / (2*h)
+    end
+
+    d[N-1] = - 2 * ε / h^2 + (urₘ[m] - y[N-2])/(2*h) - qₙ[N-1]
+    dl[N-2] = ε / h^2      - y[N-1] / (2*h)
+
+    return dl, d, du
+end
+
+@doc raw"""
+∂f_∂y(y::Vector, m::Int,
+               Xₙ::Vector, N::Int,
+               ε::Real,
+               ulₘ::Vector, urₘ::Vector,
+               qₙ::Vector) -> Tridiagonal
+
+Обертка фнукции [`f_y`](@ref), которая возвращает `Tridiagonal( f_y(...)`
+трехдиагональную матрицы из векторов, которые возвращает `f_y`.
+"""
+function ∂f_∂y(y::Vector, m::Int,
+               Xₙ::Vector, N::Int,
+               ε::Real,
+               ulₘ::Vector, urₘ::Vector,
+               qₙ::Vector)
+    return Tridiagonal( (f_y(y, m, Xₙ, N, ε, ulₘ, urₘ, qₙ))... )
 end
 
 @doc raw"""
@@ -114,7 +192,7 @@ function solve(y₀::Vector, Xₙ::Vector, N::Int,
                ε::Real, ulₘ::Vector, urₘ::Vector,
                qₙ::Vector,
                RP::Function = directRP,
-               jac::Function = ∂directRP_∂y;
+               jac::Function = ∂f_∂y;
                α::Complex = complex(0.5, 0.5))
 
     if length(Xₙ) != N+1
