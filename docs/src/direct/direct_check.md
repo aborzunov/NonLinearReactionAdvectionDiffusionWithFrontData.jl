@@ -42,6 +42,12 @@ g_d(x,t) = 2 \sin(\pi x) - \varepsilon \pi^2 (1 - 2t) \sin(\pi x) +
 
 ```@example test_direct_check
 using NonLinearReactionAdvectionDiffusionWithFrontData, Test, ForwardDiff
+using LinearAlgebra
+```
+
+Перед запуском, необходимо подключить *все* пакеты, что используются при
+тестировании.
+```@example test_direct_check
 u, u_model, Xₙ, Tₘ = include("../../../test/direct_check.jl")
 nothing #hide
 ```
