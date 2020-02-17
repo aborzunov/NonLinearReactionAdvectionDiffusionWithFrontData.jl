@@ -31,7 +31,7 @@ X = Xₙ[2:N];
 qq = qₙ[2:N];
 y = u₀[2:N];
 
-dl, d, du = DRP_y(y, 1, X, N, ε, ulₘ, urₘ, qq)
+dl, d, du = DRP_y(y, 1, X, N, ε, ulₘ, urₘ, qq);
 
 b = @benchmark DRP_y($y, 1, $X, $N, $ε, $ulₘ, $urₘ, $qq);
 @info "Сформировать 3 вектора диагоналей якобиана прямой задачи:" b
@@ -62,7 +62,7 @@ f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);  # 
 # ведь тестируемая функция — для внутреннего использования
 U = u[2:N, :];
 
-dl, d, du = ARP_y(y, 1, X, N, Tₘ, M, ε, ulₘ, urₘ, qq, U, f1, f2)
+dl, d, du = ARP_y(y, 1, X, N, Tₘ, M, ε, ulₘ, urₘ, qq, U, f1, f2);
 
 b = @benchmark ARP_y($y, 1, $X, $N, $Tₘ, $M, $ε, $ulₘ, $urₘ, $qq, $U, $f1, $f2);
 @info "Сформировать 3 вектора диагоналей якобиана сопряженной задачи:" b
@@ -82,3 +82,17 @@ b = @benchmark solve_adjoint($u₀, $Xₙ, $N, $Tₘ, $M, $ε, $ulₘ, $urₘ, $
 
 b = @benchmark solve_adjoint($u₀, $Xₙ, $N, $Tₘ, $M, $ε, $ulₘ, $urₘ, $qₙ, $u, $f1, $f2, $adjointRP, $∂adjointRP_∂y);
 @info "Решение сопряженной задачи с якобианом афтодифференцирования" b
+
+############################# Benchmark minimization loop #####################
+
+q₀ = [ 0 for x in qₙ];
+ψ₀ = zeros(N+1);
+ψl = zeros(M+1);
+ψr = zeros(M+1);
+S = 10;
+β = 0.1;
+
+qf, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, ψ₀, ψl, ψr, Xₙ, N, Tₘ, M, ε, f1, f2, S = S, β = β)
+
+b = @benchmark minimize($q₀, $u₀, $ulₘ, $urₘ, $ψ₀, $ψl, $ψr, $Xₙ, $N, $Tₘ, $M, $ε, $f1, $f2, S = $S, β = $β)
+@info "Десять итераций цикла минимизации" b

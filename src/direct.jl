@@ -37,7 +37,7 @@ function directRP(y::Vector, m::Int,
                   ulₘ::Vector, urₘ::Vector,
                   qₙ::Vector)
 
-    @assert length(Xₙ) == N-1
+    @assert length(Xₙ) == N+1
     @assert length(qₙ) == N-1
     @assert length(y)  == N-1
     @assert m < length(ulₘ)
@@ -46,11 +46,21 @@ function directRP(y::Vector, m::Int,
     RP = zero(y)                    # Создаем нулевой вектор того же типа и размера
     h = Xₙ[2] - Xₙ[1];              # Нижестоящие формулы приведены для равномерной сетки. Вычислим её шаг.
 
-    RP[1]        = ε * (y[2]   - 2*y[1]   + ulₘ[m])/(h^2) + y[1]   * (y[2]   - ulₘ[m])/(2*h) - y[1]   * qₙ[1]
+    # Здесь нужно применить сдвиг индексов!
+    # Xₙ[1] соответствует ПЕРВОМУ узлу нашей сетки, т.е. x_0
+    RP[1]     = 2ε / (Xₙ[2+1] - Xₙ[2-1]) * ( (y[2] - y[1]) /  (Xₙ[2+1] - Xₙ[2]) - (y[1] - ulₘ[m])/(Xₙ[2] - Xₙ[2-1])) +
+    + y[1]   * (y[2]   - ulₘ[m])/(Xₙ[2+1] - Xₙ[1]) - y[1]   * qₙ[1]
+
+    # Xₙ[n  ] — соответствует ``x_{n-1}``
+    # Xₙ[n+1] — соответствует ``x_{n  }``
+    # Xₙ[n+2] — соответствует ``x_{n+1}``
     for n in 2:N-2
-        RP[n]    = ε * (y[n+1] - 2*y[n]   + y[n-1])/(h^2) + y[n]   * (y[n+1] - y[n-1])/(2*h) - y[n]   * qₙ[n]
+        RP[n] = 2ε / (Xₙ[n+2] - Xₙ[n]) * ( (y[n+1] - y[n]) /  (Xₙ[n+2] - Xₙ[n+1]) - (y[n] - y[n-1])/(Xₙ[n+1] - Xₙ[n])) +
+        + y[n]   * (y[n+1] - y[n-1])/(Xₙ[n+2] - Xₙ[n]) - y[n]   * qₙ[n]
     end
-    RP[N-1]      = ε * (urₘ[m] - 2*y[N-1] + y[N-2])/(h^2) + y[N-1] * (urₘ[m] - y[N-2])/(2*h) - y[N-1] * qₙ[N-1]
+
+    RP[N-1]   =  2ε / (Xₙ[N+1] - Xₙ[N-1]) * ( (urₘ[m] - y[N-1]) /  (Xₙ[N+1] - Xₙ[N]) - (y[N-1] - y[N-2])/(Xₙ[N] - Xₙ[N-1])) +
+    + y[N-1] * (urₘ[m] - y[N-2])/(Xₙ[N+1] - Xₙ[N-1]) - y[N-1] * qₙ[N-1]
 
     return RP
 end
@@ -85,7 +95,7 @@ function DRP_y(y::Vector, m::Int,
              ulₘ::Vector, urₘ::Vector,
              qₙ::Vector)
 
-    @assert length(Xₙ) == N-1
+    @assert length(Xₙ) == N+1
     @assert length(qₙ) == N-1
     @assert length(y) == N-1
     @assert m < length(ulₘ)
@@ -229,14 +239,13 @@ function solve(y₀::Vector, Xₙ::Vector, N::Int,
     # Векторы, которые подлежат локальному изменению
     # Дальше, в вычислениях должны использоваться только их локальные копии
     y = strip_borderPoints(y₀, N);      # Вектор содержащий решение на текущем шаге
-    X = strip_borderPoints(Xₙ, N);      # Сетка без граничных точек
     q = strip_borderPoints(qₙ, N);      # Сетка без граничных точек
 
     for m in 1:M
         τ = (Tₘ[m+1] - Tₘ[m]);
 
-        j = jac(y, m, X, N, ε, ulₘ, urₘ, q);
-        rp = RP(y, m, X, N, ε, ulₘ, urₘ, q);
+        j = jac(y, m, Xₙ, N, ε, ulₘ, urₘ, q);
+        rp = RP(y, m, Xₙ, N, ε, ulₘ, urₘ, q);
 
         W = (I - α * τ * j) \ rp;
         y = y .+ τ * real(W);

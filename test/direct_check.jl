@@ -22,11 +22,10 @@
 
     # Подготовим массивы, выбросив граничные точки
     # ведь тестируемая функция — для внутреннего использования
-    X = Xₙ[2:N];
     qq = qₙ[2:N];
     y = y₀[2:N];
 
-    dl, d, du = NonLinearReactionAdvectionDiffusionWithFrontData.DRP_y(y, 1, X, N, ε, ulₘ, urₘ, qq)
+    dl, d, du = NonLinearReactionAdvectionDiffusionWithFrontData.DRP_y(y, 1, Xₙ, N, ε, ulₘ, urₘ, qq)
 
     @test length(dl) == N - 2
     @test length(d)  == N - 1
@@ -36,12 +35,12 @@
     @test count(x -> x == 0, d)  == 0
     @test count(x -> x == 0, du) == 0
 
-    tdjac = NonLinearReactionAdvectionDiffusionWithFrontData.∂DRP_∂y(y, 1, X, N, ε, ulₘ, urₘ, qq)
+    tdjac = NonLinearReactionAdvectionDiffusionWithFrontData.∂DRP_∂y(y, 1, Xₙ, N, ε, ulₘ, urₘ, qq)
     @test typeof(tdjac) <: Tridiagonal
     @test tdjac == Tridiagonal( dl, d, du )
 
     # Сравним с якобианом автодифференцирования
-    jac = NonLinearReactionAdvectionDiffusionWithFrontData.∂directRP_∂y(y, 1, X, N, ε, ulₘ, urₘ, qq)
+    jac = NonLinearReactionAdvectionDiffusionWithFrontData.∂directRP_∂y(y, 1, Xₙ, N, ε, ulₘ, urₘ, qq)
     @test isapprox(tdjac, jac)
 
 end
@@ -84,7 +83,8 @@ end
 
     # Создадим функцию, которая будет вычислять вектор правой части с добавлением невязки
     function RP(y, m, Xₙ, N, ε, ulₘ, urₘ, qₙ)
-        NonLinearReactionAdvectionDiffusionWithFrontData.directRP(y, m, Xₙ, N, ε, ulₘ, urₘ, qₙ) - g_d.(Xₙ, m)
+        d = [ g_d(x, m) for x in Xₙ[2:N] ]
+        NonLinearReactionAdvectionDiffusionWithFrontData.directRP(y, m, Xₙ, N, ε, ulₘ, urₘ, qₙ) - d
     end
     # Хоть мы и конструируем якобиан с помощью автоматического дифференцирования, примите во внимание, что
     # Якобиан ``f_y`` при добавлении `g_d` останется без изменений, т.к. `g_d` зависит только от ``x,t``.
