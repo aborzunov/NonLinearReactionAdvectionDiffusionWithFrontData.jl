@@ -1,4 +1,4 @@
-@testset "Якобиан в техдиагональном виде" begin
+@testset "Якобиан прямой задачи в техдиагональном виде." begin
 
     u_l(t) = -8 + 4*sin(2*π / T * t);# Прямая задача может быть с неоднородными ГУ
     u_r(t) =  4 + sin(-2*π / T * t);# Но в дальнейшем, будем использовать только однородные.
@@ -26,7 +26,7 @@
     qq = qₙ[2:N];
     y = y₀[2:N];
 
-    dl, d, du = NonLinearReactionAdvectionDiffusionWithFrontData.f_y(y, 1, X, N, ε, ulₘ, urₘ, qq)
+    dl, d, du = NonLinearReactionAdvectionDiffusionWithFrontData.DRP_y(y, 1, X, N, ε, ulₘ, urₘ, qq)
 
     @test length(dl) == N - 2
     @test length(d)  == N - 1
@@ -36,12 +36,12 @@
     @test count(x -> x == 0, d)  == 0
     @test count(x -> x == 0, du) == 0
 
-    tdjac = Tridiagonal(dl, d, du)
+    tdjac = NonLinearReactionAdvectionDiffusionWithFrontData.∂DRP_∂y(y, 1, X, N, ε, ulₘ, urₘ, qq)
     @test typeof(tdjac) <: Tridiagonal
+    @test tdjac == Tridiagonal( dl, d, du )
 
     # Сравним с якобианом автодифференцирования
     jac = NonLinearReactionAdvectionDiffusionWithFrontData.∂directRP_∂y(y, 1, X, N, ε, ulₘ, urₘ, qq)
-
     @test isapprox(tdjac, jac)
 
 end
@@ -91,13 +91,12 @@ end
     # То, что он не зависит от добавления `g_d` можно убедиться изменением порядка этих двух строк, ну а так же на бумаге.
     j(y, m, Xₙ, N, ε, ulₘ, urₘ, qₙ) = ForwardDiff.jacobian( z -> RP(z, m, Xₙ, N, ε, ulₘ, urₘ, qₙ), y)
 
+    # С использованием автоматического дифференцирования
     u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, RP, j);
-
     @test all(isapprox.(u_model, u, atol = 0.01))
 
     # С использованием трехдиагонального якобиана
-    u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, RP);
-
+    u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, RP, NonLinearReactionAdvectionDiffusionWithFrontData.∂DRP_∂y);
     @test all(isapprox.(u_model, u, atol = 0.01))
 
     return (u, u_model, Xₙ, Tₘ)

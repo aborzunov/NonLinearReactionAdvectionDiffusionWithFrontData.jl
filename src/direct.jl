@@ -56,7 +56,7 @@ function directRP(y::Vector, m::Int,
 end
 
 @doc raw""""
-    f_y(y::Int, m::Int,
+    DRP(y::Int, m::Int,
         Xₙ::Vector, N::Int,
         ε::Real,
         ulₘ::Vector, urₘ::Vector,
@@ -79,7 +79,7 @@ end
 !!! warning
     Работает по формулам равномерной сетки.
 """
-function f_y(y::Vector, m::Int,
+function DRP_y(y::Vector, m::Int,
              Xₙ::Vector, N::Int,
              ε::Real,
              ulₘ::Vector, urₘ::Vector,
@@ -121,15 +121,15 @@ end
                ulₘ::Vector, urₘ::Vector,
                qₙ::Vector) -> Tridiagonal
 
-Обертка фнукции [`f_y`](@ref), которая возвращает `Tridiagonal( f_y(...)`
-трехдиагональную матрицы из векторов, которые возвращает `f_y`.
+Обертка фнукции [`DRP_y`](@ref), которая возвращает `Tridiagonal( DRP_y(...))`
+трехдиагональную матрицы из векторов, которые возвращает `DRP_y`.
 """
-function ∂f_∂y(y::Vector, m::Int,
+function ∂DRP_∂y(y::Vector, m::Int,
                Xₙ::Vector, N::Int,
                ε::Real,
                ulₘ::Vector, urₘ::Vector,
                qₙ::Vector)
-    return Tridiagonal( (f_y(y, m, Xₙ, N, ε, ulₘ, urₘ, qₙ))... )
+    return Tridiagonal( (DRP_y(y, m, Xₙ, N, ε, ulₘ, urₘ, qₙ))... )
 end
 
 @doc raw"""
@@ -177,7 +177,7 @@ end
 - `urₘ::Function`:      Сеточные значения правого ГУ.
 - `qₙ::Vector`:         Сеточные значения "неоднородности", см. постановку задачи.
 - `RP::Function`:       Функция вычисления вектора правой части.
-- `jac::Function`:      Якобиан правой части по вектору `y` — ``f_y``.
+- `jac::Function`:      Якобиан правой части по вектору `y` — ``∂DRP_∂y``.
 - `α::Complex`:         Коэффициент схемы. При `α = 0` — схема Эйлера, при `α = complex(0.5, 0.5)` — схема Розенброка с комплексным коэффициентом.
 
 # Return
@@ -192,7 +192,7 @@ function solve(y₀::Vector, Xₙ::Vector, N::Int,
                ε::Real, ulₘ::Vector, urₘ::Vector,
                qₙ::Vector,
                RP::Function = directRP,
-               jac::Function = ∂f_∂y;
+               jac::Function = ∂DRP_∂y;
                α::Complex = complex(0.5, 0.5))
 
     if length(Xₙ) != N+1

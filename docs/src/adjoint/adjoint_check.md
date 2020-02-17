@@ -33,7 +33,7 @@ u(x,t) \pi (1 - 2t) \cos(\pi x) + q(x) (1 - 2t) \sin(\pi x) - 2 \delta( x - f_1(
 
 ```@example test_direct_check
 using NonLinearReactionAdvectionDiffusionWithFrontData, Test, ForwardDiff
-using LaTeXStrings, Plots
+using LaTeXStrings, Plots, LinearAlgebra
 ψ, ψ_model, Xₙ, Tₘ = include("../../../test/adjoint_check.jl")
 nothing #hide
 ```

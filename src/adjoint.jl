@@ -60,6 +60,8 @@ function adjointRP(y::Vector, m::Int,
 
     @assert size(Uₙₘ) == (N-1, M+1)
 
+    @assert m < length(ulₘ)
+
     RP = zero(y)                # Создаем нулевой вектор того же типа и размера
     h = Xₙ[2] - Xₙ[1];          # Нижестоящие формулы приведены для равномерной сетки. Вычислим её шаг.
 
@@ -72,12 +74,100 @@ function adjointRP(y::Vector, m::Int,
     return RP;
 end
 
+@doc raw""""
+    ARP_y(y::Vector, m::Int,
+          Xₙ::Vector, N::Int,
+          Tₘ::Vector, M::Int,
+          ε::Real,
+          ulₘ::Vector, urₘ::Vector,
+          qₙ::Vector,
+          Uₙₘ::Matrix, f1::Vector, f2::Vector) ->
+          (::Vector, ::Vector, ::Vector)
+
+Возращает три диагонали якоибана правой части сопряженной задачи.
+
+# Return
+Возвращает три вектора `dl`, `d`, `dl` элементов якоибана.
+Нижняя и верхняя диагонали длины ``N-2``, главная — ``N-1``.
+```
+    [ d[1]  du[1]                         ]
+    [ dl[1] d[2]  du[2]                   ]
+    [ 0     dl[2] d[3] du[3]              ]
+    [           ...  ...  ...             ]
+    [                ...  ...     du[N-2] ]
+    [                     dl[N-2] d[N-1]  ]
+```
+
+!!! warning
+    Работает по формулам равномерной сетки.
+"""
+function ARP_y(y::Vector, m::Int,
+               Xₙ::Vector, N::Int,
+               Tₘ::Vector, M::Int,
+               ε::Real,
+               ulₘ::Vector, urₘ::Vector,
+               qₙ::Vector,
+               Uₙₘ::Matrix, f1::Vector, f2::Vector)
+
+    @assert length(Xₙ) == N-1
+    @assert length(qₙ) == N-1
+    @assert length(y) == N-1
+    @assert m < length(ulₘ)
+
+    d = zeros(N-1);
+    dl = zeros(N-2);
+    du = zeros(N-2);
+
+    # Вычислим шаг равномерной сетки
+    h = Xₙ[2] - Xₙ[1];
+
+
+    d[1]  = 2 * ε / h^2 + qₙ[1]
+    du[1] = -ε / h^2    + Uₙₘ[1, m] / (2*h)
+
+    # Сдвиг индексов для `du` — см # Return документации функции
+    for n in 2:N-2
+        dl[n - 1]   = -ε / h^2      - Uₙₘ[n,m] / (2*h)
+        d[n]        = 2 * ε /h^2    + qₙ[n]
+        du[n]       = -ε / h^2      + Uₙₘ[n,m] / (2*h)
+    end
+
+    dl[N-2] = -ε / h^2      - Uₙₘ[N-1,m] / (2*h)
+    d[N-1]  =  2 * ε / h^2 + qₙ[N-1]
+
+    return dl, d, du
+end
+
+@doc raw"""
+    ∂ARP_∂y(y::Vector, m::Int,
+          Xₙ::Vector, N::Int,
+          Tₘ::Vector, M::Int,
+          ε::Real,
+          ulₘ::Vector, urₘ::Vector,
+          qₙ::Vector,
+          Uₙₘ::Matrix, f1::Vector, f2::Vector) -> Tridiagonal
+
+Обертка фнукции [`ARP_y`](@ref), которая возвращает `Tridiagonal( ARP_y(...))`
+трехдиагональную матрицы из векторов, которые возвращает `ARP_y`.
+"""
+function ∂ARP_∂y(y::Vector, m::Int,
+               Xₙ::Vector, N::Int,
+               Tₘ::Vector, M::Int,
+               ε::Real,
+               ulₘ::Vector, urₘ::Vector,
+               qₙ::Vector,
+               Uₙₘ::Matrix, f1::Vector, f2::Vector)
+    return Tridiagonal( (ARP_y(y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, Uₙₘ, f1, f2))... )
+end
+
 @doc raw"""
     ∂adjointRP_∂y(y::Vector, m::Int,
-                  Xₙ::Vector, N::Int,
-                  ε::Real,
-                  ulₘ::Vector, urₘ::Vector,
-                  qₙ::Vector)
+                   Xₙ::Vector, N::Int,
+                   Tₘ::Vector, M::Int,
+                   ε::Real,
+                   ulₘ::Vector, urₘ::Vector,
+                   qₙ::Vector,
+                   Uₙₘ::Matrix, f1::Vector, f2::Vector)
 
 Функция якобиана для `adjointRP`.
 Размерности входных векторов такие же, как и у [`adjointRP`](@ref).
@@ -109,7 +199,7 @@ function solve_adjoint(y₀::Vector, Xₙ::Vector, N::Int,
                        qₙ::Vector,
                        Uₙₘ::Matrix, f1::Vector, f2::Vector,
                        RP::Function = adjointRP,
-                       jac::Function = ∂adjointRP_∂y;
+                       jac::Function = ∂ARP_∂y;
                        α::Complex = complex(0.5, 0.5))
     # Checking lengths
     # {{{
@@ -149,7 +239,7 @@ function solve_adjoint(y₀::Vector, Xₙ::Vector, N::Int,
 
     if size(Uₙₘ) != (N+1, M+1)
         throw(ArgumentError("size(Uₙₘ) == $(size(Uₙₘ)), != $((N+1,M+1))
-                            Матрица решения прямой задачи должа быть размера N+1, M+1."))
+                            Матрица решения сопряженной задачи должа быть размера N+1, M+1."))
     end
     # }}}
 
