@@ -9,7 +9,8 @@ include("generatemd.jl")
 # workaround GR warnings
 # activates null device as output for GR
 ENV["GKSwstype"] = "100"
-GenerateMD.weave(overwrite=true)
+istravis = in("TRAVIS", keys(ENV))
+istravis || GenerateMD.weave(overwrite=true) # Do not generate mds from examples
 
 DocMeta.setdocmeta!( NonLinearReactionAdvectionDiffusionWithFrontData, :DocTestSetup, :(using NonLinearReactionAdvectionDiffusionWithFrontData); recursive=true)
 makedocs(
