@@ -9,8 +9,8 @@
                                     # собственно, после имея априорную информацию и будем определять.
     ε = 0.2;                        # Малый параметр при старшей производной
     a, b = 0, 1;                    # Область по X
-    t₀, T = 0.0, 1.0;               # Область по T
-    N, M = 250, 500;                 # Увеличенное Кол-во разбиений по X, T
+    t₀, T = 0.0, 0.28;              # Область по T
+    N, M = 50, 80;                  # Увеличенное Кол-во разбиений по X, T
     h = (b-a)/N;                    # шаг по X
     τ = (T-t₀)/M;                   # шаг по T
     Xₙ = [a  + n*h for n in 0:N];   # Сетка по Х
@@ -19,9 +19,9 @@
     ulₘ=    u_l.(Tₘ);               # Сеточные значения левого  ГУ
     urₘ=    u_r.(Tₘ);               # Сеточные значения правого ГУ
     y₀ = u_init.(Xₙ);               # Начальные условия
-    nothing #hide
-
+    #
     u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+    nothing #hide
 
     #' ## Генерация априорной информации
     ϕl = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                               # Левый вырожденный корень
@@ -34,7 +34,6 @@
     # Подготовим массивы, выбросив граничные точки
     # ведь тестируемая функция — для внутреннего использования
     # И развернем массивы по времени
-    X = Xₙ[2:N];
     qq = qₙ[2:N];
     y = y₀[2:N];
     U = u[2:N, :];
@@ -43,7 +42,7 @@
     f2 = reverse(f2);
     Tₘ = reverse(Tₘ);
 
-    dl, d, du = NonLinearReactionAdvectionDiffusionWithFrontData.ARP_y(y, 1, X, N, Tₘ, M, ε, ulₘ, urₘ, qq, U, f1, f2)
+    dl, d, du = NonLinearReactionAdvectionDiffusionWithFrontData.ARP_y(y, 1, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qq, U, f1, f2)
 
     @test length(dl) == N - 2
     @test length(d)  == N - 1
@@ -53,12 +52,12 @@
     @test count(x -> x == 0, d)  == 0
     @test count(x -> x == 0, du) == 0
 
-    tdjac = NonLinearReactionAdvectionDiffusionWithFrontData.∂ARP_∂y(y, 1, X, N, Tₘ, M, ε, ulₘ, urₘ, qq, U, f1, f2)
+    tdjac = NonLinearReactionAdvectionDiffusionWithFrontData.∂ARP_∂y(y, 1, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qq, U, f1, f2)
     @test typeof(tdjac) <: Tridiagonal
     @test tdjac == Tridiagonal( dl, d, du )
 
     # Сравним с якобианом автодифференцирования
-    jac = NonLinearReactionAdvectionDiffusionWithFrontData.∂adjointRP_∂y(y, 1, X, N, Tₘ, M, ε, ulₘ, urₘ, qq, U, f1, f2)
+    jac = NonLinearReactionAdvectionDiffusionWithFrontData.∂adjointRP_∂y(y, 1, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qq, U, f1, f2)
     @test isapprox(tdjac, jac)
 
 end
@@ -80,7 +79,7 @@ end
                                     # собственно, после имея априорную информацию и будем определять.
     ε = 0.2;                        # Малый параметр при старшей производной
     a, b = 0, 1;                    # Область по X
-    t₀, T = 0.0, 1.0;               # Область по T
+    t₀, T = 0.0, 0.28;               # Область по T
     N, M = 250, 500;                 # Увеличенное Кол-во разбиений по X, T
     h = (b-a)/N;                    # шаг по X
     τ = (T-t₀)/M;                   # шаг по T
@@ -90,9 +89,8 @@ end
     ulₘ=    u_l.(Tₘ);               # Сеточные значения левого  ГУ
     urₘ=    u_r.(Tₘ);               # Сеточные значения правого ГУ
     y₀ = u_init.(Xₙ);               # Начальные условия
-    nothing #hide
-
     u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+    nothing #hide
 
     #' ## Генерация априорной информации
     ϕl = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                               # Левый вырожденный корень
@@ -117,13 +115,14 @@ end
     Модельная функция ``(1-2t)\sin(\pi x)``.
     `n` — номер узла в сетке по X. `m` — номер шага в сетке по T.
     `X` — сетка по X, `N` — кол-во **интервалов** сетки.
-    `T` — сетка по T, `M` — кол-во **интервалов** сетки.
+    `Tₘ` — сетка по T, `M` — кол-во **интервалов** сетки.
+    Захватывает переменную `T` конечное время моделирования из окружения.
     """
     function g(n::Int, X, N::Int,
-               m::Int, T, M::Int)
-        t = T[m]
+               m::Int, Tₘ, M::Int)
+        t = Tₘ[m]
         x = X[n]
-        return (1 - 2t)*sin(π*x)
+        return (1 - 2t/T)*sin(π*x)
     end
 
     raw"""
@@ -135,7 +134,7 @@ end
     Вычисляет невязку, т.е. рез ультат подстановки ``g`` в постановку сопряженной задачи.
     `n` — номер узла в сетке по X. `m` — номер шага в сетке по T.
     `X` — сетка по X, `N` — кол-во **интервалов** сетки.
-    `T` — сетка по T, `M` — кол-во **интервалов** сетки.
+    `Tₘ` — сетка по T, `M` — кол-во **интервалов** сетки.
     """
     function g_d(n::Int, Xₙ::Vector, N::Int,
                  m::Int, Tₘ::Vector, M::Int,
@@ -143,7 +142,7 @@ end
                  u::Matrix, f1::Vector, f2::Vector)
         x = Xₙ[n];
         t = Tₘ[m];
-        out  = 2 * sin(π * x) - ( - ε * π^2 * (1 - 2t) * sin(π * x)) + π * (1 - 2t) * cos(π * x) * u[n,m] + qₙ[n] * (1 - 2t) * sin(π * x) - heterogenety(n, m, Xₙ, N, Tₘ, M, u, f1, f2)
+        out  = 2/T * sin(π * x) - ( - ε * π^2 * (1 - 2t/T) * sin(π * x)) + π * (1 - 2t/T) * cos(π * x) * u[n,m] + qₙ[n] * (1 - 2t/T) * sin(π * x) - heterogenety(n, m, Xₙ[2:N], N, Tₘ, M, u, f1, f2)
         return out;
     end
     #######################################################################################
@@ -183,11 +182,11 @@ end
 
     # С использованием автоматического дифференцирования
     ψ = solve_adjoint(y₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1, f2, RP, j)
-    @test all(isapprox.(ψ_model, ψ, atol = 0.01))
+    @test all(isapprox.(ψ_model, ψ, atol = 0.025))
 
     # С использованием трехдиагонального якобиана
     ψ = solve_adjoint(y₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1, f2, RP, ∂ARP_∂y)
-    @test all(isapprox.(ψ_model, ψ, atol = 0.01))
+    @test all(isapprox.(ψ_model, ψ, atol = 0.025))
 
     return (ψ, ψ_model, Xₙ, Tₘ)
 end

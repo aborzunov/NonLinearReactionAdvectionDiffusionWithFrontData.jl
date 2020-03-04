@@ -47,7 +47,7 @@ function adjointRP(y::Vector, m::Int,
                    Uₙₘ::Matrix, f1::Vector, f2::Vector)
 
 
-    @assert length(Xₙ) == N-1
+    @assert length(Xₙ) == N+1
     @assert length(qₙ) == N-1
     @assert length(y)  == N-1
 
@@ -64,12 +64,13 @@ function adjointRP(y::Vector, m::Int,
 
     RP = zero(y)                # Создаем нулевой вектор того же типа и размера
     h = Xₙ[2] - Xₙ[1];          # Нижестоящие формулы приведены для равномерной сетки. Вычислим её шаг.
+    X = Xₙ[2:N];
 
-    RP[1]        = - ε * (y[2]   - 2*y[1] + ulₘ[m])/(h^2)   + Uₙₘ[1, m]   * (y[2] - ulₘ[m])/(2*h) + y[1]        * qₙ[1]     - heterogenety(1, m, Xₙ, N, Tₘ, M, Uₙₘ, f1, f2)
+    RP[1]        = - ε * (y[2]   - 2*y[1] + ulₘ[m])/(h^2)   + Uₙₘ[1, m]   * (y[2] - ulₘ[m])/(2*h) + y[1]        * qₙ[1]     - heterogenety(1, m, X, N, Tₘ, M, Uₙₘ, f1, f2)
     for n in 2:N-2
-        RP[n]    = - ε * (y[n+1] - 2*y[n] + y[n-1])/(h^2)   + Uₙₘ[n, m]   * (y[n+1] - y[n-1])/(2*h) + y[n]      * qₙ[n]     - heterogenety(n, m, Xₙ, N, Tₘ, M, Uₙₘ, f1, f2)
+        RP[n]    = - ε * (y[n+1] - 2*y[n] + y[n-1])/(h^2)   + Uₙₘ[n, m]   * (y[n+1] - y[n-1])/(2*h) + y[n]      * qₙ[n]     - heterogenety(n, m, X, N, Tₘ, M, Uₙₘ, f1, f2)
     end
-    RP[N-1]      = - ε * (urₘ[m] - 2*y[N-1] + y[N-2])/(h^2) + Uₙₘ[N-1, m] * (urₘ[m] - y[N-2] )/(2*h) + y[N-1]   * qₙ[N-1]   - heterogenety(N-1, m, Xₙ, N, Tₘ, M, Uₙₘ, f1, f2)
+    RP[N-1]      = - ε * (urₘ[m] - 2*y[N-1] + y[N-2])/(h^2) + Uₙₘ[N-1, m] * (urₘ[m] - y[N-2] )/(2*h) + y[N-1]   * qₙ[N-1]   - heterogenety(N-1, m, X, N, Tₘ, M, Uₙₘ, f1, f2)
 
     return RP;
 end
@@ -109,7 +110,7 @@ function ARP_y(y::Vector, m::Int,
                qₙ::Vector,
                Uₙₘ::Matrix, f1::Vector, f2::Vector)
 
-    @assert length(Xₙ) == N-1
+    @assert length(Xₙ) == N+1
     @assert length(qₙ) == N-1
     @assert length(y) == N-1
     @assert m < length(ulₘ)
@@ -263,15 +264,14 @@ function solve_adjoint(y₀::Vector, Xₙ::Vector, N::Int,
     # Векторы, которые подлежат локальному изменению
     # Дальше, в вычислениях должны использоваться только их локальные копии
     y = strip_borderPoints(y₀,  N);      # Вектор содержащий решение на текущем шаге
-    X = strip_borderPoints(Xₙ,  N);      # Сетка без граничных точек
     q = strip_borderPoints(qₙ,  N);      # Сетка без граничных точек
     U = strip_borderPoints(Uₙₘ, N)
 
     for m in 1:M
         τ = (Tₘ[m+1] - Tₘ[m]);
 
-        rp = RP(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
-        j = jac(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
+        rp = RP(y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
+        j = jac(y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
 
         W = (I - α * τ * j) \ rp;
         y = y .+ τ * real(W);

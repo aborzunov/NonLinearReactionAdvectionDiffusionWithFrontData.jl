@@ -99,7 +99,8 @@ function f1(ϕ::Matrix, u::Matrix, Xₙ::Vector, N::Int, M::Int)
 
         catch e
             isa(e, BoundsError) || rethrow(e)
-            @warn "Bound Error" m k
+            @warn "Bound Error, Setting f1[m:end] .= f1[m-1]" m k
+            f1[m:end] .= f1[m-1];
             break
         end
 
@@ -139,7 +140,8 @@ function f2(f1::Vector, u::Matrix, Xₙ::Vector, N::Int, M::Int)
 
         catch e
             isa(e, BoundsError) || rethrow(e)
-            @warn "Bound Error" m k
+            @warn "Bound Error, Setting f2[m:end] .= f2[m-1]" m k
+            f2[m:end] .= f2[m-1];
             break
         end
     end
