@@ -54,3 +54,23 @@
     end
 
 end
+
+@testset "Формирование сетки" begin
+
+    using NonLinearReactionAdvectionDiffusionWithFrontData: meshformation;
+
+    e = 0.02;
+    a, b = 0, 1;
+    xtp = 0.3;
+    N = 50;
+    X = meshformation(a, b, xtp, e, N);
+
+    @test sort(X) == X
+    @test unique(X) == X
+    @test length(X) == N + N + 2N + 1
+
+    @test_throws ErrorException meshformation(a, b, xtp, 3.1, N)
+    @test_throws AssertionError meshformation(a, b, 0.05, e, N)
+    @test_throws AssertionError meshformation(a, b, 0.95, e, N)
+
+end

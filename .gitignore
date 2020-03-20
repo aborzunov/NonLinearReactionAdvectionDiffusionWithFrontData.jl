@@ -10,6 +10,7 @@
 *.mp4
 *.gif
 *.png
+*.m
 
 # Generated files purposed to be created at deploy stage
 /docs/src/generated/*
