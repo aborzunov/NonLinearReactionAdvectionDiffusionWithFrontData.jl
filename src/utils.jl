@@ -1,7 +1,7 @@
 # Всякие вспомогательные функции
 
 @doc raw"""
-    meshformation(a::Int, b::Int,
+    shishkin_mesh(a::Real, b::Real,
                   x_tp::Real, ε::Real,
                   N::Int = 50,
                   C_i::Real = 1.0, K_i::Real = 1.0,
@@ -21,73 +21,115 @@
 - `K::Int`      Кол-во интервалов вне всех сгущений.
 
 # Return
-Кусчноравномерную сетк, на эскизе чтоками изображены узлы сетки и помечены характерные
-точки использованные в коде функции, для формирования сетки.
+Кусчноравномерную сетк, на эскизе чтоками изображены узлы сетки.
 ```md
-    bb                            ai   bi                                ab
-    ↓                             ↓     ↓                                ↓
 .....  .  .  .  .  .  .  .  .  .  .......  .  .  .  .  .  .  .  .  .  .  ......
 ```
 """
-function meshformation(a::Int, b::Int,
+function shishkin_mesh(a::Real, b::Real,
                        x_tp::Real, ε::Real,
                        N::Int = 50,
                        C_i::Real = 1.0, K_i::Real = 1.0,
                        C_b::Real = 1.0, K_b::Real = 1.0)
 
-    width = abs(ε * log(ε));                        # Толщина сгущения, одинаковая для внутреннего и переходных
-    N_b = N * K_b;                                  # Кол-во интервалов на пограничных сгущениях
-    N_i = N * K_i;                                  # Кол-во интервалов на внутреннем сгущении
-
-    δb = C_b * width / N_b;                         # Шаг сетки на пограничных сгущениях
-    Xl = [ a + i*δb for i in 0:N_b];                # Сетка левого сгущения
-    Xr = [ b - width + i*δb for i in 0:N_b];        # Сетка правого сгущения
-
-    if last(Xl) > first(Xr)
-        throw(ErrorException("Пограничные сгущения пересекаются.
-                             Возможно `ε` недостаточно маленькая"));
+    if ! ( a < x_tp < b )
+        throw(ArgumentError("``a, x_tp, b`` должна образовывать строго упорядоченную тройку: $((a, x_tp, b))"))
     end
 
-    # Характерные точки, см `# Return`
-    # `bb` — сокращение от b_border, правая граница пограничных сгущений
-    # `ai` — сокращение от a_interior, левая граница внутреннего сгущения
-    bb = last(Xl);                                  # Правая граница сгущения на левом пограничном слое
-    ai = x_tp - width/2;                            # Левая граница сгущения на внутреннем слое
-    @assert bb < ai "Внутренее сгущение пересекается с левым пограничным"
+    N_i = Int(K_i * N);
+    N_b = Int(K_b * N);
+    x = zeros(N + N_i + 2*N_b + 1);
 
-    # Характерные точки, см `# Return`
-    # `ab` — сокращение от a_border, левая граница пограничных сгущений
-    # `bi` — сокращение от b_interior, правая граница внутреннего сгущения
-    bi = x_tp + width/2;                            # Правая граница сгущения на внутреннем слое
-    ab = first(Xr);                                 # Левая граница сгущения на правом пограничном слое
-    @assert bi < ab "Внутренее сгущение пересекается с правым пограничным"
+    if ! all( x -> x>10, [N_i, N_b, N] )
+        throw(ArgumentError("Количество точек в сгущениях или вне их меньше 10. Используйте другую комбинацию `N, K_i, K_b` " *
+                            "N, N_b, N_i = $((N, N_b, N_i))"));
+    end
 
-    δi = C_i * width / N_i;                         # Шаг сетки на внутреннем сгущении
-    Xi = [ ai + i*δi for i in 0:N_i];               # Сетка внутреннего сгущения
+        # Вычисляем долю узлов от N, которые будут лежать слева от внутреннего слоя
+        # Проверяем, не пересекаются ли "зоны влияния" внутреннего и пограничного слоёв
+        if ((x_tp - abs(C_i*ε*log(ε))) - (a + abs(C_b*ε*log(ε)))) >= 0
 
-    N_dl = Real(ai - bb) / ( ab - bi);              # `N_dl` кол-во обычных точек слева от вн. сгущения, от N_default_left
-    @debug "Характерные точки сетки" bb ai bi ab
-    @debug "Длины участков без сгущений" ( ai - bb ) ( ab - bi )
+            if ((b - abs(C_b*ε*log(ε))) - (x_tp + abs(C_i*ε*log(ε)))) >= 0
+                k_left = ((x_tp - abs(C_i*ε*log(ε))) - (a + abs(C_b*ε*log(ε))))/(b - a - 2*abs(C_i*ε*log(ε)) - 2*abs(C_b*ε*log(ε)));
+                @show k_left
+            else
+                k_left = 1;
+            end
+        else
+            k_left = 0;
+        end
+        # Вычисляем число узлов, которые буду лежать слева и справа от внутреннего слоя
+        N_left = Int(round(k_left*N));
+        N_right = N - N_left;
 
-    length_dl = abs(ai - bb);                       # Длина стандартного участка без сгущений, слева от вн. сгущения
-    length_dr = abs(ab - bi);                       # Длина стандартного участка без сгущений, справа от вн. сгущения
+        # Вычисляем соответствующие шаги
 
-    pl = length_dl / (length_dl + length_dr);       # Доля точек в левом стандартном участке
-    pr = length_dr / (length_dl + length_dr);       # Доля точек в левом стандартном участке
-    N_l = Int(round(pl * N));                       # Кол-во интервалов на левом участке без сгущений
-    N_r = N - N_l;                                  # Кол-во интервалов на правом участке без сгущений
-    @assert N_l + N_r == N "Что-то пошло не так с долями точек слева и справа"
-    @assert N_r == Int(round(pr * N)) "Что-то пошло не так с долями точек слева и справа"
+        # Проверяем, не пересекаются ли "зоны влияния" внутреннего и пограничного слоёв
+        # В разных случаях действуем по-разному.
+        if ((x_tp - abs(C_i*ε*log(ε))) - (a + abs(C_b*ε*log(ε)))) >= 0
+            if ((b - abs(C_b*ε*log(ε))) - (x_tp + abs(C_i*ε*log(ε)))) >= 0
+                h_int = 2*abs(C_i*ε*log(ε))/(N_i);
+                h_left = ((x_tp - abs(C_i*ε*log(ε))) - (a + abs(C_b*ε*log(ε))))/N_left;
+                h_right = ((b - abs(C_b*ε*log(ε))) - (x_tp + abs(C_i*ε*log(ε))))/N_right;
+                h_bound = abs(C_b*ε*log(ε))/(N_b);
+            else
+                h_bound = abs(C_b*ε*log(ε))/(N_b);
+                h_left = ((x_tp - abs(C_i*ε*log(ε))) - (a + abs(C_b*ε*log(ε))))/N_left;
+                h_int = (b - (x_tp - abs(C_i*ε*log(ε))))/(N_i + N_b);
+            end
+        else
+            h_int = ((x_tp + abs(C_i*ε*log(ε))) - a)/(N_b + N_i);
+            h_right = ((b - abs(C_b*ε*log(ε))) - (x_tp + abs(C_i*ε*log(ε))))/N_right;
+            h_bound = abs(C_b*ε*log(ε))/(N_b);
+        end
 
-    @debug "Доля точек в сгущениях" pl pr
-    @debug "Кол-во точек" N_l N_r
+        x[1] = a;
 
-    δ = (length_dl + length_dr) / N;                # Шаг сетки вне сгущений
+        # Проверяем, не пересекаются ли "зоны влияния" внутреннего и пограничного слоёв
+        # В разных случаях действуем по-разному.
 
-    Xdl = [bb + δ*i for i in 1:N_l-1];              # Сетка левого стандартного участка
-    Xdr = [bi + δ*i for i in 1:N_r-1];              # Сетка правого стандартного участка
+        if ((x_tp - abs(C_i*ε*log(ε))) - (a + abs(C_b*ε*log(ε)))) >= 0
+            if ((b - abs(C_b*ε*log(ε))) - (x_tp + abs(C_i*ε*log(ε)))) >= 0
+                for n = 1:(N_b)
+                    x[n + 1] = x[n] + h_bound;
+                end
+                for n = (N_b + 1):(N_b + N_left)
+                    x[n + 1] = x[n] + h_left;
+                end
+                for n = (N_b + N_left + 1):(N_b + N_left + N_i)
+                    x[n + 1] = x[n] + h_int;
+                end
+                for n = (N_b + N_left + N_i + 1):(N_b + N + N_i)
+                    x[n + 1] = x[n] + h_right;
+                end
+                for n = (N_b + N + N_i + 1):(N + N_i + 2*N_b)
+                    x[n + 1] = x[n] + h_bound;
+                end
+            else
+                for n = 1:(N_b)
+                    x[n + 1] = x[n] + h_bound;
+                end
+                for n = (N_b + 1):(N_b + N_left)
+                    x[n + 1] = x[n] + h_left;
+                end
+                for n = (N_b + N_left + 1):(N + N_i + 2*N_b)
+                    x[n + 1] = x[n] + h_int;
+                end
+            end
+        else
+            for n = 1:(N_b + N_left + N_i)
+                x[n + 1] = x[n] + h_int;
+            end
+            for n = (N_b + N_left + N_i + 1):(N_b + N + N_i)
+                x[n + 1] = x[n] + h_right;
+            end
+            for n = (N_b + N + N_i + 1):(N + N_i + 2*N_b)
+                x[n + 1] = x[n] + h_bound;
+            end
+        end
 
-    return [Xl; Xdl; Xi; Xdr; Xr]
+
+    return x
 end
 
 @doc raw"""
