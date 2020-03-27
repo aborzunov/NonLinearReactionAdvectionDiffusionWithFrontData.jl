@@ -1,42 +1,40 @@
-#' ## Решение прямой задачи
 using NonLinearReactionAdvectionDiffusionWithFrontData
-using NonLinearReactionAdvectionDiffusionWithFrontData: meshformation;
+using NonLinearReactionAdvectionDiffusionWithFrontData: shishkin_mesh, my_mesh;
 
 u_l(t) = -8;                    # ГУ
 u_r(t) =  4;                    #
-q(x) = 4*sin(3 * π * x);        # Коэффициент линейного усиления, который в обратной
+qf(x) = 4*sin(3 * π * x);       # Коэффициент линейного усиления, который в обратной
                                 # задаче необходимо определить, но при генерации априорной
                                 # информации мы задаем некоторый коэффициент, который,
                                 # собственно, после имея априорную информацию и будем определять.
-ε = 0.01;                        # Малый параметр при старшей производной
+ε = 0.01;                       # Малый параметр при старшей производной
 a, b = 0, 1;                    # Область по X
-t₀, T = 0, 0.28;                # Область по T
-x_tp = 0.25;
-N, M = 20, 400;                  # Кол-во разбиений по X, T
-h = (b-a)/N;                    # шаг по X
+t₀, T = 0, 0.50;                # Область по T
+x_tp = 0.12;                    # Положение переходного слоя
+M = 900;                        # Кол-во разбиений по X, T
 τ = (T-t₀)/M;                   # шаг по T
-Xₙ = meshformation(a, b, x_tp, ε, N, 1.0, 8.0);   # Сетка по Х
-N = 11N;
 Tₘ = [t₀ + m*τ for m in 0:M];   # Сетка по Т
-qₙ =      q.(Xₙ);               # Сеточные значения коэффициента линейного усиления
 ulₘ=    u_l.(Tₘ);               # Сеточные значения левого  ГУ
 urₘ=    u_r.(Tₘ);               # Сеточные значения правого ГУ
-y₀ = u_init.(Xₙ, ε=ε, x_tp = x_tp);               # Начальные условия
 nothing #hide
 
-#' Все массивы передаются внутрь функции `solve` полностью, вместе с граничными точками.
-#'
-#' Внутри, они локально модифицируются, и на вход
-#' [`NonLinearReactionAdvectionDiffusionWithFrontData.directRP`](@ref),
-#' [`NonLinearReactionAdvectionDiffusionWithFrontData.∂directRP_∂y`](@ref)
-#' подаются без крайних точек.
-u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+#' Новое поведение будет реализоваться с помощью передачи функции создания сетки внутрь `solve` в качестве аргумента.
+#' Эта функция должна принимать только один аргумент — положение переходного слоя и формировать соответствующую сетку.
+#' В пакете есть формирование кусочно-равномерной сетки со сгущениями на границе и на переходном слое.
+#' Создадим замыкание этой функции, которое будет иметь нужную сигнатуру.
+mshfrm(x_tp) = shishkin_mesh(a, b, x_tp, ε, 20, 1.0, 2.0, 0.2, 0.05);
+Xₙ = mshfrm(x_tp); ;                            # Сетка по Х
+N = length(Xₙ) - 1                              # Примем за N длину сетки, что получилась в итоге.
+qₙ =    qf.(Xₙ);                                # Сеточные значения коэффициента линейного усиления
+y₀ = u_init.(Xₙ, ε=ε, x_tp = x_tp);             # Начальные условия
+
+u, XX, TP = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, create_mesh = mshfrm);
 nothing #hide
 
 
 #' ## Генерация априорной информации
 ϕl = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                               # Левый вырожденный корень
-ϕr = phidetermination(qₙ, urₘ, reverse(Xₙ), N, Tₘ, M);                      # Нужно подать инвертированную сетку
+ϕr = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);                      # Нужно подать инвертированную сетку
 ϕr = reverse(ϕr, dims=1);                                                   # А после — инвертировать решение по X
 ϕ = NonLinearReactionAdvectionDiffusionWithFrontData.Φ(ϕl, ϕr, N, M);       # Серединный корень
 f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);   # Положение переходного слоя
@@ -51,8 +49,8 @@ make_plot(u, Xₙ, Tₘ, m, y_lim=extrema(u[:, m]*1.05))
 
 #' Запись gif одного только решения
 @info "$( splitdir(@__FILE__)[2] ) Рисует решение прямой задачи."
-make_gif(u, Xₙ, Tₘ; name="example_direct.gif", frames_to_write=collect( 1:20 ), convert2mp4 = true)
+make_gif(u, XX, Tₘ; name="example_direct.gif")
 
 #' Запись **только** mp4 вместе с вырожденными корнями
 @info "$( splitdir(@__FILE__)[2] ) Рисует решение с вырожденными корнями и информации о переходном слое."
-make_gif(u, Xₙ, Tₘ, ϕl, ϕr; convert2mp4 = true, name="example_direct_with_f1_f2.gif")
+make_gif(u, XX, Tₘ, ϕl, ϕr, f1, f2; convert2mp4 = true, name="example_direct_with_f1_f2.gif")

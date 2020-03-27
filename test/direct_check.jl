@@ -92,11 +92,11 @@ end
     j(y, m, Xₙ, N, ε, ulₘ, urₘ, qₙ) = ForwardDiff.jacobian( z -> RP(z, m, Xₙ, N, ε, ulₘ, urₘ, qₙ), y)
 
     # С использованием автоматического дифференцирования
-    u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, RP, j);
+    u, XX, TP = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, RP, j);
     @test all(isapprox.(u_model, u, atol = 0.01))
 
     # С использованием трехдиагонального якобиана
-    u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, RP, NonLinearReactionAdvectionDiffusionWithFrontData.∂DRP_∂y);
+    u, XX, TP = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, RP, NonLinearReactionAdvectionDiffusionWithFrontData.∂DRP_∂y);
     @test all(isapprox.(u_model, u, atol = 0.01))
 
     return (u, u_model, Xₙ, Tₘ)
