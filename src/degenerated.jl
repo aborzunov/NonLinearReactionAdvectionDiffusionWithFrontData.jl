@@ -49,6 +49,38 @@ function Φ(ϕ_l::Matrix, ϕ_r::Matrix, N::Int, M::Int)
 end
 
 @doc raw"""
+    apply_on_dynamic_mesh(ϕ::Matrix, XX::Matrix,
+                      N::Int, M::Int) -> Matrix
+
+Аппроксимирует `ϕ` на диномичски изменяющуюся на каждом временном шаге сетку `XX`.
+
+Функции [`phidetermination`](@ref) определяют вырожденные корни на стартовой сетке.
+[`Φ`](@ref) проиозводит линейные операции над векторами на каждом временном шаге.
+Поэтому если в расчетах была использована динамическая сетка, то нужно переопределить `ϕ`
+на этой динамической сетке.
+"""
+function apply_on_dynamic_mesh(ϕ::Matrix, XX::Matrix,
+                           N::Int, M::Int)
+    out = zero(ϕ)
+    size(ϕ) == size(XX) || throw(ArgumentError("Входные матрицы различной длины"))
+
+    size(ϕ) == size(XX) == (N+1, M+1) || throw(ArgumentError("Входные матрицы неверной длины" *
+                        "size(ϕ) = $(size(ϕ)), size(XX) = $(size(XX)), (N+1, M+1) = $((N+1, M+1))"))
+
+    # Функция `phidetermination` работает на статичной сетке.
+    # Функция `Φ` просто производит линейные операции.
+    # Поэтому `ϕ`, наш входной аргумент определен на статичной сетке на первом временном шаге.
+    for m in 1:M+1
+        # Так, мы будем брать `ϕ` на шаге m, а сетку — из самого первого.
+        # После, интерполировать на текущую сетку.
+        spl = Spline1D( XX[:, 1], ϕ[:, m ] )
+        out[:, m] = spl(XX[:, m])
+    end
+
+    return out
+end
+
+@doc raw"""
     find_f_zeros(f::Vector, Xₙ::Vector)
 
 Находит такой ``x``, что ``f(x) = 0``.
@@ -129,30 +161,49 @@ end
 
 Точка пересечения находится путем интерполяции функции ``u(x,t) - ϕ(x) = 0``.
 """
-function f1(ϕ::Matrix, u::Matrix, Xₙ::Vector, N::Int, M::Int)
-    @assert length(Xₙ) == N+1
+function f1(ϕ::Matrix, u::Matrix, Xₙ::Array, N::Int, M::Int)
     @assert size(u) == (N+1, M+1)
     @assert size(ϕ) == (N+1, M+1)
 
     f1 = zeros(M+1);
 
     # Необходимо найти абсциссу пересечения Φ и u(x, t), т.е. аргумент х на каждом временном шаге
-    for m in 1:M+1
-        f1[m] = find_f_zeros(u[:,m] - ϕ[:,m], Xₙ);
+    if typeof(Xₙ) <: Vector
+        for m in 1:M+1
+            f1[m] = find_f_zeros(u[:,m] - ϕ[:,m], Xₙ);
+        end
+    elseif typeof(Xₙ) <: Matrix
+        for m in 1:M+1
+            # Только в отличии от прошлого случая, здесь `ϕ, u` — определены на динамической сетке
+            # Мы должны подавать соответствующую сетку на каждом шаге
+            f1[m] = find_f_zeros(u[:,m] - ϕ[:,m], Xₙ[:,m]);
+        end
+    else
+        throw(ArgumentError("Функция принимает `Xₙ` только в виде вектора или матрицы"))
     end
 
     return f1
 end
 
-function f2(f1::Vector, u::Matrix, Xₙ::Vector, N::Int, M::Int)
+function f2(f1::Vector, u::Matrix, Xₙ::Array, N::Int, M::Int)
     @assert size(u) == (N+1, M+1)
     @assert length(f1) == M+1;
 
     f2 = zeros(M+1);
 
     # находим значение функции на каждом временном шаге
-    for m in 1:M+1
-        f2[m] = find_f_zeros(Xₙ .- f1[m], u[:, m]); # Передадим аргументы в обратном порядке
+    if typeof(Xₙ) <: Vector
+        for m in 1:M+1
+            f2[m] = find_f_zeros(Xₙ .- f1[m], u[:, m]); # Передадим аргументы в обратном порядке
+        end
+    elseif typeof(Xₙ) <: Matrix
+        for m in 1:M+1
+            # Только в отличии от прошлого случая, здесь `ϕ, u` — определены на динамической сетке
+            # Мы должны подавать соответствующую сетку на каждом шаге
+            f2[m] = find_f_zeros(Xₙ[:, m] .- f1[m], u[:, m]); # Передадим аргументы в обратном порядке
+        end
+    else
+        throw(ArgumentError("Функция принимает `Xₙ` только в виде вектора или матрицы"))
     end
 
     return f2

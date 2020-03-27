@@ -40,9 +40,10 @@ function shishkin_mesh(a::Real, b::Real,
     N_b = Int(K_b * N);
     x = zeros(N + N_i + 2*N_b + 1);
 
-    if ! all( x -> x>10, [N_i, N_b, N] )
-        throw(ArgumentError("Количество точек в сгущениях или вне их меньше 10. Используйте другую комбинацию `N, K_i, K_b` " *
-                            "N, N_b, N_i = $((N, N_b, N_i))"));
+    if all( x -> x<10, [N_i, N_b, N] )
+        throw(ArgumentError("Количество точек в сгущениях или вне их меньше 10. " *
+                            "Используйте другую комбинацию базового количества точек `N` и сгущающих коэффициентоа `K_i, K_b` " *
+                            "\n (N, N_b, N_i) == $((N, N_b, N_i))"));
     end
 
         # Вычисляем долю узлов от N, которые будут лежать слева от внутреннего слоя
@@ -51,7 +52,6 @@ function shishkin_mesh(a::Real, b::Real,
 
             if ((b - abs(C_b*ε*log(ε))) - (x_tp + abs(C_i*ε*log(ε)))) >= 0
                 k_left = ((x_tp - abs(C_i*ε*log(ε))) - (a + abs(C_b*ε*log(ε))))/(b - a - 2*abs(C_i*ε*log(ε)) - 2*abs(C_b*ε*log(ε)));
-                @show k_left
             else
                 k_left = 1;
             end
