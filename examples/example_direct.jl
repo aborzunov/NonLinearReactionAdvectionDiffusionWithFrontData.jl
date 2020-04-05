@@ -43,12 +43,10 @@ nothing # hide
 #' ## Визуализация
 
 #' Нарисовать пятый шаг по времени
-make_plot(u, Xₙ, Tₘ, 5, ϕl, ϕr, f1, f2)
+make_plot(u, Xₙ, Tₘ, 5, ϕl, ϕr, ϕ, f1, f2)
 
 #' Запись gif одного только решения
-@info "$( splitdir(@__FILE__)[2] ) Рисует решение прямой задачи."
-make_gif(u, XX, Tₘ; name="example_direct.gif")
+make_gif(u, XX, Tₘ; name="direct_example.gif")
 
 #' Запись **только** mp4 вместе с вырожденными корнями
-@info "$( splitdir(@__FILE__)[2] ) Рисует решение с вырожденными корнями и информации о переходном слое."
-make_gif(u, XX, Tₘ, ϕl, ϕr, f1, f2; convert2mp4 = true, name="example_direct_with_f1_f2.gif")
+make_gif(u, XX, Tₘ, ϕl, ϕr, ϕ, f1, f2; convert2mp4 = true, name="direct_with_f1_f2_example.gif")

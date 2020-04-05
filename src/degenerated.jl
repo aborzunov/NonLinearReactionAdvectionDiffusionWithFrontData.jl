@@ -155,11 +155,15 @@ function find_f_zeros(f::Vector, Xₙ::Vector)
 end
 
 @doc raw"""
-    f1(ϕ::Matrix, u::Matrix, Xₙ::Vector, N::Int, M::Int)
+    f1(ϕ::Matrix, u::Matrix, Xₙ::Array, N::Int, M::Int) -> Vector
 
-Находит значение искомой функции на переходном слое ``f_1(t) = u(x_{t.p.}, t)`` путем поиска точки пересечения ``u(x,t)`` и ``ϕ(x)``.
+Находит положение переходного слоя ``f_1(t) = x_{t.p.}(t)``
+путем поиска точки пересечения аргумента, при котором пересекаются ``u(x,t)`` и ``ϕ(x)``.
 
-Точка пересечения находится путем интерполяции функции ``u(x,t) - ϕ(x) = 0``.
+Точка пересечения находится путем интерполяции функции обратной к ``u(x,t) - ϕ(x) = 0``,
+передавай аргументы в инвертированном виде в [`find_f_zeros`](@ref).
+
+See also: [`find_f_zeros`](@ref)
 """
 function f1(ϕ::Matrix, u::Matrix, Xₙ::Array, N::Int, M::Int)
     @assert size(u) == (N+1, M+1)
@@ -185,6 +189,14 @@ function f1(ϕ::Matrix, u::Matrix, Xₙ::Array, N::Int, M::Int)
     return f1
 end
 
+@doc raw"""
+    f2(ϕ::Matrix, u::Matrix, Xₙ::Array, N::Int, M::Int) -> Vector
+
+Находит значение искомой функции на переходном слое ``f_2(t) = u(x_{t.p.}, t)``.
+Находится путем интерполяции функции ``u(x - f1(t), t) = 0``.
+
+See also: [`find_f_zeros`](@ref)
+"""
 function f2(f1::Vector, u::Matrix, Xₙ::Array, N::Int, M::Int)
     @assert size(u) == (N+1, M+1)
     @assert length(f1) == M+1;

@@ -28,10 +28,9 @@ mshfrm(x_tp) = shishkin_mesh(a, b, x_tp, ε, 40, 0.5, 1.0, 1.0, 0.25);
 Xₙ = mshfrm(x_tp); ;                            # Сетка по Х
 N = length(Xₙ) - 1                              # Примем за N длину сетки, что получилась в итоге.
 qₙ =    qf.(Xₙ);                                # Сеточные значения коэффициента линейного усиления
-y₀ = u_init.(Xₙ, ε=ε, x_tp = x_tp);             # Начальные условия
-scatter(Xₙ, y₀)
+u₀ = u_init.(Xₙ, ε=ε, x_tp = x_tp);             # Начальные условия
 
-u, XX, TP = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, create_mesh = mshfrm);
+u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, create_mesh = mshfrm);
 nothing #hide
 
 
@@ -40,22 +39,20 @@ nothing #hide
 ϕr = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);             # Нужно подать инвертированную сетку
 ϕr = reverse(ϕr, dims=1);                                                   # А после — инвертировать решение по X
 ϕ = Φ(ϕl, ϕr, N, M);                                                        # Полуразность вырожденных корней
-ϕ = apply_on_dynamic_mesh(ϕ, XX, N, M);                                         # Аппроксимация на переменную сетку
-ϕl = apply_on_dynamic_mesh(ϕl, XX, N, M);                                       # Аппроксимация на переменную сетку
-ϕr = apply_on_dynamic_mesh(ϕr, XX, N, M);                                       # Аппроксимация на переменную сетку
+ϕ = apply_on_dynamic_mesh(ϕ, XX, N, M);                                     # Аппроксимация на переменную сетку
+ϕl = apply_on_dynamic_mesh(ϕl, XX, N, M);                                   # Аппроксимация на переменную сетку
+ϕr = apply_on_dynamic_mesh(ϕr, XX, N, M);                                   # Аппроксимация на переменную сетку
 f1_data = f1(ϕ, u, XX, N, M);                                               # Положение переходного слоя
 f2_data = f2(f1_data, u, XX, N, M);                                         # Значение функции на переходном слое
 nothing # hide
 
 #' ## Визуализация
 #' Нарисовать пятый шаг по времени
-m = 2;
+m = 5;
 make_plot(u, Xₙ, Tₘ, m, y_lim=extrema(u[:, m]*1.05))
 
 #' Запись gif одного только решения
-@info "$( splitdir(@__FILE__)[2] ) Рисует решение прямой задачи."
-make_gif(u, XX, Tₘ; name="example_direct.gif", frames_to_write = collect( 1:100 ))
+make_gif(u, XX, Tₘ; name="example_direct_nonuniform.gif", frames_to_write = collect(1:132))
 
 #' Запись **только** mp4 вместе с вырожденными корнями
-@info "$( splitdir(@__FILE__)[2] ) Рисует решение с вырожденными корнями и информации о переходном слое."
-make_gif(u, XX, Tₘ, ϕl, ϕr, ϕ, f1_data, f2_data; convert2mp4 = true, name="example_direct_with_f1_f2.gif")
+make_gif(u, XX, Tₘ, ϕl, ϕr, ϕ, f1_data, f2_data; convert2mp4 = true, name="example_direct_nonuniform_with_f1_f2.gif")

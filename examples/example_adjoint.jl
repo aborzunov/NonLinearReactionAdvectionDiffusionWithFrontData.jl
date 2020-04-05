@@ -25,12 +25,12 @@ ulₘ=    u_l.(Tₘ);               # Сеточные значения лево
 urₘ=    u_r.(Tₘ);               # Сеточные значения правого ГУ
 y₀ = u_init.(Xₙ);               # Начальные условия
 #
-u = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+u, XX, TP = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
 nothing #hide
 
 #' ## Генерация априорной информации
 ϕl = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                               # Левый вырожденный корень
-ϕr = phidetermination(qₙ, urₘ, reverse(Xₙ), N, Tₘ, M);                      # Нужно подать инвертированную сетку
+ϕr = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);             # Нужно подать инвертированную сетку
 ϕr = reverse(ϕr, dims=1);                                                   # А после — инвертировать решение по X
 ϕ = NonLinearReactionAdvectionDiffusionWithFrontData.Φ(ϕl, ϕr, N, M);       # Серединный корень
 f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);   # Положение переходного слоя
@@ -44,7 +44,7 @@ y₀ = [0.0 for i in 1:N+1];      # Нулевые начальные услов
 ψl = [0.0 for i in 1:M+1];      # Нулевые ГУ
 ψr = [0.0 for i in 1:M+1];      # Нулевые ГУ
 
-ψ = solve_adjoint(y₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1, f2)
+ψ = solve_adjoint(y₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1, f2, w = 0.0005)
 nothing #hide
 
 #' ## Визуализация
@@ -55,9 +55,8 @@ nothing #hide
 # Нарисует гиф с неравномерной скоростью по оси T, первые 80 шагов
 # отрисуем полностью, а из последующих выберем каждый десятый, с
 # помощью keyword `frames_to_write = [1:80; 81:10:M+1]
-@info "$( splitdir(@__FILE__)[2] ) Рисует решение сопряженной задачи."
-make_gif(ψ[:,end:-1:1], Xₙ, Tₘ[end:-1:1]; frames_to_write=[1:80; 81:10:M+1], label="\\psi",
-         name="example_adjoint.gif", convert2mp4 = true)
+make_gif(ψ[:,end:-1:1], XX, Tₘ[end:-1:1]; frames_to_write=[1:80; 81:10:M+1], label="\\psi",
+         name="adjoint_example.gif", convert2mp4 = true)
 
 #' Результат должен быть около нулевой, ведь в качестве текущего приближения `q` мы взяли искомое,
 #' а при нем — градиент должен обнуляться.

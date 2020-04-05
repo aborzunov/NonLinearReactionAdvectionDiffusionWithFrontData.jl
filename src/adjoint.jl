@@ -15,8 +15,8 @@
                  Xₙ::Vector, N::Int,
                  Tₘ::Vector, M::Int,
                  Uₙₘ::Matrix,
-                 f1::Vector, f2::Vector;
-                 w::Real = 0.0001)
+                 f1::Vector, f2::Vector,
+                 w::Real)
 
 Неоднородность выражающая невязку текущего решения с искомым.
 `` 2 \delta( x - f_1(t) ) ( u^s(x,t) - f_2(t) ) ``.
@@ -25,7 +25,8 @@ function heterogenety(n::Int, m::Int,
                       Xₙ::Vector, N::Int,
                       Tₘ::Vector, M::Int,
                       Uₙₘ::Matrix,
-                      f1::Vector, f2::Vector)
+                      f1::Vector, f2::Vector,
+                      w::Real)
 
     @assert length(Xₙ) == N-1
 
@@ -35,7 +36,7 @@ function heterogenety(n::Int, m::Int,
 
     @assert size(Uₙₘ) == (N-1, M+1)
 
-    return 2 * deltaw( n, f1[m], Xₙ, N) * ( Uₙₘ[n, m] - f2[m] )
+    return 2 * deltaw( n, f1[m], Xₙ, N, w) * ( Uₙₘ[n, m] - f2[m] )
 end
 
 @doc raw"""
@@ -78,7 +79,8 @@ function adjointRP(y::Vector, m::Int,
                    ε::Real,
                    ulₘ::Vector, urₘ::Vector,
                    qₙ::Vector,
-                   Uₙₘ::Matrix, f1::Vector, f2::Vector)
+                   Uₙₘ::Matrix, f1::Vector, f2::Vector,
+                   w::Real)
 
 
     @assert length(Xₙ) == N+1
@@ -110,7 +112,7 @@ function adjointRP(y::Vector, m::Int,
     # вторая — берем следующий элемент,
     # третья — совершаем сдвиг индексов для Xₙ
     RP[1]     = - 2ε / (Xₙ[1+1+1] - Xₙ[1-1+1]) * ( (y[2] - y[1]) /  (Xₙ[1+1+1] - Xₙ[1+1]) - (y[1] - ulₘ[m])/(Xₙ[1+1] - Xₙ[1-1+1])) +
-        Uₙₘ[1,m]   * (y[2]   - ulₘ[m])/(Xₙ[1+1+1] - Xₙ[1-1+1]) + y[1] * qₙ[1] - heterogenety(1, m, X, N, Tₘ, M, Uₙₘ, f1, f2)
+        Uₙₘ[1,m]   * (y[2]   - ulₘ[m])/(Xₙ[1+1+1] - Xₙ[1-1+1]) + y[1] * qₙ[1] - heterogenety(1, m, X, N, Tₘ, M, Uₙₘ, f1, f2, w)
 
     # Xₙ[n  ] — соответствует ``x_{n-1}``
     # Xₙ[n+1] — соответствует ``x_{n  }``
@@ -123,11 +125,11 @@ function adjointRP(y::Vector, m::Int,
     # третье — совершаем сдвиг индексов для Xₙ
     for n in 2:N-2
         RP[n] = - 2ε / (Xₙ[n+1+1] - Xₙ[n-1+1]) * ( (y[n+1] - y[n]) /  (Xₙ[n+1+1] - Xₙ[n+1]) - (y[n] - y[n-1])/(Xₙ[n+1] - Xₙ[n-1+1])) +
-        + Uₙₘ[n, m]   * (y[n+1] - y[n-1])/(Xₙ[n+1+1] - Xₙ[n-1+1]) + y[n]   * qₙ[n] - heterogenety(n, m, X, N, Tₘ, M, Uₙₘ, f1, f2)
+        + Uₙₘ[n, m]   * (y[n+1] - y[n-1])/(Xₙ[n+1+1] - Xₙ[n-1+1]) + y[n]   * qₙ[n] - heterogenety(n, m, X, N, Tₘ, M, Uₙₘ, f1, f2, w)
     end
 
     RP[N-1]   =  - 2ε / (Xₙ[N+1] - Xₙ[N-2+1]) * ( (urₘ[m] - y[N-1]) /  (Xₙ[N+1] - Xₙ[N-1+1]) - (y[N-1] - y[N-2])/(Xₙ[N-1+1] - Xₙ[N-2+1])) +
-        Uₙₘ[N-1, m] * (urₘ[m] - y[N-2])/(Xₙ[N+1] - Xₙ[N-2+1]) + y[N-1] * qₙ[N-1] - heterogenety(N-1, m, X, N, Tₘ, M, Uₙₘ, f1, f2)
+        Uₙₘ[N-1, m] * (urₘ[m] - y[N-2])/(Xₙ[N+1] - Xₙ[N-2+1]) + y[N-1] * qₙ[N-1] - heterogenety(N-1, m, X, N, Tₘ, M, Uₙₘ, f1, f2, w)
 
     return RP;
 end
@@ -285,20 +287,29 @@ end
     Массивы `Xₙ`, `Tₘ`, `u`, `f1`, `f2` Передаются **как есть**!
     Они переварачиваются внутри функции локально.
 """
-function solve_adjoint(y₀::Vector, Xₙ::Vector, N::Int,
+function solve_adjoint(y₀::Vector, Xₙ::Array, N::Int,
                        Tₘ::Vector, M::Int,
                        ε::Real, ulₘ::Vector, urₘ::Vector,
                        qₙ::Vector,
                        Uₙₘ::Matrix, f1::Vector, f2::Vector,
                        RP::Function = adjointRP,
                        jac::Function = ∂ARP_∂y;
-                       α::Complex = complex(0.5, 0.5))
+                       α::Complex = complex(0.5, 0.5),
+                       w::Real = 0.00001)
     # Checking lengths
     # {{{
-    if length(Xₙ) != N+1
-        throw(ArgumentError("""length(Xₙ) == $(length(Xₙ)), N == $(N)
-        Массив Xₙ должен иметь размерность N+1."""))
+    if (typeof(Xₙ) <: Vector)
+        length(Xₙ) == N+1 ||
+        throw(ArgumentError("length(Xₙ) == $(length(Xₙ)), N == $(N) "*
+                            "Массив Xₙ должен иметь размерность N+1."))
+    elseif ( typeof(Xₙ) <: Matrix )
+        size(Xₙ) == (N+1, M+1) ||
+        throw(ArgumentError("size(Xₙ) == $(size(Xₙ)), N == $(N), M == $(M) " *
+                            "Массив Xₙ должен иметь размерность (N+1, M+1)."))
+    else
+        throw(ArgumentError("Функция принимает `Xₙ` только в виде вектора или матрицы"))
     end
+
     if length(qₙ) != N+1
         throw(ArgumentError("""length(qₙ) == $(length(qₙ)), N == $(N)
         Массив qₙ должен иметь размерность N+1."""))
@@ -336,8 +347,8 @@ function solve_adjoint(y₀::Vector, Xₙ::Vector, N::Int,
     # }}}
 
     if Tₘ[end] - Tₘ[1] < 0
-        throw(ArgumentError("Сетка по времени должна передаваться в стандартном
-                            виде, а не развернутом, то же касается остальных массивов."))
+        throw(ArgumentError("Сетка по времени должна передаваться в стандартном " *
+                            "виде, а не развернутом, то же касается остальных массивов."))
     end
 
     Tₘ  = reverse(Tₘ);          # Инвертируем сетку по времени
@@ -346,6 +357,10 @@ function solve_adjoint(y₀::Vector, Xₙ::Vector, N::Int,
     f1  = reverse(f1);
     f2  = reverse(f2);
     Uₙₘ   = Uₙₘ[:,end:-1:1]
+    if typeof(Xₙ) <: Matrix
+        Xₙ   = Xₙ[:,end:-1:1]
+    end
+
 
     u = zeros(N+1, M+1);        # Решение
     u[1  , :]   = ulₘ;          # Запись левого  ГУ на каждом шаге
@@ -354,20 +369,39 @@ function solve_adjoint(y₀::Vector, Xₙ::Vector, N::Int,
 
     # Векторы, которые подлежат локальному изменению
     # Дальше, в вычислениях должны использоваться только их локальные копии
-    y = strip_borderPoints(y₀,  N);      # Вектор содержащий решение на текущем шаге
-    q = strip_borderPoints(qₙ,  N);      # Сетка без граничных точек
-    U = strip_borderPoints(Uₙₘ, N)
+    y = strip_borderPoints(y₀,  N);         # Вектор содержащий решение на текущем шаге
+    U = strip_borderPoints(Uₙₘ, N);         # Выбросим ГУ на каждом шаге по времени
+    X = Xₙ[:,1];                            # Сетка, что будет использоваться внутри
+    qspl = Spline1D(Xₙ[:,end], qₙ);         # qₙ определен для шага t=0, а стеку мы уже развернули
+    q = qspl(X);
+    q = strip_borderPoints(q,  N);         # Сетка без граничных точек
 
     for m in 1:M
+
+        X = zeros(N+1);
+        if ( typeof(Xₙ) <: Vector )
+            X = Xₙ;
+        else
+            X = Xₙ[:, m]
+        end
+
         τ = (Tₘ[m+1] - Tₘ[m]);
 
-        rp = RP(y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
-        j = jac(y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
+        rp = RP(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2, w)
+        j = jac(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
 
         W = (I - α * τ * j) \ rp;
         y = y .+ τ * real(W);
 
         u[2:N, m+1] = y       # Сохраним вектор решения на следующем шаге
+        y1 = u[:,m+1];
+
+        if typeof(Xₙ) <: Matrix
+            q = qspl(Xₙ[2:end-1, m+1]);
+
+            yspl = Spline1D(X, y1);
+            y = yspl(Xₙ[2:end-1, m+1]);
+        end
 
     end
     return u

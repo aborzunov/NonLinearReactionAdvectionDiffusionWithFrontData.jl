@@ -21,7 +21,7 @@ using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogenety
     Uₙₘ = u[2:N, :];
     X = XX[2:N, :];
     # Создадим замыкания, для удобства
-    h(z) = [  - heterogenety(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, w=z) for n in 1:N-1, m in 1:M+1]
+    h(z) = [  - heterogenety(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, z) for n in 1:N-1, m in 1:M+1]
     nnz(arr) = length( findall( x -> ! isapprox(x, 0), arr ))
     H = h(0.001);    # Значения неоднородности на сетке `` Xₙ × Tₘ``
 
@@ -86,7 +86,7 @@ end
     # она принимает аргументы без граничных точек по x.
     Uₙₘ = u[2:N, :];
     X = XX[2:N, :];
-    h(z) = [  - heterogenety(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, w=z) for n in 1:N-1, m in 1:M+1]
+    h(z) = [  - heterogenety(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, z) for n in 1:N-1, m in 1:M+1]
     nnz(arr) = length( findall( x -> ! isapprox(x, 0), arr ));
 
     # Количество ненулевых элементов — 0
