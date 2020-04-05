@@ -1,6 +1,4 @@
 using NonLinearReactionAdvectionDiffusionWithFrontData;
-using NonLinearReactionAdvectionDiffusionWithFrontData: f1, f2;
-using NonLinearReactionAdvectionDiffusionWithFrontData: apply_on_dynamic_mesh, Φ;
 
 using Test
 using Documenter
@@ -14,7 +12,7 @@ include("utils.jl")
 @time @testset "Модельная невзяка для прямой задачи              " begin include("direct_check.jl") end
 
 @time @testset "Якобиан сопряженной задачи на статической сетке. " begin include("adjoint_jacobian.jl") end
-#include("adjoint_check.jl")
+@time @testset "Модельная невязка для сопряженной задачи         " begin include("adjoint_check.jl") end
 
 @time @testset "Градиент на точных данных                        " begin include("gradient_check.jl") end
 #include("degenerated_check.jl")

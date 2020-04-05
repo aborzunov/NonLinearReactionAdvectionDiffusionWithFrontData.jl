@@ -1,4 +1,6 @@
+using  NonLinearReactionAdvectionDiffusionWithFrontData;
 using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogenety
+using  NonLinearReactionAdvectionDiffusionWithFrontData: apply_on_dynamic_mesh;
 
 @testset "Градиент на точных данных и статической сетке    " begin
 
@@ -6,6 +8,7 @@ using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogenety
     a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ = NonLinearReactionAdvectionDiffusionWithFrontData.dparams();
     #
     u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+    #' ## Генерация априорной информации
     #########################################################################################
     ϕl      = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                      # Левый вырожденный корень
     ϕr      = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);    # Нужно подать инвертированную сетку
@@ -70,15 +73,17 @@ end
     #
     u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, create_mesh = mshfrm);
     #' ## Генерация априорной информации
-    ϕl = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                               # Левый вырожденный корень
-    ϕr = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);             # Нужно подать инвертированную сетку
-    ϕr = reverse(ϕr, dims=1);                                                   # А после — инвертировать решение по X
-    ϕ = Φ(ϕl, ϕr, N, M);                                                        # Полуразность вырожденных корней
-    ϕ = apply_on_dynamic_mesh(ϕ, XX, N, M);                                     # Аппроксимация на переменную сетку
-    ϕl = apply_on_dynamic_mesh(ϕl, XX, N, M);                                   # Аппроксимация на переменную сетку
-    ϕr = apply_on_dynamic_mesh(ϕr, XX, N, M);                                   # Аппроксимация на переменную сетку
+    #########################################################################################
+    ϕl      = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                          # Левый вырожденный корень
+    ϕr      = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);        # Нужно подать инвертированную сетку
+    ϕr      = reverse(ϕr, dims=1);                                              # А после — инвертировать решение по X
+    ϕ       = Φ(ϕl, ϕr, N, M);                                                  # Полуразность вырожденных корней
+    ϕ       = apply_on_dynamic_mesh(ϕ, XX, N, M);                               # Аппроксимация на переменную сетку
+    ϕl      = apply_on_dynamic_mesh(ϕl, XX, N, M);                              # Аппроксимация на переменную сетку
+    ϕr      = apply_on_dynamic_mesh(ϕr, XX, N, M);                              # Аппроксимация на переменную сетку
     f1_data = f1(ϕ, u, XX, N, M);                                               # Положение переходного слоя
     f2_data = f2(f1_data, u, XX, N, M);                                         # Значение функции на переходном слое
+    #########################################################################################
 
 
     using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogenety

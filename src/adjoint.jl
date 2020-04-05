@@ -65,6 +65,7 @@ end
 - `Uₙₘ::Matrix`:        Матрица размера `N-1, M+1` решения прямой задачи при данном `qₙ`.
 - `f1::Vector`:         Эспериментальные данные — положение внутреннего слоя, размера `M+1`.
 - `f2::Vector`:         Эспериментальные данные — значение функции на внутреннеем слое, размера `M+1`.
+- `w::Real`:            Априорный параметр в аппроксимации дельта-функции (см. [`heterogenyty`](@ref), [`δw`](@ref)).
 
 !!! warn
     Функция не входит в публичный API, поэтому размерность
@@ -259,10 +260,11 @@ end
                    ε::Real,
                    ulₘ::Vector, urₘ::Vector,
                    qₙ::Vector,
-                   Uₙₘ::Matrix, f1::Vector, f2::Vector)
+                   Uₙₘ::Matrix, f1::Vector, f2::Vector,
+                   w::Real)
 
 Функция якобиана для `adjointRP`.
-Размерности входных векторов такие же, как и у [`adjointRP`](@ref).
+Все аргументы, размерности входных векторов такие же, как и у [`adjointRP`](@ref).
 
 !!! warn
     Функция не входит в публичный API, поэтому размерность
@@ -272,13 +274,14 @@ end
      - `Uₙₘ`        размера `N-1, M+1`
 """
 function ∂adjointRP_∂y(y::Vector, m::Int,
-                   Xₙ::Vector, N::Int,
-                   Tₘ::Vector, M::Int,
-                   ε::Real,
-                   ulₘ::Vector, urₘ::Vector,
-                   qₙ::Vector,
-                   Uₙₘ::Matrix, f1::Vector, f2::Vector)
-    return ForwardDiff.jacobian( z -> adjointRP(z, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, Uₙₘ, f1, f2), y)
+                       Xₙ::Vector, N::Int,
+                       Tₘ::Vector, M::Int,
+                       ε::Real,
+                       ulₘ::Vector, urₘ::Vector,
+                       qₙ::Vector,
+                       Uₙₘ::Matrix, f1::Vector, f2::Vector,
+                       w::Real)
+    return ForwardDiff.jacobian( z -> adjointRP(z, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, Uₙₘ, f1, f2, w), y)
 end
 
 @doc raw"""
@@ -388,7 +391,18 @@ function solve_adjoint(y₀::Vector, Xₙ::Array, N::Int,
         τ = (Tₘ[m+1] - Tₘ[m]);
 
         rp = RP(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2, w)
-        j = jac(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
+
+        # Вычисляем матрицу Якоби.
+        # Если это наш стандартный якобиан, то вызываем его.
+        # Если это НЕ наш стандартный якобиан, то это должен быть
+        # функция якобиана, созданная через автоматическое дифференцирование,
+        # она требует сигнатуру вызова идентичную `adjointRP`.
+        if jac === ∂ARP_∂y
+            j = jac(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
+        else
+            j = jac(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2, w)
+        end
+
 
         W = (I - α * τ * j) \ rp;
         y = y .+ τ * real(W);
