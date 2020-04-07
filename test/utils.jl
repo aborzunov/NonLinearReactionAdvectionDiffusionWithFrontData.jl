@@ -1,4 +1,4 @@
-@testset "Utils" begin
+@testset "Utils                                            " begin
 
     N = 20;
     X = [i/N for i in 0:N];
@@ -43,7 +43,7 @@
         # Возвращает только один ненулевой элемент
         @test length( filter( x -> x != 0, d) ) == 1
 
-        @testset "Проверка области определения" begin
+        @testset "Проверка области определения дельта-функции" begin
             @test_throws DomainError delta(-2, X, 0.5)
             @test_throws DomainError delta(2, X, 0.5)
             @test_throws DomainError delta(0.5, X, -2)
@@ -55,7 +55,7 @@
 
 end
 
-@testset "Формирование сетки" begin
+@testset "Формирование сетки                               " begin
 
     using NonLinearReactionAdvectionDiffusionWithFrontData: shishkin_mesh;
 

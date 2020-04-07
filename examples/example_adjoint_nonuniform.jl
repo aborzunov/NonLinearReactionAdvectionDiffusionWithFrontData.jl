@@ -1,4 +1,3 @@
-
 #' ## Решение прямой задачи для генерации априорной информации
 #' Сопряженная задача определяется для сеточного решения некоторой прямой задачи,
 #' и некоторых априорных данных. Поэтому, сначала необходимо сгенерировать
@@ -35,9 +34,11 @@ nothing #hide
 mshfrm(x_tp) = shishkin_mesh(a, b, x_tp, ε, 40, 1.0, 1.0, 0.2, 1.0);
 Xₙ = mshfrm(x_tp); ;                            # Сетка по Х
 N = length(Xₙ) - 1                              # Примем за N длину сетки, что получилась в итоге.
-qₙ =  1.0 * qf.(Xₙ);                                # Сеточные значения коэффициента линейного усиления
+qₙ =  1.0 * qf.(Xₙ);                            # Сеточные значения коэффициента линейного усиления
+                                                # Измените линейный коэффициент, чтобы посмотреть
+                                                # на поведение сопряженной задачи (а следовательно градиента),
+                                                # когда прямая задача не соответствует наблюдаемым данным.
 u₀ = u_init.(Xₙ, ε=ε, x_tp = x_tp);             # Начальные условия
-scatter(Xₙ, u₀)
 
 u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, create_mesh = mshfrm);
 #' ## Генерация априорной информации
@@ -50,25 +51,29 @@ u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, create_mesh = 
 ϕr      = apply_on_dynamic_mesh(ϕr, XX, N, M);                              # Аппроксимация на переменную сетку
 f1_data = f1(ϕ, u, XX, N, M);                                               # Положение переходного слоя
 f2_data = f2(f1_data, u, XX, N, M);                                         # Значение функции на переходном слое
-scatter!(XX[:, end], u[:, end])
+#
+w = 0.000051;                                                               # Априорный параметр апроксимации дельта-функции
 
-using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogenety;
-using LaTeXStrings;
+#' Проведем контроль выбора априорного параметра в аппроксимации дельта-функции
+#' На точных данных, эта неоднородность должна быть нулевой почти везде
+#' Ведь сопряженная задача — ретроспективная. Её начальные условие — нулевые.
+#' Нулевое решение сопряженной задачи даст нам нулевой градиент,
+#' а значит мы нашли решение.
+using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity;
+using LaTeXStrings, Plots;
 Uₙₘ = u[2:N, :];
 X = XX[2:N, :];
-H = [  - heterogenety(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, w) for n in 1:N-1, m in 1:M+1]
+H = [  - heterogeneity(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, w) for n in 1:N-1, m in 1:M+1]
 heatmap(H', title=L"-2 δ( x - f_1(t))(u(f1(t), t) - f2(t) ")
+
 #' ## Решение сопряженной задачи
 
 Uₙₘ = u;                        # Сохраним старую матрицу
 ψ₀ = [0.0 for i in 1:N+1];      # Нулевые начальные условия
 ψl = [0.0 for i in 1:M+1];      # Нулевые ГУ
 ψr = [0.0 for i in 1:M+1];      # Нулевые ГУ
-w = 0.0001;                    # Априорный параметр апроксимации дельта функции
 ψ = solve_adjoint(ψ₀, XX, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1_data, f2_data, w = w)
 nothing #hide
-
-make_gif(u, XX, Tₘ, ϕl, ϕr, ϕ, f1_data, f2_data; convert2mp4 = true, name="example_direct_with_f1_f2.gif")
 
 #' ## Визуализация
 
@@ -79,7 +84,7 @@ make_gif(u, XX, Tₘ, ϕl, ϕr, ϕ, f1_data, f2_data; convert2mp4 = true, name="
 # отрисуем полностью, а из последующих выберем каждый десятый и последние — опять полностью.
 # С помощью keyword `frames_to_write`
 ftw = [1:50; 51:10:M-50; M-49:M+1];
-make_gif(ψ[:,end:-1:1], XX, Tₘ[end:-1:1]; frames_to_write=ftw, label="\\psi",
+make_gif(ψ[:,end:-1:1], XX, Tₘ; frames_to_write=ftw, label="\\psi",
          name="adjoint_example_nonuniform.gif", convert2mp4 = true)
 
 #' Результат должен быть около нулевой, ведь в качестве текущего приближения `q` мы взяли искомое,

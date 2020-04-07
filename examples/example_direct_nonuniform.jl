@@ -47,12 +47,5 @@ f2_data = f2(f1_data, u, XX, N, M);                                         # З
 nothing # hide
 
 #' ## Визуализация
-#' Нарисовать пятый шаг по времени
-m = 5;
-make_plot(u, Xₙ, Tₘ, m, y_lim=extrema(u[:, m]*1.05))
-
-#' Запись gif одного только решения
-make_gif(u, XX, Tₘ; name="example_direct_nonuniform.gif", frames_to_write = collect(1:132))
-
 #' Запись **только** mp4 вместе с вырожденными корнями
 make_gif(u, XX, Tₘ, ϕl, ϕr, ϕ, f1_data, f2_data; convert2mp4 = true, name="example_direct_nonuniform_with_f1_f2.gif")

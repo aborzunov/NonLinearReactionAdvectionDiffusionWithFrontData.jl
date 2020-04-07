@@ -1,5 +1,9 @@
 # Тест проверяет корректность решения прямой задачи. Алгоритм описан в /docs/src/direct/direct_check.md
 # Возвращает решение, аналитическое решение, сетку по X, сетку по T.
+using NonLinearReactionAdvectionDiffusionWithFrontData;
+using NonLinearReactionAdvectionDiffusionWithFrontData: phidetermination, Φ;
+using NonLinearReactionAdvectionDiffusionWithFrontData: f1, f2;
+using ForwardDiff;
 
 # Зададим параметры для прямой задачи
 u_l(t) = 0;                     # ГУ удовлетворяющие модельной функции

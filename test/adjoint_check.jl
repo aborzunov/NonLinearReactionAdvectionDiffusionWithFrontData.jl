@@ -5,7 +5,7 @@
 using NonLinearReactionAdvectionDiffusionWithFrontData;
 using NonLinearReactionAdvectionDiffusionWithFrontData: phidetermination, Φ;
 using NonLinearReactionAdvectionDiffusionWithFrontData: f1, f2;
-using NonLinearReactionAdvectionDiffusionWithFrontData: heterogenety, adjointRP, ∂ARP_∂y;
+using NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity, adjointRP, ∂ARP_∂y;
 
 using ForwardDiff;
 
@@ -84,7 +84,7 @@ function g_d(n::Int, Xₙ::Vector, N::Int,
                w::Real)
     x = Xₙ[n];
     t = Tₘ[m];
-    out  = 2/T * sin(π * x) - ( - ε * π^2 * (1 - 2t/T) * sin(π * x)) + π * (1 - 2t/T) * cos(π * x) * u[n,m] + qₙ[n] * (1 - 2t/T) * sin(π * x) - heterogenety(n, m, Xₙ[2:N], N, Tₘ, M, u, f1, f2, w)
+    out  = 2/T * sin(π * x) - ( - ε * π^2 * (1 - 2t/T) * sin(π * x)) + π * (1 - 2t/T) * cos(π * x) * u[n,m] + qₙ[n] * (1 - 2t/T) * sin(π * x) - heterogeneity(n, m, Xₙ[2:N], N, Tₘ, M, u, f1, f2, w)
     return out;
 end
 #######################################################################################

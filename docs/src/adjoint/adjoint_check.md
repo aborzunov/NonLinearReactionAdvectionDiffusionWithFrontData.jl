@@ -32,8 +32,7 @@ u(x,t) \pi (1 - 2t) \cos(\pi x) + q(x) (1 - 2t) \sin(\pi x) - 2 \delta( x - f_1(
 решению, сетке по X, T.
 
 ```@example test_direct_check
-using NonLinearReactionAdvectionDiffusionWithFrontData, Test, ForwardDiff
-using LaTeXStrings, Plots, LinearAlgebra
+using Test
 ψ, ψ_model, Xₙ, Tₘ = include("../../../test/adjoint_check.jl")
 nothing #hide
 ```
@@ -42,8 +41,7 @@ nothing #hide
 ```@example test_direct_check
 d = [missing, missing];
 dd = [missing missing; missing missing];
-@info "$( splitdir(@__FILE__)[2] ) Рисует решение сопряженной задачи на модельной функции."
-make_gif(ψ, Xₙ, Tₘ[end:-1:1], dd, dd, d, d, ψ_model;
+make_gif(ψ, Xₙ, Tₘ[end:-1:1], dd, dd, dd, d, d, ψ_model;
             name="adjoint_check.gif", label="\\psi", frames_to_write=[1:80; 81:10:length(Tₘ)], convert2mp4=true)
 ```
 

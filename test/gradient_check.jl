@@ -1,5 +1,5 @@
 using  NonLinearReactionAdvectionDiffusionWithFrontData;
-using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogenety
+using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity
 using  NonLinearReactionAdvectionDiffusionWithFrontData: apply_on_dynamic_mesh;
 
 @testset "Градиент на точных данных и статической сетке    " begin
@@ -19,18 +19,17 @@ using  NonLinearReactionAdvectionDiffusionWithFrontData: apply_on_dynamic_mesh;
     #########################################################################################
     nothing #hide
 
-    # Функция `heterogenety` — для внутреннего использования,
+    # Функция `heterogeneity` — для внутреннего использования,
     # она принимает аргументы без граничных точек по x.
     Uₙₘ = u[2:N, :];
     X = XX[2:N, :];
     # Создадим замыкания, для удобства
-    h(z) = [  - heterogenety(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, z) for n in 1:N-1, m in 1:M+1]
+    hmap(z) = [  - heterogeneity(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, z) for n in 1:N-1, m in 1:M+1]
     nnz(arr) = length( findall( x -> ! isapprox(x, 0), arr ))
-    H = h(0.001);    # Значения неоднородности на сетке `` Xₙ × Tₘ``
 
     # Количество ненулевых элементов — 0
-    @test       nnz(h(0.0001)) < M/4        # 0, Не рекомендовано
-    @test 0 < nnz(h(0.0004)) < M/10    # 5, норм!
+    @test       nnz(hmap(0.0001)) < M/4        # 0, Не рекомендовано
+    @test 0 < nnz(hmap(0.0004)) < M/10    # 5, норм!
 
     # Для визуального контроля, можно использовать следующий код дающий анимацию
     #=
@@ -60,7 +59,7 @@ using  NonLinearReactionAdvectionDiffusionWithFrontData: apply_on_dynamic_mesh;
 
     # Карта поверхности неоднородности
     heatmap(X, Tₘ, H',  xlabel = "x", ylabel="t", title=L"- 2 \delta(x - f_1(t)) ( u^s(x,t) - f_2(t))")
-    savefig("heterogenety.png")
+    savefig("heterogeneity.png")
     # }}}
     =#
 
@@ -68,6 +67,9 @@ end
 
 @testset "Градиент на точных данных и динамической сетке   " begin
 
+    using NonLinearReactionAdvectionDiffusionWithFrontData;
+    using NonLinearReactionAdvectionDiffusionWithFrontData: Φ, apply_on_dynamic_mesh;
+    using NonLinearReactionAdvectionDiffusionWithFrontData: f1, f2;
 
     a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀, mshfrm = NonLinearReactionAdvectionDiffusionWithFrontData.dparams_nonuniform();
     #
@@ -86,16 +88,18 @@ end
     #########################################################################################
 
 
-    using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogenety
-    # Функция `heterogenety` — для внутреннего использования,
+    using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity
+    # Функция `heterogeneity` — для внутреннего использования,
     # она принимает аргументы без граничных точек по x.
     Uₙₘ = u[2:N, :];
     X = XX[2:N, :];
-    h(z) = [  - heterogenety(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, z) for n in 1:N-1, m in 1:M+1]
+    hmap(z) = [  - heterogeneity(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, z) for n in 1:N-1, m in 1:M+1]
     nnz(arr) = length( findall( x -> ! isapprox(x, 0), arr ));
 
     # Количество ненулевых элементов — 0
-    @test nnz(h(0.00001)) < M/4        # 0, Не рекомендовано
-    @test 0 < nnz(h(0.000005)) < M/10    # 5, норм!
+    @test nnz(hmap(0.00001)) > M * 0.05         # Много ненулевых элементов,
+                                                # значит итерационный процесс продолжится и уйдет от решения
+    @test nnz(hmap(0.000001)) < M * 0.05        # 0, Не рекомендовано
+    @test 0 < nnz(hmap(0.000003)) < M * 0.01    # 4, Должно быть норм!
 
 end

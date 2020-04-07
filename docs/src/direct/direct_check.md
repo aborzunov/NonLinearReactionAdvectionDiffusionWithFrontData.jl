@@ -40,14 +40,11 @@ g_d(x,t) = 2 \sin(\pi x) - \varepsilon \pi^2 (1 - 2t) \sin(\pi x) +
 через `@test`. А так же, `@testset` возвращает `u, u_model, Xₙ, Tₘ`, что соответствует решению, аналитическому
 решению, сетке по X, T.
 
-```@example test_direct_check
-using NonLinearReactionAdvectionDiffusionWithFrontData, Test, ForwardDiff
-using LinearAlgebra
-```
-
 Перед запуском, необходимо подключить *все* пакеты, что используются при
 тестировании.
 ```@example test_direct_check
+using NonLinearReactionAdvectionDiffusionWithFrontData;
+using Test;
 u, u_model, Xₙ, Tₘ = include("../../../test/direct_check.jl")
 nothing #hide
 ```
@@ -55,8 +52,7 @@ nothing #hide
 ```@example test_direct_check
 d = [missing, missing];
 dd = [missing missing; missing missing];
-@info "$( @__FILE__ ) Рисует решение прямой задачи на модельной функции"
-make_gif(u, Xₙ, Tₘ, dd, dd, d, d, u_model; convert2mp4=true)
+make_gif(u, Xₙ, Tₘ, dd, dd, dd, d, d, u_model; name = "dicrect_check.gif")
 ```
 
 ```@example test_direct_check

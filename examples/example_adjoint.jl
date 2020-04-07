@@ -5,6 +5,8 @@
 #' Сделаем это на увеличенном числе интервалов, т.к. решение сопряженной задачи
 #' менее гладкое.
 using NonLinearReactionAdvectionDiffusionWithFrontData
+using NonLinearReactionAdvectionDiffusionWithFrontData: phidetermination, Φ;
+using NonLinearReactionAdvectionDiffusionWithFrontData: f1, f2;
 
 u_l(t) = -8
 u_r(t) =  4
@@ -29,12 +31,12 @@ u, XX, TP = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
 nothing #hide
 
 #' ## Генерация априорной информации
-ϕl = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                               # Левый вырожденный корень
-ϕr = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);             # Нужно подать инвертированную сетку
-ϕr = reverse(ϕr, dims=1);                                                   # А после — инвертировать решение по X
-ϕ = NonLinearReactionAdvectionDiffusionWithFrontData.Φ(ϕl, ϕr, N, M);       # Серединный корень
-f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);   # Положение переходного слоя
-f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);  # Значение функции на переходном слое
+ϕl      = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                              # Левый вырожденный корень
+ϕr      = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);            # Нужно подать инвертированную сетку
+ϕr      = reverse(ϕr, dims=1);                                                  # А после — инвертировать решение по X
+ϕ       = Φ(ϕl, ϕr, N, M);                                                      # Серединный корень
+f1_data = f1(ϕ, u, Xₙ, N, M);                                                   # Положение переходного слоя
+f2_data = f2(f1_data, u, Xₙ, N, M);                                             # Значение функции на переходном слое
 nothing #hide
 
 #' ## Решение сопряженной задачи
@@ -44,7 +46,7 @@ y₀ = [0.0 for i in 1:N+1];      # Нулевые начальные услов
 ψl = [0.0 for i in 1:M+1];      # Нулевые ГУ
 ψr = [0.0 for i in 1:M+1];      # Нулевые ГУ
 
-ψ = solve_adjoint(y₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1, f2, w = 0.0005)
+ψ = solve_adjoint(y₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1_data, f2_data, w = 0.0005)
 nothing #hide
 
 #' ## Визуализация
@@ -55,7 +57,7 @@ nothing #hide
 # Нарисует гиф с неравномерной скоростью по оси T, первые 80 шагов
 # отрисуем полностью, а из последующих выберем каждый десятый, с
 # помощью keyword `frames_to_write = [1:80; 81:10:M+1]
-make_gif(ψ[:,end:-1:1], XX, Tₘ[end:-1:1]; frames_to_write=[1:80; 81:10:M+1], label="\\psi",
+make_gif(ψ[:,end:-1:1], XX, Tₘ; frames_to_write=[1:80; 81:10:M+1], label="\\psi",
          name="adjoint_example.gif", convert2mp4 = true)
 
 #' Результат должен быть около нулевой, ведь в качестве текущего приближения `q` мы взяли искомое,
