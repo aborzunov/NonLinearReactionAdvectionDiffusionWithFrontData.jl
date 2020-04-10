@@ -14,5 +14,7 @@ include("utils.jl")
 @time @testset "Якобиан сопряженной задачи на статической сетке. " begin include("adjoint_jacobian.jl") end
 @time @testset "Модельная невязка для сопряженной задачи         " begin include("adjoint_check.jl") end
 
-@time @testset "Градиент на точных данных                        " begin include("gradient_check.jl") end
-#include("degenerated_check.jl")
+@time @testset "Неоднородность на точных данных                  " begin include("heterogeneity_check.jl") end
+@time @testset "Вырожденые корни                                 " begin include("degenerated_check.jl") end
+#
+@time @testset "Градиент, функционал                             " begin include("functional.jl") end

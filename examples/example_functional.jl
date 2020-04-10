@@ -1,9 +1,8 @@
 #' ## Генерация априорной информации
 
-using NonLinearReactionAdvectionDiffusionWithFrontData
-using LaTeXStrings
-using Plots; gr()
-using ProgressMeter
+using NonLinearReactionAdvectionDiffusionWithFrontData;
+using NonLinearReactionAdvectionDiffusionWithFrontData: phidetermination, Φ;
+using NonLinearReactionAdvectionDiffusionWithFrontData: f1, f2;
 #
 u_l(t) = -8 #+ cos(2*π * t);
 u_r(t) =  4 #+ (1 + sin(2*π * t));
@@ -25,13 +24,14 @@ urₘ=    u_r.(Tₘ);               # Сеточные значения прав
 u₀ = u_init.(Xₙ);               # Начальные условия
 nothing #hide
 
-u = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
-ϕl = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                               # Левый вырожденный корень
-ϕr = phidetermination(qₙ, urₘ, reverse(Xₙ), N, Tₘ, M);                      # Нужно подать инвертированную сетку
-ϕr = reverse(ϕr, dims=1);                                                   # А после — инвертировать решение по X
-ϕ = NonLinearReactionAdvectionDiffusionWithFrontData.Φ(ϕl, ϕr, N, M);       # Серединный корень
-f1 = NonLinearReactionAdvectionDiffusionWithFrontData.f1(ϕ, u, Xₙ, N, M);   # Положение переходного слоя
-f2 = NonLinearReactionAdvectionDiffusionWithFrontData.f2(f1, u, Xₙ, N, M);  # Значение функции на переходном слое
+u, XX, TP   = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);                              # Нам вернут решение, сетку, f_1^s
+#
+ϕl          = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                               # Левый вырожденный корень
+ϕr          = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);             # Нужно подать инвертированную сетку
+ϕr          = reverse(ϕr, dims=1);                                                   # А после — инвертировать решение по X
+ϕ           = Φ(ϕl, ϕr, N, M);                                                       # Серединный корень
+f1_data     = f1(ϕ, u, Xₙ, N, M);                                                    # Положение переходного слоя
+f2_data     = f2(f1_data, u, Xₙ, N, M);                                              # Значение функции на переходном слое
 nothing #hide
 #########################################################################################
 
@@ -39,9 +39,9 @@ q₀ = [ 0 for x in qₙ];
 ψ₀ = zeros(N+1);
 ψl = zeros(M+1);
 ψr = zeros(M+1);
-S = 100;
-β = 0.1;
-qf, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, ψ₀, ψl, ψr, Xₙ, N, Tₘ, M, ε, f1, f2, S = S, β = β)
+S = 5000;
+β = 0.01;
+qf, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, ψ₀, ψl, ψr, Xₙ, N, Tₘ, M, ε, f1_data, f2_data, S = S, β = β, w = 0.0001)
 frames = [1:20; 21:div(S,50):S];    # Первые двадцать без пропусков
 frames = collect(1:div(S, 50):S);   # С пропусками, чтобы всего было 50 кадров
 make_minimzation_gif(Js, Qs, qₙ, Xₙ, name = "Minimization.gif", frames_to_write = frames, β = β)

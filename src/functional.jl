@@ -2,20 +2,38 @@
 
 @doc raw"""
     J_q(uˢ::Matrix, ψˢ::Matrix,
-             Xₙ::Vector, N::Int,
+             Xₙ::Array, N::Int,
              Tₘ::Vector, M::Int) -> Vector
 
 """
 function J_q(uˢ::Matrix, ψˢ::Matrix,
-             Xₙ::Vector, N::Int,
+             Xₙ::Array, N::Int,
              Tₘ::Vector, M::Int)
 
-    @assert length(Xₙ) == N+1
+    if (typeof(Xₙ) <: Vector)
+        length(Xₙ) == N+1 ||
+        throw(ArgumentError("length(Xₙ) == $(length(Xₙ)), N == $(N) "*
+                            "Массив Xₙ должен иметь размерность N+1."))
+    elseif ( typeof(Xₙ) <: Matrix )
+        size(Xₙ) == (N+1, M+1) ||
+        throw(ArgumentError("size(Xₙ) == $(size(Xₙ)), N == $(N), M == $(M) " *
+                            "Массив Xₙ должен иметь размерность (N+1, M+1)."))
+    else
+        throw(ArgumentError("Функция принимает `Xₙ` только в виде вектора или матрицы"))
+    end
     @assert length(Tₘ) == M+1
 
     J_q = zeros(N+1);
 
     for m in 1:M+1
+        if typeof(Xₙ) <: Vector
+            X = Xₙ
+        elseif typeof(Xₙ) <: Matrix
+            X = Xₙ[:, m]
+        else
+            throw(ArgumentError("Функция принимает `Xₙ` только в виде вектора или матрицы"))
+        end
+
         if m != M+1
             τ = Tₘ[m+1] - Tₘ[m]
             J_q  += (( uˢ[:, m] .* ψˢ[:, m] ) + ( uˢ[:, m+1] .* ψˢ[:, m+1] )).* τ / 2
@@ -70,14 +88,16 @@ function J(uˢ::Matrix, Xₙ::Vector, N::Int,
     return J
 end
 
-function minimize(q₀, u₀, ul, ur,
+function minimize(q₀, u₀, ulₘ, urₘ,
                   ψ₀, ψl, ψr,
                   Xₙ, N,
                   Tₘ, M,
                   ε,
-                  f1, f2;
+                  f1_data, f2_data;
                   S = 10,
-                  β = 0.01)
+                  β = 0.01,
+                  w = 0.0001,
+                  create_mesh::Function = x -> [NaN, NaN])
 
     #' ## Подготовка к итерационному процессу
     #
@@ -94,17 +114,17 @@ function minimize(q₀, u₀, ul, ur,
         # Нахождения решения прямой задачи внутри итерационного числа
         # в аргументах отличается лишь вектором `qˢ`.
         # Решение `u` зависит от него как от параметра.
-        uˢ = solve(u₀, Xₙ, N, Tₘ, M, ε, ul, ur, qˢ);
+        uˢ, XXˢ, TPˢ = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qˢ, create_mesh = create_mesh);
 
         # Решаем сопряженную задачу, на вход которой подадим
         # `uˢ`      — Параметр, изменяющийся внутри цикла
         # `f1, f2`  — Параметры, сформированные единожды до цикла
 
-        ψˢ = solve_adjoint(ψ₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qˢ, uˢ, f1, f2);
+        ψˢ = solve_adjoint(ψ₀, XXˢ, N, Tₘ, M, ε, ψl, ψr, qˢ, uˢ, f1_data, f2_data, w=w);
 
-        J_values[s] = J(uˢ, Xₙ, N, Tₘ, M, f1, f2, qˢ);
+        J_values[s] = J(uˢ, Xₙ, N, Tₘ, M, f1_data, f2_data, qˢ);
 
-        ∇J = J_q(uˢ, ψˢ[:,end:-1:1], Xₙ, N, Tₘ, M);
+        ∇J = J_q(uˢ, ψˢ[:,end:-1:1], XXˢ, N, Tₘ, M);
 
         qˢ = qˢ - β * ∇J;
 

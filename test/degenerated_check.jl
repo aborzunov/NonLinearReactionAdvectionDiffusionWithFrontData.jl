@@ -1,7 +1,6 @@
-@testset "Поиск нуля функции" begin
+using NonLinearReactionAdvectionDiffusionWithFrontData: find_f_zeros;
 
-    using NonLinearReactionAdvectionDiffusionWithFrontData: find_f_zeros;
-
+@testset "Поиск нулей функции                              " begin
     g(x) = (x - 1.1)*(x + 1.1) # функция
 
     X1 = collect(range(-2, 0, length=20));
@@ -27,5 +26,4 @@
 
     # Подадим немонотонные значения функции: см первый массив
     @test_throws ArgumentError find_f_zeros( [-1, 1, 3, 2, 4, 5, 6, 8, 7], [-1, 1, 2, 3, 4, 5, 6, 7, 8] )
-
 end
