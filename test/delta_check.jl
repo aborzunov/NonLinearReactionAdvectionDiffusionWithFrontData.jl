@@ -1,3 +1,5 @@
+using NonLinearReactionAdvectionDiffusionWithFrontData;
+
 @testset "Дельта-функция                                   " begin
     N = 20;
     X = [i/N for i in 0:N];

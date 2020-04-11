@@ -1,5 +1,6 @@
 using  NonLinearReactionAdvectionDiffusionWithFrontData;
-using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity
+using  NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity;
+using  NonLinearReactionAdvectionDiffusionWithFrontData: f1, f2;
 using  NonLinearReactionAdvectionDiffusionWithFrontData: apply_on_dynamic_mesh;
 
 @testset "Градиент на точных данных и статической сетке    " begin

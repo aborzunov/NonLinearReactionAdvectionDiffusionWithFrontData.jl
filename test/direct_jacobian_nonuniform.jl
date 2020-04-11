@@ -1,4 +1,6 @@
+using NonLinearReactionAdvectionDiffusionWithFrontData;
 using NonLinearReactionAdvectionDiffusionWithFrontData: shishkin_mesh;
+using LinearAlgebra;
 
 u_l(t) = -8;                    # ГУ
 u_r(t) =  4;                    #

@@ -1,3 +1,5 @@
+using NonLinearReactionAdvectionDiffusionWithFrontData;
+using LinearAlgebra;
 
 u_l(t) = -8 + 4*sin(2*π / T * t);# Прямая задача может быть с неоднородными ГУ
 u_r(t) =  4 + sin(-2*π / T * t);# Но в дальнейшем, будем использовать только однородные.
@@ -41,4 +43,3 @@ tdjac = NonLinearReactionAdvectionDiffusionWithFrontData.∂DRP_∂y(y, 1, Xₙ,
 # Сравним с якобианом автодифференцирования
 jac = NonLinearReactionAdvectionDiffusionWithFrontData.∂directRP_∂y(y, 1, Xₙ, N, ε, ulₘ, urₘ, qq)
 @test isapprox(tdjac, jac)
-

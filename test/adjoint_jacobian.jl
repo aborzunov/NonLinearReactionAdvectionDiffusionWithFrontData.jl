@@ -1,3 +1,4 @@
+using NonLinearReactionAdvectionDiffusionWithFrontData;
 using NonLinearReactionAdvectionDiffusionWithFrontData: f1, f2;
 using NonLinearReactionAdvectionDiffusionWithFrontData: ARP_y, ∂ARP_∂y;
 using LinearAlgebra;

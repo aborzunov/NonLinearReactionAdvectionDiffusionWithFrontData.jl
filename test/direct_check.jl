@@ -54,4 +54,4 @@ u, XX, TP = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, RP, j);
 u, XX, TP = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, RP, NonLinearReactionAdvectionDiffusionWithFrontData.∂DRP_∂y);
 @test all(isapprox.(u_model, u, atol = 0.01))
 
-return (u, u_model, Xₙ, Tₘ)
+(u, u_model, Xₙ, Tₘ)

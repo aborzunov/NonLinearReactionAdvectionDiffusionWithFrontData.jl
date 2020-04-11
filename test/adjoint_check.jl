@@ -130,4 +130,4 @@ j(y, m, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, U, f1, f2, w) = ForwardDiff.jacobi
 ψ = solve_adjoint(ψ₀, Xₙ, N, Tₘ, M, ε, ψl, ψr, qₙ, Uₙₘ, f1_data, f2_data, RP, ∂ARP_∂y, w = ω)
 @test all(isapprox.(ψ_model, ψ, atol = 0.025))
 
-return (ψ, ψ_model, Xₙ, Tₘ)
+(ψ, ψ_model, Xₙ, Tₘ)

@@ -1,3 +1,5 @@
+using NonLinearReactionAdvectionDiffusionWithFrontData;
+
 @testset "Различные вспомогательные функции                " begin
 
     N = 20;
@@ -18,7 +20,6 @@
         @test B == Y[2:N]
         @test_throws AssertionError NonLinearReactionAdvectionDiffusionWithFrontData.strip_borderPoints(B, N)
     end
-
 
 end
 
