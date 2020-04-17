@@ -34,6 +34,8 @@ using ProgressMeter
 export u_init, solve;
 export make_plot, make_gif, make_minimzation_gif;
 export phidetermination, Φ;
+export apply_on_dynamic_mesh;
+export f1, f2;
 export delta, solve_adjoint;
 export J, J_q, minimize;
 
