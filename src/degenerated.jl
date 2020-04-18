@@ -1,6 +1,32 @@
 # Вычисление вырожденных корней
 
 @doc raw"""
+    generate_obs_data(u::Matrix, Xₙ::Vector, N::Int,
+                      Tₘ::Vector, M::Int,
+                      qₙ::Vector,
+                      ulₘ::Vector, urₘ::Vector)
+
+Фнукция-сокращение.
+
+#Return
+`ϕl, ϕr, ϕ, f1_data, f2_data`
+
+"""
+function generate_obs_data(u::Matrix, Xₙ::Vector, N::Int,
+                           Tₘ::Vector, M::Int,
+                           qₙ::Vector,
+                           ulₘ::Vector, urₘ::Vector)
+
+    ϕl      = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                      # Левый вырожденный корень
+    ϕr      = phidetermination(qₙ, urₘ, Xₙ, N, Tₘ, M, reverseX = true);     # Правый вырожденный корень
+    ϕ       = Φ(ϕl, ϕr, N, M);                                              # Серединный корень
+    f1_data = f1(ϕ, u, Xₙ, N, M);                                           # Положение переходного слоя
+    f2_data = f2(f1_data, u, Xₙ, N, M);                                     # Значение функции на переходном слое
+
+    return ϕl, ϕr, ϕ, f1_data, f2_data
+end
+
+@doc raw"""
     phidetermination(q::Vector, ub::Vector,
                      Xₙ::Vector, N::Int,
                      Tₘ::Vector, M::Int;

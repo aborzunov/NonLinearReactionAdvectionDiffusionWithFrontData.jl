@@ -6,6 +6,9 @@ using ForwardDiff, LaTeXStrings, Plots
 
 # Перейдем в каталог текущего файла
 cd(@__DIR__)
+# activates null device as output for GR
+ENV["GKSwstype"] = "100"
+istravis = in("TRAVIS", keys(ENV))
 
 # Autogenerate documentation markdown for for all scripts
 # in "examples/" package subfolder
@@ -17,7 +20,9 @@ function replace_includes(str)
 
     included = [
                 "example_direct.jl",
+                "example_direct_dparams.jl",
                 "example_direct_nonuniform.jl",
+                "example_direct_nonuniform_dparams.jl",
                 ]
 
     # Пусть к каталогу с примерами
@@ -31,13 +36,10 @@ function replace_includes(str)
     return str
 end
 
-Literate.markdown("src/examples/doc_example_direct.jl", "src/examples/"; name = "docexample_direct", preprocess = replace_includes, documenter = true)
-
-# workaround GR warnings
-# activates null device as output for GR
-ENV["GKSwstype"] = "100"
-#istravis = in("TRAVIS", keys(ENV))
-#istravis || GenerateMD.weave(overwrite=true) # Do not generate mds from examples
+Literate.markdown("src/examples/de_direct.jl", "src/generated/"; name = "docexample_direct", preprocess = replace_includes, documenter = true)
+Literate.markdown("src/examples/de_direct_dparams.jl", "src/generated/"; name = "docexample_direct_dparams", preprocess = replace_includes, documenter = true)
+Literate.markdown("src/examples/de_direct_nonuniform.jl", "src/generated/"; name = "docexample_direct_nonuniform", preprocess = replace_includes, documenter = true)
+Literate.markdown("src/examples/de_direct_nonuniform_dparams.jl", "src/generated/"; name = "docexample_direct_nonuniform_dparams", preprocess = replace_includes, documenter = true)
 
 DocMeta.setdocmeta!( NonLinearReactionAdvectionDiffusionWithFrontData, :DocTestSetup, :(using NonLinearReactionAdvectionDiffusionWithFrontData); recursive=true)
 makedocs(
@@ -47,7 +49,10 @@ makedocs(
         "Главная" => "index.md",
         "Прямая задача" => Any["Прямая задача" => "direct/direct.md",
                                "Генерирование априорной информации" => "direct/apriordata.md",
-                               "Пример на статической сетке" => "examples/docexample_direct.md",
+                               "Пример №1 на статической сетке" => "generated/docexample_direct.md",
+                               "Пример №2 на статической сетке" => "generated/docexample_direct_dparams.md",
+                               "Пример №3 на динамической сетке" => "generated/docexample_direct_nonuniform.md",
+                               "Пример №4 на динамической сетке" => "generated/docexample_direct_nonuniform_dparams.md",
                                "Проверка на модельном решении" => "direct/direct_check.md",
                               ],
         "Сопряженная задача" => Any["Сопряженная задача" => "adjoint/adjoint.md",
