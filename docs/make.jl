@@ -4,6 +4,9 @@ using Literate;
 
 using ForwardDiff, LaTeXStrings, Plots
 
+# Перейдем в каталог текущего файла
+cd(@__DIR__)
+
 # Autogenerate documentation markdown for for all scripts
 # in "examples/" package subfolder
 # based on https://github.com/Evizero/Augmentor.jl
