@@ -330,10 +330,9 @@ function solve(y₀::Vector, Xₙ::Vector, N::Int,
     # Для определения положения переходного слоя
     # Найдем полусумму вырожденных корней на всех шагах по времени
     # используя оригинальную сетку.
-    ϕl = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                           # Левый вырожденный корень
-    ϕr = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);         # Нужно подать инвертированную сетку
-    ϕr = reverse(ϕr, dims=1);                                               # А после — инвертировать решение по X
-    ϕ = NonLinearReactionAdvectionDiffusionWithFrontData.Φ(ϕl, ϕr, N, M);   # Серединный корень
+    ϕl = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                   # Левый вырожденный корень
+    ϕr = phidetermination(qₙ, urₘ, Xₙ, N, Tₘ, M, reverseX = true);  # Правый вырожденный корень
+    ϕ  = Φ(ϕl, ϕr, N, M);                                           # Серединный корень
 
     x_tp = find_f_zeros(u[:, 1] - ϕ[:, 1], X);         # Найдем положение переходного слоя
     Xₜₚ[1] = x_tp;

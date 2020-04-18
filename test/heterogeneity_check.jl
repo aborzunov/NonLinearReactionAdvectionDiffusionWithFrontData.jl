@@ -12,8 +12,7 @@ using  NonLinearReactionAdvectionDiffusionWithFrontData: apply_on_dynamic_mesh;
     #' ## Генерация априорной информации
     #########################################################################################
     ϕl      = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                      # Левый вырожденный корень
-    ϕr      = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);    # Нужно подать инвертированную сетку
-    ϕr      = reverse(ϕr, dims=1);                                          # А после — инвертировать решение по X
+    ϕr      = phidetermination(qₙ, urₘ, Xₙ, N, Tₘ, M, reverseX = true);     # Правый вырожденный корень
     ϕ       = Φ(ϕl, ϕr, N, M);                                              # Серединный корень
     f1_data = f1(ϕ, u, Xₙ, N, M);                                           # Положение переходного слоя
     f2_data = f2(f1_data, u, Xₙ, N, M);                                     # Значение функции на переходном слое
@@ -78,8 +77,7 @@ end
     #' ## Генерация априорной информации
     #########################################################################################
     ϕl      = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                          # Левый вырожденный корень
-    ϕr      = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);        # Нужно подать инвертированную сетку
-    ϕr      = reverse(ϕr, dims=1);                                              # А после — инвертировать решение по X
+    ϕr      = phidetermination(qₙ, urₘ, Xₙ, N, Tₘ, M, reverseX = true);         # Правый вырожденный корень
     ϕ       = Φ(ϕl, ϕr, N, M);                                                  # Полуразность вырожденных корней
     ϕ       = apply_on_dynamic_mesh(ϕ, XX, N, M);                               # Аппроксимация на переменную сетку
     ϕl      = apply_on_dynamic_mesh(ϕl, XX, N, M);                              # Аппроксимация на переменную сетку
@@ -97,10 +95,9 @@ end
     hmap(z) = [  - heterogeneity(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, z) for n in 1:N-1, m in 1:M+1]
     nnz(arr) = length( findall( x -> ! isapprox(x, 0), arr ));
 
-    # Количество ненулевых элементов — 0
-    @test nnz(hmap(0.00001)) > M * 0.05         # Много ненулевых элементов,
+    @test nnz(hmap(0.00002)) > M * 0.05         # Много ненулевых элементов,
                                                 # значит итерационный процесс продолжится и уйдет от решения
-    @test nnz(hmap(0.000001)) < M * 0.05        # 0, Не рекомендовано
+    @test nnz(hmap(0.0000001)) < M * 0.05        # 0, Не рекомендовано
     @test 0 < nnz(hmap(0.000003)) < M * 0.01    # 4, Должно быть норм!
 
 end

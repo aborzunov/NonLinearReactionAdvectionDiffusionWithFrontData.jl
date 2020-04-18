@@ -271,7 +271,7 @@ end
 # Return
     `a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ `
 """
-function dparams(;x_tp = 0.1, qfunc = x -> sin(3pi*x),
+function dparams(;x_tp = 0.1, qfunc = x -> 4*sin(3pi*x),
                  ε = 0.2,
                  a = 0.0, b = 1.0,
                  t_start = 0.0, T_end = 0.36,

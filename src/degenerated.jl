@@ -3,18 +3,31 @@
 @doc raw"""
     phidetermination(q::Vector, ub::Vector,
                      Xₙ::Vector, N::Int,
-                     Tₘ::Vector, M::Int)
+                     Tₘ::Vector, M::Int;
+                     reverseX = false)
 
 Решает ОДУ для нахождения вырожденного корня.
+
+`reverseX` флаг обозначающий направления интегрирования по оси ``X``.
 """
-function phidetermination(q::Vector, ub::Vector,
+function phidetermination(qₙ::Vector, ub::Vector,
                           Xₙ::Vector, N::Int,
-                          Tₘ::Vector, M::Int)
-    @assert length(q ) == N + 1
+                          Tₘ::Vector, M::Int;
+                          reverseX::Bool = false)
+
+    @assert length(qₙ) == N + 1
     @assert length(Xₙ) == N + 1
 
     @assert length(ub) == M + 1
     @assert length(Tₘ) == M + 1
+
+    if (Xₙ[end] - Xₙ[1]) < 0
+        throw(ArgumentError("Сетку следует передавать в нормальном виде," *
+                            " а не инвертированном. Исльзуйте kw `reverseX`."))
+    end
+
+    X = reverseX ? reverse(Xₙ) : Xₙ;
+    q = reverseX ? reverse(qₙ) : qₙ;
 
     phi = zeros(N + 1, M + 1);
 
@@ -24,11 +37,11 @@ function phidetermination(q::Vector, ub::Vector,
         phi[1,m] = ub[m];
 
         for n = 1:N
-            phi[n+1, m ] = phi[n, m ] + (Xₙ[n+1] - Xₙ[n]) * ( q[n+1] + q[n] ) / 2;
+            phi[n+1, m ] = phi[n, m ] + (X[n+1] - X[n]) * ( q[n+1] + q[n] ) / 2;
         end
     end
 
-    return phi
+    return reverseX ? reverse(phi, dims=1) : phi
 end
 
 @doc raw"""

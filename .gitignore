@@ -12,8 +12,9 @@
 *.png
 *.m
 
-# Generated files purposed to be created at deploy stage
-/docs/src/generated/*
+# Здесь хранятся сгенерированные md файлы
+# Внутри есть .gitkeep чтобы каталог существовал в git-e
+/docs/src/generated/*.md
 
 #results dir with gifs/mp4s
 # mp4s in docs/src/assets/ are being tracked further

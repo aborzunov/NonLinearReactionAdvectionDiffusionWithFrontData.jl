@@ -33,12 +33,11 @@ using LinearAlgebra;
     nothing #hide
 
     #' ## Генерация априорной информации
-    ϕl      = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                              # Левый вырожденный корень
-    ϕr      = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);            # Нужно подать инвертированную сетку
-    ϕr      = reverse(ϕr, dims=1);                                                  # А после — инвертировать решение по X
-    ϕ       = Φ(ϕl, ϕr, N, M);                                                      # Серединный корень
-    f1_data = f1(ϕ, u, Xₙ, N, M);                                                   # Положение переходного слоя
-    f2_data = f2(f1_data, u, Xₙ, N, M);                                             # Значение функции на переходном слое
+    ϕl      = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                  # Левый вырожденный корень
+    ϕr      = phidetermination(qₙ, urₘ, Xₙ, N, Tₘ, M, reverseX = true); # Правый вырожденный корень
+    ϕ       = Φ(ϕl, ϕr, N, M);                                          # Серединный корень
+    f1_data = f1(ϕ, u, Xₙ, N, M);                                       # Положение переходного слоя
+    f2_data = f2(f1_data, u, Xₙ, N, M);                                 # Значение функции на переходном слое
     nothing #hide
 
     #' ## Решение сопряженной задачи
@@ -99,8 +98,7 @@ end
     u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, create_mesh = mshfrm);
     #' ## Генерация априорной информации
     ϕl      = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                          # Левый вырожденный корень
-    ϕr      = phidetermination(reverse(qₙ), urₘ, reverse(Xₙ), N, Tₘ, M);        # Нужно подать инвертированную сетку и q
-    ϕr      = reverse(ϕr, dims=1);                                              # А после — инвертировать решение по X
+    ϕr      = phidetermination(qₙ, urₘ, Xₙ, N, Tₘ, M, reverseX = true);         # Правый вырожденный корень
     ϕ       = Φ(ϕl, ϕr, N, M);                                                  # Полуразность вырожденных корней
     ϕ       = apply_on_dynamic_mesh(ϕ, XX, N, M);                               # Аппроксимация на переменную сетку
     ϕl      = apply_on_dynamic_mesh(ϕl, XX, N, M);                              # Аппроксимация на переменную сетку
