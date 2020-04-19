@@ -37,23 +37,23 @@ function replace_includes(str)
 end
 
 Literate.markdown("src/examples/de_direct.jl", "src/generated/"; name = "docexample_direct", preprocess = replace_includes, documenter = true)
-Literate.markdown("src/examples/de_direct_dparams.jl", "src/generated/"; name = "docexample_direct_dparams", preprocess = replace_includes, documenter = true)
-Literate.markdown("src/examples/de_direct_nonuniform.jl", "src/generated/"; name = "docexample_direct_nonuniform", preprocess = replace_includes, documenter = true)
-Literate.markdown("src/examples/de_direct_nonuniform_dparams.jl", "src/generated/"; name = "docexample_direct_nonuniform_dparams", preprocess = replace_includes, documenter = true)
+#Literate.markdown("src/examples/de_direct_dparams.jl", "src/generated/"; name = "docexample_direct_dparams", preprocess = replace_includes, documenter = true)
+#Literate.markdown("src/examples/de_direct_nonuniform.jl", "src/generated/"; name = "docexample_direct_nonuniform", preprocess = replace_includes, documenter = true)
+#Literate.markdown("src/examples/de_direct_nonuniform_dparams.jl", "src/generated/"; name = "docexample_direct_nonuniform_dparams", preprocess = replace_includes, documenter = true)
 
 DocMeta.setdocmeta!( NonLinearReactionAdvectionDiffusionWithFrontData, :DocTestSetup, :(using NonLinearReactionAdvectionDiffusionWithFrontData); recursive=true)
 makedocs(
     modules=[NonLinearReactionAdvectionDiffusionWithFrontData],
     format=Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     pages= Any[
-        "Главная" => "index.md",
-        "Прямая задача" => Any["Прямая задача" => "direct/direct.md",
-                               "Генерирование априорной информации" => "direct/apriordata.md",
-                               "Пример №1 на статической сетке" => "generated/docexample_direct.md",
-                               "Пример №2 на статической сетке" => "generated/docexample_direct_dparams.md",
-                               "Пример №3 на динамической сетке" => "generated/docexample_direct_nonuniform.md",
-                               "Пример №4 на динамической сетке" => "generated/docexample_direct_nonuniform_dparams.md",
-                               "Проверка на модельном решении" => "direct/direct_check.md",
+        "index.md",
+        "Прямая задача" => Any["direct/direct.md",
+                               "direct/experimental_data.md",
+                               "generated/docexample_direct.md",
+                               #"generated/docexample_direct_dparams.md",
+                               #"generated/docexample_direct_nonuniform.md",
+                               #"generated/docexample_direct_nonuniform_dparams.md",
+                               "direct/direct_check.md",
                               ],
         "Сопряженная задача" => Any["Сопряженная задача" => "adjoint/adjoint.md",
                                     "Проверка корректности решения сопряженной задачи" => "adjoint/adjoint_check.md",

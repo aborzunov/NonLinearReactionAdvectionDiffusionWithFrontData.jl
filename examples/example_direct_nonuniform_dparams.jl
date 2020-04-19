@@ -1,16 +1,17 @@
+# ## [Пример №4, краткий, динамическая сетка](@id de_4)
+#
+# Делаем тоже самое, что в [развернотом примере](@ref de_3),
+# только с использованием функций сокращений и стандартных параметров.
 using NonLinearReactionAdvectionDiffusionWithFrontData
 using NonLinearReactionAdvectionDiffusionWithFrontData: shishkin_mesh;
-using NonLinearReactionAdvectionDiffusionWithFrontData: f1, f2;
-using NonLinearReactionAdvectionDiffusionWithFrontData: phidetermination, apply_on_dynamic_mesh, Φ;
 
-# ## Задача параметров и решение в коротком виде
-#
-a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀, mshfrm = NonLinearReactionAdvectionDiffusionWithFrontData.dparams_nonuniform();
-u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, create_mesh = mshfrm);
+## Задача параметров и решение в коротком виде
+a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀, mshfrm_std = NonLinearReactionAdvectionDiffusionWithFrontData.dparams_nonuniform();
+u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, create_mesh = mshfrm_std);
 nothing #hide
 
 
-# ## Генерация априорной информации
+## Генерация априорной информации
 ϕl      = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                  # Левый вырожденный корень
 ϕr      = phidetermination(qₙ, urₘ, Xₙ, N, Tₘ, M, reverseX = true); # Правый вырожденный корень
 ϕ       = Φ(ϕl, ϕr, N, M);                                          # Полуразность вырожденных корней
