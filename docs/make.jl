@@ -65,9 +65,11 @@ Literate.markdown("src/examples/dt_direct.jl", "src/generated/"; name = "doctest
 content1 = read(dirname(dirname(pathof(NonLinearReactionAdvectionDiffusionWithFrontData)))*"/docs/src/direct/direct_check.md", String)
 content2 = read(dirname(dirname(pathof(NonLinearReactionAdvectionDiffusionWithFrontData)))*"/docs/src/generated/doctest_direct.md", String)
 
-io = open(dirname(dirname(pathof(NonLinearReactionAdvectionDiffusionWithFrontData)))*"/docs/src/direct/direct_check.md", "w")
-print(io, content1 * content2)
-close(io)
+if ! occursin("# ## Непосредственная реализация проверки", content1)
+    io = open(dirname(dirname(pathof(NonLinearReactionAdvectionDiffusionWithFrontData)))*"/docs/src/direct/direct_check.md", "w")
+    print(io, content1 * content2)
+    close(io)
+end
 
 
 DocMeta.setdocmeta!( NonLinearReactionAdvectionDiffusionWithFrontData, :DocTestSetup, :(using NonLinearReactionAdvectionDiffusionWithFrontData); recursive=true)
