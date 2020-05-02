@@ -40,7 +40,7 @@ Pages = [
     "direct/direct.md",
     "direct/experimental_data.md",
     "generated/docexample_direct.md",
-    "direct/direct_check.md",
+    "generated/direct_check.md",
 ]
 Depth = 1
 ```

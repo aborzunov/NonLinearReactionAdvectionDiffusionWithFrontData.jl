@@ -10,11 +10,6 @@ cd(@__DIR__)
 ENV["GKSwstype"] = "100"
 istravis = in("TRAVIS", keys(ENV))
 
-# Autogenerate documentation markdown for for all scripts
-# in "examples/" package subfolder
-# based on https://github.com/Evizero/Augmentor.jl
-#include("generatemd.jl")
-
 # Функция реализующая предобработку примеров
 function replace_includes_examples(str)
 
@@ -43,7 +38,7 @@ function replace_includes_test(str)
                 "direct_check.jl",
                 ]
 
-    # Пусть к каталогу с примерами
+    # Пусть к каталогу с тестами
     path = dirname(dirname(pathof(NonLinearReactionAdvectionDiffusionWithFrontData)))*"/test/"
 
     for ex in included
@@ -65,9 +60,11 @@ Literate.markdown("src/examples/dt_direct.jl", "src/generated/"; name = "doctest
 content1 = read(dirname(dirname(pathof(NonLinearReactionAdvectionDiffusionWithFrontData)))*"/docs/src/direct/direct_check.md", String)
 content2 = read(dirname(dirname(pathof(NonLinearReactionAdvectionDiffusionWithFrontData)))*"/docs/src/generated/doctest_direct.md", String)
 
-io = open(dirname(dirname(pathof(NonLinearReactionAdvectionDiffusionWithFrontData)))*"/docs/src/direct/direct_check.md", "w")
-print(io, content1 * content2)
+composed_path = dirname(dirname(pathof(NonLinearReactionAdvectionDiffusionWithFrontData)))*"/docs/src/generated/direct_check.md";
+io = open(composed_path, "w+")
+print(io, content1 * "\n" * content2)
 close(io)
+@info "writing composed file to $(composed_path)"
 
 
 DocMeta.setdocmeta!( NonLinearReactionAdvectionDiffusionWithFrontData, :DocTestSetup, :(using NonLinearReactionAdvectionDiffusionWithFrontData); recursive=true)
@@ -79,7 +76,7 @@ makedocs(
         "Прямая задача" => Any["direct/direct.md",
                                "direct/experimental_data.md",
                                "generated/docexample_direct.md",
-                               "direct/direct_check.md",
+                               "generated/direct_check.md",
                               ],
         "Сопряженная задача" => Any["Сопряженная задача" => "adjoint/adjoint.md",
                                     "Проверка корректности решения сопряженной задачи" => "adjoint/adjoint_check.md",
