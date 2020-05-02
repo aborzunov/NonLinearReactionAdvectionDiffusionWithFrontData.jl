@@ -17,7 +17,7 @@
         &\mathbf{\textbf{y}}_{init} = \big(u_{init} (x_1) \; u_{init} (x_2) \; \ldots \; u_{init} (x_{N - 1}) \big)^T.
     \end{aligned}
 ```
-``u_init(x_n)`` вычисляется с помощью [`u_init(x)`](@ref).
+``u_{\text{init}}(x_n)`` вычисляется с помощью [`u_init(x)`](@ref).
 
 
 То текущая функция определяет вектор-функцию $\mathbf{\textbf{f}}$ следующим образом:
