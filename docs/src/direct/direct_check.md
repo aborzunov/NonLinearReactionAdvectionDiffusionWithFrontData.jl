@@ -26,7 +26,7 @@
 * ``\frac{\partial g}{\partial t} = -2 \sin(\pi x)``.
 
 Подстановка пробной функции в исходной уравнение
-(см. [Постановка прямой задачи](@ref direct_formulation)), позволит нам определить
+(см. [Постановка прямой задачи](@ref direct-formulation)), позволит нам определить
 ``g_d``
 ```math
 g_d(x,t) = 2 \sin(\pi x) - \varepsilon \pi^2 (1 - 2t) \sin(\pi x) +
@@ -62,8 +62,9 @@ g_d(x,t) = 2 \sin(\pi x) - \varepsilon \pi^2 (1 - 2t) \sin(\pi x) +
 формулах якобиана.
 
 Такая проверка корректности решения применяется в unit тесте
-`"tests/direct_with_model.jl"`. Здесь мы сделаем `include`, а
+`"tests/direct_check.jl"`. Здесь мы сделаем `include`, а
 [Literate.jl](https://github.com/fredrikekre/Literate.jl) включит
-текст теста вместе с результатами его выполнения  в этот md файл (_см.
-`make.jl`, строго говоря, конкретно здесь мы дописываем в этот файл содержимое
-файла, который сгенерирует `Litarate.jl` из `dt_direct.jl`_).
+текст теста вместе с результатами его выполнения  в этот md файл ( _см.
+`make.jl`, строго говоря, конкретно здесь, мы компануем этот файл и содержимое
+файла, который сгенерирует `Litarate.jl` из `dt_direct.jl` в
+`docs/src/generated/direct_check.jl` _ ).
