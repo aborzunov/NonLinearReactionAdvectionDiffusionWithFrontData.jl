@@ -1,59 +1,131 @@
-# Алгоритм решения прямой задачи
+# Прямая задача
 
-Если записать систему в следующем виде:
+## [Постановка прямой задачи](@id direct-formulation)
+
+Прямая задача представляет из себя параболическое уравнение типа
+реакция-адвекция-диффузия для отрезка ``[0,1]`` с граничными условиями
+первого рода, где искомая функция ``u(x,y)`` подлежит определению на
+полуинтервале ``(0, T]``
+```math
+\left\{
+\begin{aligned}
+    &\varepsilon\frac{\partial^2 u}{\partial x^2} -
+    \frac{\partial u}{\partial t} = -u \frac{\partial u}{\partial x} +
+    q(x)\,u, \quad x \in (0,1), \quad t \in (0,T], \\
+    &u(0,t) = u_l(t), \quad u(1,t) = u_r(t), \quad t \in (0,T], \\
+    &u(x,t) = u_i(x), \qquad x \in [0,1], t=0.
+\end{aligned}
+\right.
+```
+
+## Схема решения
+
+Схема решения будет подробно объяснена на равномерной сетке.
+Формулы для неравномерной сетки будет даны без объяснений.
+В обоих случаях будет использоваться метод жестких прямых для сведения
+уравнения в частных производных к системе обыкновенных дифференциальных
+уравнений. После чего, последняя будет решаться с помощью одностадийной схемы Розенброка с
+комплексными коэффициентами (CROS1).
+
+Введём равномерную сетку ``X_N`` с ``N`` интервалами по пространственной
+переменной ``x`` с шагом `` h = 1/N``: ``X_N = \lbrace x_n, 0 \le n \le N:
+x_n = n h \rbrace``.
+Произведём конечно-разностную аппроксимацию пространственных производных,
+перенесём всё в правую часть, так, чтобы слева осталась только производная по
+времени и получим дифференциально-алгебраическую систему, где количество
+неизвестных ``u_n \equiv u_n(t) \equiv u(x_n, t), n = \overline{0, N}``
+равняется ``N+1``.
+
+```math
+\left\{
+    \begin{aligned}
+    & \frac{d u}{d t} = \varepsilon \frac{u_{n+1} - 2 u_n + u_{n-1}}{h^2} +
+    u_n \frac{u_{n+1} - u_{n-1}}{2h} - q_n u_n, \quad n = \overline{1, N-1}, t \in
+    (0, T] \\
+    & u_0 = u_l(t), u_N = u_r(t), \quad t \in (0, T], \\
+    & u(x_n, 0) = u_i(x_n), \quad x \in [0, 1], t =0.
+    \end{aligned}
+\right.
+```
+
+Теперь сведём полученную дифференциально-алгебраическую систему к системе
+обыкновенных дифференциальных уравнений их ``N-1`` уравнений с ``N-1``
+неизвестной путем подстановки алгебраических
+выражений для ``u_0, u_N`` в правую часть дифференциальных уравнений
+```math
+\left\{
+\begin{aligned}
+    & \frac{du}{dt} = \frac{u_{2} - 2 u_1 + u_l(t)}{h^2} + u_1
+    \frac{u_2 - u_l(t)}{2h} - q_1 u_1, \quad t \in (0, T] \\
+    & \frac{d u}{d t} = \varepsilon \frac{u_{n+1} - 2 u_n + u_{n-1}}{h^2} +
+    u_n \frac{u_{n+1} - u_{n-1}}{2h} - q_n u_n, \quad n = \overline{2, N-2},
+    t \in (0, T] \\
+    & \frac{du}{dt} = \varepsilon \frac{u_r(t) - 2 u_{N-1} + u_{N-2}}{h^2} +
+    u_{N-1} \frac{u_r(t) - u_{N-2}}{2h} - q_{N-1} u_{N-1}, \quad t \in (0, T]\\
+    & u_n(0) = u_i(x_n), \quad n = \overline{0, N} .
+\end{aligned}
+\right.
+```
+
+Введём новый вектор искомой функции ``\mathbf{y} =
+(u_1, u_2, \dots, u_{N-1})^T``, тогда можно записать систему в следующем виде:
 ```math
     \left\{
     \begin{aligned}
-        &\dfrac{d \mathbf{\textbf{y}}}{d t} = \mathbf{\textbf{f}} \, (\mathbf{\textbf{y}},t), \quad t \in (t_0,T],\\
-        &\mathbf{\textbf{y}}(t_0) = \mathbf{\textbf{y}}_{init},
+        &\frac{d \mathbf{y}}{d t} = \mathbf{f} \, (\mathbf{y},t), \quad t \in (0,T],\\
+        &\mathbf{y}(0) = \mathbf{y}_i,
     \end{aligned}
     \right.
 ```
 где
 ```math
     \begin{aligned}
-        &\mathbf{\textbf{y}} = \big(u_1 \; u_2 \;  \ldots \; u_{N - 1} \big)^T, \\
-        &\mathbf{\textbf{f}} = \big(f_1 \; f_2 \; \ldots \; f_{N - 1}\big)^T, \\
-        &\mathbf{\textbf{y}}_{init} = \big(u_{init} (x_1) \; u_{init} (x_2) \; \ldots \; u_{init} (x_{N - 1}) \big)^T.
+        &\mathbf{y} = \big(u_1 \; u_2 \;  \ldots \; u_{N - 1} \big)^T, \\
+        &\mathbf{f} = \big(f_1 \; f_2 \; \ldots \; f_{N - 1}\big)^T, \\
+        &\mathbf{y}_i = \big(u_i (x_1) \; u_i (x_2) \; \ldots \; u_i (x_{N - 1}) \big)^T,
     \end{aligned}
 ```
-``u_{\text{init}}(x_n)`` вычисляется с помощью [`u_init(x)`](@ref).
-
-
-То текущая функция определяет вектор-функцию $\mathbf{\textbf{f}}$ следующим образом:
+вектор-функция правой части ``\mathbf{f}`` определяется следующим
+образом:
 ```math
     \begin{aligned}
-        &f_1 =       \varepsilon \dfrac{y_{2}        - 2y_1       + u_{left}(t)}{h^2} + y_1       \dfrac{y_{2}        - u_{left}(t)}{2h} - q(x_1) y_1, \\
-        &f_n =       \varepsilon \dfrac{y_{n + 1}    - 2y_n       + y_{n - 1}}{h^2}   + y_n       \dfrac{y_{n + 1}    - y_{n - 1}}{2h}   - q(x_n) u_n, \quad n=\overline{2, N-2}, \\
-        &f_{N - 1} = \varepsilon \dfrac{u_{right}(t) - 2y_{N - 1} + y_{N - 2}}{h^2}   + y_{N - 1} \dfrac{u_{right}(t) - y_{N - 2}}{2h}   - q(x_{N-1}) y_{N-1}.
+        &f_1 =       \varepsilon \frac{y_{2}     - 2y_1  + u_l(t)}{h^2}
+        + y_1       \frac{y_{2}        - u_l(t)}{2h} - q(x_1) y_1, \\
+        &f_n =       \varepsilon \frac{y_{n + 1} - 2y_n  + y_{n - 1}}{h^2}
+        + y_n       \frac{y_{n + 1}    - y_{n - 1}}{2h}   - q(x_n) u_n, \quad n=\overline{2, N-2}, \\
+        &f_{N - 1} = \varepsilon \frac{u_r(t) - 2y_{N - 1} + y_{N - 2}}{h^2}
+        + y_{N - 1} \frac{u_r(t) - y_{N - 2}}{2h}   - q(x_{N-1}) y_{N-1}.
     \end{aligned}
 ```
-На каждом временном шаге, решение находится как:
+Решение на следующем временном определяется как
 ```math
     \begin{aligned}
-        &\mathbf{\textbf{y}}(t_{m + 1}) = \mathbf{\textbf{y}}(t_m) + (t_{m + 1} - t_m) \, \mathrm{Re} \, \mathbf{\textbf{w}}_1,\\
+        &\mathbf{y}(t_{m + 1}) = \mathbf{y}(t_m) + (t_{m + 1} - t_m) \, \mathrm{Re} \, \mathbf{w},\\
     \end{aligned}
 ```
-где ``W_1`` находится из
+где ``w`` находится
 ```math
 \begin{aligned}
-    &\left[\mathbf{\textbf{E}} - \alpha \, (t_{m + 1} - t_m) \, \mathbf{\textbf{f}}_\mathbf{\textbf{y}}\Big(\mathbf{\textbf{y}}(t_m),t_m\Big)\right] \, \mathbf{\textbf{w}}_1 = \\
-    &\qquad\qquad\qquad\qquad\quad = \mathbf{\textbf{f}} \, \Big(\mathbf{\textbf{y}}(t_m),\frac{t_{m + 1} + t_m}{2}\Big).
+    &\left[\mathbf{E} - \alpha \, (t_{m + 1} - t_m) \, \mathbf{f}_\mathbf{y}\Big(\mathbf{y}(t_m),t_m\Big)\right] \, \mathbf{w}_1 = \\
+    &\qquad\qquad\qquad\qquad\quad = \mathbf{f} \, \Big(\mathbf{y}(t_m),\frac{t_{m + 1} + t_m}{2}\Big).
 \end{aligned}
 ```
 
-``\mathbf{f}_\mathbf{y}(\mathbf{y}(t_m), t_m)`` — якобиан функции [`NonLinearReactionAdvectionDiffusionWithFrontData.directRP`](@ref) по вектору ``y`` (в момент времени ``t_m``) в момент времени ``t\_m``.
-Эта матрица Якоби имеет следущие ненулевые элементы.
+``\mathbf{f}_\mathbf{y}(\mathbf{y}(t_m), t_m)`` — якобиан функции ``f``
+по вектору ``y(t_m)``, где члены явно зависящие от времени взяты при ``t\_m``.
+Эта матрица Якоби имеет следующие ненулевые элементы.
 ```math
 \begin{aligned}
-    & \left(f_y\right)_{1,1}  & \equiv & \frac{\partial f_1}{\partial y_1} & = & \varepsilon\dfrac{-2}{h^2} - \dfrac{y_{2} - u_{left}(t)}{2h} + q(x_1), \\
+    & \left(f_y\right)_{1,1}  & \equiv & \frac{\partial f_1}{\partial y_1} & = & \varepsilon\frac{-2}{h^2} - \frac{y_{2} - u_l(t)}{2h} + q(x_1), \\
 
-     & \left(f_y\right)_{n,n - 1}  & \equiv & \frac{\partial f_n}{\partial y_{n - 1}} & = & \varepsilon \dfrac{1}{h^2} + \dfrac{y_{n}}{2h}, \quad n=\overline{2, N-1},\\
+     & \left(f_y\right)_{n,n - 1}  & \equiv & \frac{\partial f_n}{\partial y_{n - 1}} & = & \varepsilon \frac{1}{h^2} + \frac{y_{n}}{2h}, \quad n=\overline{2, N-1},\\
 
-     & \left(f_y\right)_{n,n}  & \equiv & \frac{\partial f_n}{\partial y_{n}} & = &  -\varepsilon \dfrac{2}{h^2} - \dfrac{y_{n+1} - y_{n-1}}{2h} + q(x_n), \quad n=\overline{2, N-2},\\
+     & \left(f_y\right)_{n,n}  & \equiv & \frac{\partial f_n}{\partial y_{n}} & = &  -\varepsilon \frac{2}{h^2} - \frac{y_{n+1} - y_{n-1}}{2h} + q(x_n), \quad n=\overline{2, N-2},\\
 
-     & \left(f_y\right)_{n,n + 1}  & \equiv & \frac{\partial f_n}{\partial y_{n + 1}} & = & \varepsilon \dfrac{1}{h^2} - \dfrac{y_{n}}{2h}, \quad n=\overline{1, N-2},\\
+     & \left(f_y\right)_{n,n + 1}  & \equiv & \frac{\partial f_n}{\partial y_{n + 1}} & = & \varepsilon \frac{1}{h^2} - \frac{y_{n}}{2h}, \quad n=\overline{1, N-2},\\
 
-     & \left(f_y\right)_{N - 1,N - 1}  & \equiv & \frac{\partial f_{N - 1}}{\partial y_{N - 1}} & = &  \varepsilon \dfrac{-2}{h^2} - \dfrac{u_{right}(t) - y_{N - 2}}{2h} + q(x_N).
+     & \left(f_y\right)_{N - 1,N - 1}  & \equiv & \frac{\partial f_{N - 1}}{\partial y_{N - 1}} & = &  \varepsilon \frac{-2}{h^2} - \frac{u_r(t) - y_{N - 2}}{2h} + q(x_N).
 \end{aligned}
 ```
+
+## Случай неравномерной сетки

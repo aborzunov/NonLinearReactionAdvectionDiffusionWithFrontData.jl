@@ -8,15 +8,17 @@ end
 
 # Главная
 
-## Постановка обратной задачи
+## Постановка задачи
 
 Рассмотрим прямую задачу для сингулярно возмущенного уравнения типа Бюргерса:
 ```math
 \left\{
 \begin{aligned}
-    &\varepsilon\frac{\partial^2 u}{\partial x^2} - \frac{\partial u}{\partial t} = -u \frac{\partial u}{\partial x} +  q(x)\,u, \quad x \in (0,1), \quad t \in (0,T), \\
-    &u(0,t) = u_{left}(t), \quad u(1,t) = u_{right}(t), \quad t \in (0,T), \\
-    &u(x,t) = u_{init}(x), \qquad x \in [0,1].
+    &\varepsilon\frac{\partial^2 u}{\partial x^2} -
+    \frac{\partial u}{\partial t} = -u \frac{\partial u}{\partial x} +
+    q(x)\,u, \quad x \in (0,1), \quad t \in (0,T], \\
+    &u(0,t) = u_l(t), \quad u(1,t) = u_r(t), \quad t \in (0,T], \\
+    &u(x,t) = u_i(x), \qquad x \in [0,1], t=0.
 \end{aligned}
 \right.
 ```
