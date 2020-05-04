@@ -88,16 +88,26 @@ x_n = n h \rbrace``.
 вектор-функция правой части ``\mathbf{f}`` определяется следующим
 образом:
 ```math
+\mathbf{f} = \left\{
     \begin{aligned}
         &f_1 =       \varepsilon \frac{y_{2}     - 2y_1  + u_l(t)}{h^2}
         + y_1       \frac{y_{2}        - u_l(t)}{2h} - q(x_1) y_1, \\
+
         &f_n =       \varepsilon \frac{y_{n + 1} - 2y_n  + y_{n - 1}}{h^2}
-        + y_n       \frac{y_{n + 1}    - y_{n - 1}}{2h}   - q(x_n) u_n, \quad n=\overline{2, N-2}, \\
+        + y_n       \frac{y_{n + 1}    - y_{n - 1}}{2h}   - q(x_n) u_n,
+        \quad n=\overline{2, N-2}, \\
+
         &f_{N - 1} = \varepsilon \frac{u_r(t) - 2y_{N - 1} + y_{N - 2}}{h^2}
         + y_{N - 1} \frac{u_r(t) - y_{N - 2}}{2h}   - q(x_{N-1}) y_{N-1}.
     \end{aligned}
+    \right.
 ```
-Решение на следующем временном определяется как
+
+Введём равномерную сетку по времени ``T_M`` с шагом ``\tau = T/M``, состоящую
+из ``M`` интервалов и ``M+1`` точек:
+``T_M = \lbrace t_m, 0 \le m \le M: t_m = \tau m \rbrace ``.
+
+Записав однастадийную схему Розенброка, ешение на следующем временном определяется как
 ```math
     \begin{aligned}
         &\mathbf{y}(t_{m + 1}) = \mathbf{y}(t_m) + (t_{m + 1} - t_m) \, \mathrm{Re} \, \mathbf{w},\\
@@ -124,8 +134,97 @@ x_n = n h \rbrace``.
 
      & \left(f_y\right)_{n,n + 1}  & \equiv & \frac{\partial f_n}{\partial y_{n + 1}} & = & \varepsilon \frac{1}{h^2} - \frac{y_{n}}{2h}, \quad n=\overline{1, N-2},\\
 
-     & \left(f_y\right)_{N - 1,N - 1}  & \equiv & \frac{\partial f_{N - 1}}{\partial y_{N - 1}} & = &  \varepsilon \frac{-2}{h^2} - \frac{u_r(t) - y_{N - 2}}{2h} + q(x_N).
+     & \left(f_y\right)_{N - 1,N - 1}  & \equiv & \frac{\partial f_{N - 1}}{\partial y_{N - 1}} & = &  \varepsilon \frac{-2}{h^2} - \frac{u_r(t) - y_{N - 2}}{2h} + q(x_{N-1}).
 \end{aligned}
 ```
 
+Если от нас потребуется использовать сеточные значения ``u_l(t), u_r(t), q(x)``,
+то используются соответствующие сетки заменим их на ``u_l^m, u_r^m, q_n``
+соответственно.
+
 ## Случай неравномерной сетки
+
+Введение неравномерной сетки необходимо для эффективной обработки случаев,
+когда малый параметр ``\varepsilon`` начинает приобретать достаточно большой
+порядок малости, и вычисления на равномерной сетке становятся слишком долгими.
+Тогда мы сгустим сетку в окрестностях особенностей решения.
+В дальнейшем мы будем использовать кусочно-равномерную сетку, но формулы
+запишем в общем виде для неравномерных сеток.
+
+Подход к решению остаётся неизменным, нужно лишь модифицировать формулы
+``\mathbf{f}`` и ``\mathbf{F}_{\mathbf{y}}`` для неравномерной сетки.
+Запишем их с использованием сеточных значений ``u_l^m, u_r^m, q_n``.
+
+```math
+\mathbf{f} = \left\{
+\begin{aligned}
+        &f_1 =  \frac{2 \varepsilon}{x_2 - x_0} \left(
+              \frac{y_{2} - y_1}{x_2 - x_1}
+            - \frac{y_{1} + u_l^m}{x_1 - x_0}
+        \right)
+        + y_1 \frac{y_{2} - u_l^m}{x_2 - x_0} - q_{1} y_1, \\
+
+        &f_n =  \frac{2 \varepsilon}{x_{n+1} - x_{n-1}}
+        \left(
+              \frac{y_{n+1} - y_{n}}{x_{n+1} - x_{n}}
+            - \frac{y_{n} + y_{n-1}}{x_{n} - x_{n-1}}
+        \right)
+        + y_n  \frac{y_{n + 1} - y_{n - 1}}{x_{n+1} - x_{n-1}}
+        - q_{n} u_n, \quad n=\overline{2, N-2}, \\
+
+        &f_{N - 1} =  \frac{2 \varepsilon}{x_{N} - x_{N-1}}
+        \left(
+              \frac{u_r^m - y_{N - 1}}{x_{N} - x_{N-1}}
+            - \frac{y_{N-1} + y_{N - 2}}{x_{N-1} - x_{N-2}}
+        \right)
+        + y_{N - 1} \frac{u_r^m - y_{N - 2}}{x_{N} - x_{N-2}}
+        - q_{N-1} y_{N-1}.
+\end{aligned}
+\right.
+```
+
+Ненулевые элементы матрицы Якоби
+```math
+\begin{aligned}
+    (f_y)_{1, 1}          & =
+    \frac{2 \varepsilon}{x_2 - x_0}
+    \left(
+        \frac{-1}{x_{2} - x_{1}} - \frac{1}{x_{1} - x_{0}}
+    \right)
+    + \frac{y_{2} - u_l^m}{x_2 - x_0} - q_1, \\
+
+    (f_y)_{n, n - 1}      & =
+    \frac{2 \varepsilon}{x_{n+1} - x_{n-1}}
+    \left(
+        \frac{1}{x_{n} - x_{n-1}}
+    \right)
+    - \frac{y_{n}}{x_{n+1} - x_{n-1}}, \quad n=\overline{2, N-1},\\
+
+    (f_y)_{n, n}          & =
+    \frac{2 \varepsilon}{x_{n+1} - x_{n-1}}
+    \left(
+        \frac{-1}{x_{n+1} - x_{n}} - \frac{1}{x_{n} - x_{n-1}}
+    \right)
+    + \frac{y_{n+1} - y_{n-1}}{x_{n+1} - x_{n-1}} - q_n, \quad n=\overline{2, N-2},\\
+
+    (f_y)_{n, n + 1}      & =
+    \frac{2 \varepsilon}{x_{n+1} - x_{n-1}}
+    \left(
+        \frac{1}{x_{n+1} - x_{n}}
+    \right)
+    + \frac{y_{n}}{x_{n+1} - x_{n-1}}, \quad n=\overline{1, N-2},\\
+
+    (f_y)_{N - 1,N - 1} & =
+    \frac{2 \varepsilon}{x_{N} - x_{N-2}}
+    \left(
+        \frac{-1}{x_{N} - x_{N-1}} - \frac{1}{x_{N-1} - x_{N-2}}
+    \right)
+    + \frac{u_r^m - y_{N - 2}}{x_{N} - x_{N-2}} - q_{N-1}.
+\end{aligned}
+```
+
+## Случай динамической сеткe
+
+В дальнейшем, мы построим алгоритм определения положения переходного слоя.
+!!! tip Изменение алгоритма при динамической сетке
+    Ну собственно здесь нужно нормально всё описать
