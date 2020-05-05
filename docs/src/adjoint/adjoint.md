@@ -1,116 +1,142 @@
 # Сопряженная задача
 
+## Постановка сопряженной задачи
+
+
 Сопряженная задача формулируется следующим образом:
 ```math
 \left\{
 \begin{aligned}
-    &\varepsilon\frac{\partial^2 \psi}{\partial x^2} + \frac{\partial \psi}{\partial t} = u \frac{\partial \psi}{\partial x} + q(x)\,\psi  -\\
-    & \qquad  - 2\delta(x - f_1(t))(u(x,t) - f_2(t)), \quad x \in (0,1), \quad t \in (0,T], \\
+    &\varepsilon\frac{\partial^2 \psi}{\partial x^2} +
+    \frac{\partial \psi}{\partial t} =
+    u \frac{\partial \psi}{\partial x} + q(x)\,\psi  -\\
+    & \qquad  - 2\delta(x - f_1(t))(u(x,t) - f_2(t)),
+    \quad x \in (0,1), \quad t \in (0,T], \\
+
     &\psi(0,t) = 0, \quad \psi(1,t) = 0, \quad t \in (0,T], \\
+
     &\psi(x,T) = 0, \qquad x \in [0,1].
 \end{aligned}
 \right.
 ```
+Причем, важной особенностью численной реализации решения сопряженной задачи,
+является динамическая, неравномерная по ``x`` сетка, уникальная для
+каждого шага по времени.
+Эту сетку возвращается нам функция [`solve`](@ref) решения прямой задачи.
 
-Перепишем её в удобном виде для применений метода жесткий прямых
-```math
-\left\{
-\begin{aligned}
-    &\frac{\partial \psi}{\partial t} = - \varepsilon\frac{\partial^2 \psi}{\partial x^2} +  u \frac{\partial \psi}{\partial x} + q(x)\,\psi  -\\
-    & \qquad  - 2\delta(x - f_1(t))(u(x,t) - f_2(t)), \quad x \in (0,1), \quad t \in (0,T], \\
-    &\psi(0,t) = 0, \quad \psi(1,t) = 0, \quad t \in (0,T], \\
-    &\psi(x,T) = 0, \qquad x \in [0,1].
-\end{aligned}
-\right.
-```
+Сопряженная задача является ретроспективной. Она должна использоваться
+переданную ей сетку ``X_N^M`` в обратном по времени направлении. Найдя решение
+на следующем временном слое ``\psi^{m-1}`` мы должны аппроксимировать его на
+соответствующую новому временному слою сетку ``X_N^{m-1}``.
 
-Дальше будем использовать уже введенную в решении прямой задачи сетку, ``x_n \in X_N``, ``\psi_n \equiv \psi_n(t) \equiv \psi(x_n, t)``, ``u_n \equiv u_n(t) \equiv u(x_n, t)``, ``q_n \equiv q(x_n)``.
-```math
-\left\{
-\begin{aligned}
-    &\frac{\partial \psi_n}{\partial t} = - \varepsilon \frac{ \psi_{n+1} - 2 \psi_n + \psi_{n-1} }{h^2} +  u_n \frac{\psi_{n+1} - \psi_{n-1}}{2h} + q_n\,\psi_n  -\\
-    & \qquad  - 2\delta(x_n - f_1(t))(u_n(t) - f_2(t)), \quad n = \overline{1, N-1}, \quad t \in (0,T], \\
-    &\psi(0,t) = 0, \quad \psi(1,t) = 0, \quad t \in (0,T], \\
-    &\psi_n(T) = 0, \quad n = \overline{ 0, N}.
-\end{aligned}
-\right.
-```
-
-Сведем дифференциально-алгебраическую систему к дифференциальной, путем подстановки нулевых граничных условий.
-
-```math
-\left\{
-\begin{aligned}
-    &\frac{\partial \psi_1     }{\partial t} = - \varepsilon \frac{ \psi_{2}     - 2 \psi_1              }{h^2} +  u_1 \frac{\psi_{2} }{2h} + q_1\,\psi_1  -\\
-    & \qquad  - 2\delta(x_1 - f_1(t))(u_1(t) - f_2(t)),  \quad t \in (0,T], \\
-    &\frac{\partial \psi_n     }{\partial t} = - \varepsilon \frac{ \psi_{n+1}   - 2 \psi_n + \psi_{n-1} }{h^2} +  u_n \frac{\psi_{n+1} - \psi_{n-1}}{2h} + q_n\,\psi_n  -\\
-    & \qquad  - 2\delta(x_n - f_1(t))(u_n(t) - f_2(t)), \quad n = \overline{2, N-2}, \quad t \in (0,T], \\
-    &\frac{\partial \psi_{N-1} }{\partial t} = - \varepsilon \frac{          -2 \psi_{N-1} + \psi_{N-2}  }{h^2} +  u_{N-1} \frac{ - \psi_{N-2}}{2h} + q_{N-1}\,\psi_{N-1}  -\\
-    & \qquad  - 2\delta(x_{N-1} - f_1(t))(u_{N-1}(t) - f_2(t)),  \quad t \in (0,T], \\
-    &\psi_n(T) = 0, \quad n = \overline{0, N}
-\end{aligned}
-\right.
-```
-
-Введем следующие обозначения:
+Введем следующие обозначения
 
 |                        Описание                          |                          Обозначение                          |
 |----------------------------------------------------------|---------------------------------------------------------------|
 | вектор столбец искомой функции размерностью ``N-1``:     |   ``\mathbf{y} = (\psi_1, \psi_2, \dots, \psi_{N-1})^T``.     |
 | вектор столбец начальных значений размерностью ``N-1``:  |   ``\mathbf{y_0} = (0, 0, \dots, 0)^T``.                      |
-| вектор столбец правой части размерность ``N-1``:         |   ``\mathbf{f}(\mathbf{y}, t)`` для вышеприведенной системы.  |
+| вектор столбец правой части размерность ``N-1``:         |   ``\mathbf{f}(\mathbf{y}, t)``                               |
+Приведём только формулы для неравномерной сетки.
 
-!!! note
-    **Замечание, о технической реализации в коде `adjointRP`**.
-
-    `u`, `Xₙ` передаются как есть, вместе с граничными точками!
-    Внутри функции они локально модифицируются, для сохранения индексации.
-
-```math
-\begin{aligned}
-    &ARP_1 = - \varepsilon \frac{ y_{2} - 2 y_1 }{h^2} +  u_1 \frac{y_{2} }{2h} + q_1\,y_1  -\\
-    & \qquad  - 2\delta(x_n - f_1(t))(u_n(t) - f_2(t))\\
-    &ARP_n = - \varepsilon \frac{ y_{n+1} - 2 y_n + y_{n-1} }{h^2} +  u_n \frac{y_{n+1} - y_{n-1}}{2h} + q_n\,y_n  -\\
-    & \qquad  - 2\delta(x_n - f_1(t))(u_n(t) - f_2(t)), \quad n = \overline{2, N-2}\\
-    &ARP_{N-1} = - \varepsilon \frac{  2 y_{N-1} + y_{N-2} }{h^2} +  u_{N-1} \frac{ - y_{N-2}}{2h} + q_{N-1}\,y_{N-1}  -\\
-    & \qquad  - 2\delta(x_{N-1} - f_1(t))(u_{N-1}(t) - f_2(t)) \\
-\end{aligned}
-```
-
-!!! warning
-    Сетку нужно развернуть, в тексте об этом дописать.
-
-Используя уже введенную временную сетку по времени ``t_m \in T_m``, ``ARP_n^m \equiv ARP_n(t_m) \equiv ARP(x_n, t_m)``.
-```math
-\begin{aligned}
-    &ARP_1^m = - \varepsilon \frac{ y_{2} - 2 y_1 }{h^2} +  u_1^m \frac{y_{2} }{2h} + q_n\,y_1  -\\
-    & \qquad  - 2\delta(x_1 - f_1^m)(u_1^m - f_2^m)\\
-    &ARP_n^m = - \varepsilon \frac{ y_{n+1} - 2 y_n + y_{n-1} }{h^2} +  u_n^m \frac{y_{n+1} - y_{n-1}}{2h} + q_n\,y_n  -\\
-    & \qquad  - 2\delta(x_n - f_1^m)(u_n^m - f_2^m), \quad n = \overline{2, N-2}\\
-    &ARP_{N-1}^m = - \varepsilon \frac{  2 y_{N-1} + y_{N-2} }{h^2} +  u_{N-1}^m \frac{ - y_{N-2}}{2h} + q_{N-1}\,y_{N-1}  -\\
-    & \qquad  - 2\delta(x_{N-1} - f_1^m)(u_{N-1}^m - f_2^m) \\
-\end{aligned}
-```
-
-Теперь, систему ОДУ можно записать следующим образом:
+Сопряженная задача легко приводится к виду
 ```math
     \left\{
     \begin{aligned}
-        &\dfrac{d \mathbf{\textbf{y}}}{d t} = \mathbf{\textbf{ARP}} \, (\mathbf{\textbf{y}},t), \quad t \in [t_0,T),\\
-        &\mathbf{\textbf{y}}(T) = \mathbf{\textbf{y}}_{init},
+        &\frac{d \mathbf{y}}{d t} = \mathbf{f} \, (\mathbf{y},t), \quad t \in [t_0,T),\\
+        &\mathbf{y}(T) = \mathbf{y}_{init},
     \end{aligned}
     \right.
 ```
 
+Хоть граничные условия у нас и нулевые ``\psi_r(t) = \psi_l(t) = 0``, в
+формулах выпишем их явно. Причем ``f^m`` вычисляется с использованием ``X_N^m``.
+```math
+\mathbf{f} = \left\{
+\begin{aligned}
+        &f_1 =  \frac{-2 \varepsilon}{x_2 - x_0} \left(
+              \frac{y_{2} - y_1}{x_2 - x_1}
+            - \frac{y_{1} + \psi_l^m}{x_1 - x_0}
+        \right)
+        + y_1 \frac{y_{2} - \psi_l^m}{x_2 - x_0}
+        + q_{1} y_1 - 2 \delta( x_1 - f_1^m)) ( u_n^m - f_2^m), \\
+
+        &f_n =  \frac{-2 \varepsilon}{x_{n+1} - x_{n-1}}
+        \left(
+              \frac{y_{n+1} - y_{n}}{x_{n+1} - x_{n}}
+            - \frac{y_{n} + y_{n-1}}{x_{n} - x_{n-1}}
+        \right)
+        + y_n  \frac{y_{n + 1} - y_{n - 1}}{x_{n+1} - x_{n-1}}
+        + q_{n} u_n - 2 \delta( x_n - f_1^m)) ( u_n^m - f_2^m),
+        \quad n=\overline{2, N-2}, \\
+
+        &f_{N - 1} =  \frac{-2 \varepsilon}{x_{N} - x_{N-1}}
+        \left(
+              \frac{\psi_r^m - y_{N - 1}}{x_{N} - x_{N-1}}
+            - \frac{y_{N-1} + y_{N - 2}}{x_{N-1} - x_{N-2}}
+        \right)
+        + y_{N - 1} \frac{\psi_r^m - y_{N - 2}}{x_{N} - x_{N-2}}
+        + q_{N-1} y_{N-1} - 2 \delta( x_{N-1} - f_1^m)) ( u_n^m - f_2^m).
+\end{aligned}
+\right.
+```
+Ненулевые элементы Якобиана ``\mathbf{F}_{\mathbf{y}}``
+```math
+\begin{aligned}
+    (f_y)_{1, 1}          & =
+    \frac{-2 \varepsilon}{x_2 - x_0}
+    \left(
+        \frac{-1}{x_{2} - x_{1}} - \frac{1}{x_{1} - x_{0}}
+    \right)
+    + q_1, \\
+
+    (f_y)_{n, n - 1}      & =
+    \frac{-2 \varepsilon}{x_{n+1} - x_{n-1}}
+    \left(
+        \frac{1}{x_{n} - x_{n-1}}
+    \right)
+    - \frac{u_{n}^m}{x_{n+1} - x_{n-1}}, \quad n=\overline{2, N-1},\\
+
+    (f_y)_{n, n}          & =
+    \frac{-2 \varepsilon}{x_{n+1} - x_{n-1}}
+    \left(
+        \frac{-1}{x_{n+1} - x_{n}} - \frac{1}{x_{n} - x_{n-1}}
+    \right)
+    + q_n, \quad n=\overline{2, N-2},\\
+
+    (f_y)_{n, n + 1}      & =
+    \frac{-2 \varepsilon}{x_{n+1} - x_{n-1}}
+    \left(
+        \frac{1}{x_{n+1} - x_{n}}
+    \right)
+    + \frac{u_{n}^m}{x_{n+1} - x_{n-1}}, \quad n=\overline{1, N-2},\\
+
+    (f_y)_{N - 1,N - 1} & =
+    \frac{-2 \varepsilon}{x_{N} - x_{N-2}}
+    \left(
+        \frac{-1}{x_{N} - x_{N-1}} - \frac{1}{x_{N-1} - x_{N-2}}
+    \right)
+    + q_{N-1}.
+\end{aligned}
+```
+
+-------------------------------------------------------------------------------
 
 !!! note
-    Правая часть в уравнении для ``\mathbf{W}`` в явном виде не зависит от ``t``, а все сеточные функции `u, f_1, f_2` берутся в момент времени ``t_m``, вместо ``\frac{ t_{m+1} + t_m}{2}``.
+    Правая часть в уравнении для ``\mathbf{w}`` в явном виде не зависит от
+    ``t``, а все сеточные функции `u, f_1, f_2` берутся в момент времени
+    ``t_m``, вместо ``\frac{ t_{m+1} + t_m}{2}``.
 
 Найдем решение сопряженной задачи следующим образом:
 ```math
     \begin{aligned}
-        &\mathbf{\textbf{y}}(t_{m + 1}) = \mathbf{\textbf{y}}(t_m) + (t_{m + 1} - t_m) \, \mathrm{Re} \, \mathbf{\textbf{W}} \,\\
-        &\left[\mathbf{\textbf{E}} - \dfrac{1 + i}{2} \, (t_{m + 1} - t_m) \, \mathbf{\textbf{ARP}}_\mathbf{\textbf{y}}\Big(\mathbf{\textbf{y}}(t_m),t_m\Big)\right] \, \mathbf{\textbf{W}} = \\
-        &\qquad\qquad\qquad\qquad\quad = \mathbf{\textbf{ARP}} \, \Big(\mathbf{\textbf{y}}(t_m), t_{m}\Big).
+        & \mathbf{y}(t_{m - 1}) = \mathbf{y}(t_m) + (t_{m} - t_{m-1}) \,
+        \mathrm{Re} \, \mathbf{w} \,\\
+
+        & \left[\mathbf{E} - \frac{1 + i}{2} \, (t_{m} - t_{m-1}) \,
+        \mathbf{F}_\mathbf{y}\Big(\mathbf{y}(t_m),t_m\Big)\right] \,
+        \mathbf{w} = \\
+
+        & \qquad\qquad\qquad\qquad\quad = \mathbf{f} \,
+        \Big(\mathbf{y}(t_m), t_{m}\Big).
     \end{aligned}
 ```
