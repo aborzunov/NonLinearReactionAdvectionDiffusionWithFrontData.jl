@@ -67,4 +67,4 @@ g_d(x,t) = 2 \sin(\pi x) - \varepsilon \pi^2 (1 - 2t) \sin(\pi x) +
 текст теста вместе с результатами его выполнения  в этот md файл ( _см.
 `make.jl`, строго говоря, конкретно здесь, мы компануем этот файл и содержимое
 файла, который сгенерирует `Litarate.jl` из `dt_direct.jl` в
-`docs/src/generated/direct_check.jl` _ ).
+`docs/src/generated/direct_check.jl`_ ).

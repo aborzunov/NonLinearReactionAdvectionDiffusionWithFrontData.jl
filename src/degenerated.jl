@@ -13,7 +13,7 @@
 значение `u` на переходном слое.
 `ϕl, ϕr, ϕ, f1_data, f2_data`
 
-See also: [`ϕl`](@ref), [`ϕr`](@ref), [`Φ`](@ref), [`f1`](@ref), [`f2`](@ref).
+See also: [`phidetermination`](@ref), [`Φ`](@ref), [`f1`](@ref), [`f2`](@ref).
 """
 function generate_obs_data(u::Matrix, Xₙ::Vector, N::Int,
                            Tₘ::Vector, M::Int,
