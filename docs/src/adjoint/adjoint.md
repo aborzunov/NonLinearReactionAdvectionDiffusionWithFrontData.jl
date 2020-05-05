@@ -140,3 +140,27 @@
         \Big(\mathbf{y}(t_m), t_{m}\Big).
     \end{aligned}
 ```
+
+## Программная реализация
+
+* Функция неоднородности [`heterogeneity`](@ref), конечно-разностная
+  аппроксимация дельта функции [`deltaw`](@ref).
+
+* Функция правой части [`adjointRP`](@ref).
+
+* Функция якобиана [`∂ARP_∂y`](@ref), возвращает матрицу типа `Tridiagonal`
+  (см. [официальную
+  документацию](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.Tridiagonal))
+
+* Функция якобиана, вычисляемого автоматическим дифференцированием
+    [ForwardDiff.jl](http://www.juliadiff.org/ForwardDiff.jl/stable/user/api/#ForwardDiff.jacobian)
+
+* Функция поиска решение по схеме CROS1 [`solve_adjoint`](@ref).
+
+
+## Ссылки на функции
+
+```@autodocs
+Modules = [NonLinearReactionAdvectionDiffusionWithFrontData]
+Pages = ["adjoint.jl"]
+```
