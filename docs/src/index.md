@@ -3,7 +3,6 @@ DocTestSetup = quote
     using NonLinearReactionAdvectionDiffusionWithFrontData
     using Plots
 end
-
 ```
 
 # Главная
@@ -42,7 +41,17 @@ Pages = [
     "direct/direct.md",
     "direct/experimental_data.md",
     "generated/docexample_direct.md",
-    "generated/direct_check.md",
+    "generated/final_direct_check.md",
+]
+Depth = 1
+```
+
+### Сопряженная задача
+
+```@contents
+Pages = [
+    "adjoint/adjoint.md",
+    "generated/final_adjoint_check.md",
 ]
 Depth = 1
 ```

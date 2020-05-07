@@ -5,7 +5,7 @@ using Test;
 using LaTeXStrings;
 using Plots;
 
-include("direct_check.jl")
+include("test/direct_check.jl")
 
 # Посмотрим на результат решения в сравнении с аналитическим решением
 

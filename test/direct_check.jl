@@ -56,3 +56,4 @@ u, XX, TP = solve(y₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, RP, NonLinearR
 @test all(isapprox.(u_model, u, atol = 0.01))
 
 (u, u_model, Xₙ, Tₘ)
+nothing #hide

@@ -3,7 +3,7 @@
 using NonLinearReactionAdvectionDiffusionWithFrontData;
 using NonLinearReactionAdvectionDiffusionWithFrontData: phidetermination, Φ;
 using NonLinearReactionAdvectionDiffusionWithFrontData: f1, f2;
-#
+
 u_l(t) = -8 #+ cos(2*π * t);
 u_r(t) =  4 #+ (1 + sin(2*π * t));
 qf(x) = sin(3 * π * x);        # Коэффициент линейного усиления, который в обратной
@@ -35,13 +35,14 @@ f2_data     = f2(f1_data, u, Xₙ, N, M);                                       
 nothing #hide
 #########################################################################################
 
-q₀ = [ 0 for x in qₙ];
+q₀ = [ 0.60 * x for x in qₙ];
 ψ₀ = zeros(N+1);
 ψl = zeros(M+1);
 ψr = zeros(M+1);
-S = 5000;
-β = 0.01;
-qf, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, ψ₀, ψl, ψr, Xₙ, N, Tₘ, M, ε, f1_data, f2_data, S = S, β = β, w = 0.0001)
+S = 100;
+β = 0.05;
+q_final, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, ψ₀, ψl, ψr, Xₙ, N, Tₘ, M, ε, f1_data, f2_data, S = S, β = β, w = 0.0003);
+
 frames = [1:20; 21:div(S,50):S];    # Первые двадцать без пропусков
 frames = collect(1:div(S, 50):S);   # С пропусками, чтобы всего было 50 кадров
 make_minimzation_gif(Js, Qs, qₙ, Xₙ, name = "Minimization_uniform.gif", frames_to_write = frames, β = β)

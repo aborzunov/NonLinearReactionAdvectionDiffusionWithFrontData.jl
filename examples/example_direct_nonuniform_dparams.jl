@@ -1,6 +1,6 @@
 # ## [Пример №4, краткий, динамическая сетка](@id de_4)
 #
-# Делаем тоже самое, что в [развернотом примере](@ref de_3),
+# Делаем тоже самое, что в [развернутом примере №3](@ref de_3),
 # только с использованием функций сокращений и стандартных параметров.
 using NonLinearReactionAdvectionDiffusionWithFrontData
 using NonLinearReactionAdvectionDiffusionWithFrontData: shishkin_mesh;

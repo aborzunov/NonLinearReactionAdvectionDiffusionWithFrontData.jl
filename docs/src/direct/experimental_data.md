@@ -68,10 +68,3 @@ f_1(t) \equiv x_{tp}(t) = \argmin_x |u(x,t) - \varPhi(x,t)|
 
 * Всё это вместе, одной строчкой, делается с помощью
     [`generate_obs_data`](@ref).
-
-## Ссылки на функции
-
-```@autodocs
-Modules = [NonLinearReactionAdvectionDiffusionWithFrontData]
-Pages = ["degenerated.jl"]
-```
