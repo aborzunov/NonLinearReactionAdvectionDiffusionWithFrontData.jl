@@ -6,6 +6,11 @@
 /docs/build/
 /docs/site/
 
+# Generated files are being stored here
+# The folder will emerge during documentation stage
+# see docs/make.jl
+/docs/src/generated
+
 *.mp4
 *.gif
 *.png
