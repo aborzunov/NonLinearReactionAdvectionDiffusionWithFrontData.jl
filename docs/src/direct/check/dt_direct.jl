@@ -7,6 +7,8 @@ using Plots;
 
 include("test/direct_check.jl")
 
+# ### Визуализация
+
 # Посмотрим на результат решения в сравнении с аналитическим решением
 
 d = [missing, missing];
