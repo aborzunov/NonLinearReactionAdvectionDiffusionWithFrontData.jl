@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>- · NonLinearReactionAdvectionDiffusionWithFrontData.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">NonLinearReactionAdvectionDiffusionWithFrontData.jl</span></div><form class="docs-search" action="../../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../../">Главная</a></li><li><span class="tocitem">Прямая задача</span><ul><li><a class="tocitem" href="../../../direct/direct/">Прямая задача</a></li><li><a class="tocitem" href="../../../direct/experimental_data/">Генерация экспериментальной информации</a></li><li><a class="tocitem" href="../../docexample_direct/">Примеры</a></li><li><a class="tocitem" href="../../final_direct_check/">Проверка корректности решения прямой задачи</a></li></ul></li><li><span class="tocitem">Сопряженная задача</span><ul><li><a class="tocitem" href="../../../adjoint/adjoint/">Сопряженная задача</a></li><li><a class="tocitem" href="../../final_adjoint_check/">Проверка корректности решения сопряженной задачи</a></li></ul></li><li><span class="tocitem">Функционал, Градиент, Минимизация</span><ul><li><a class="tocitem" href="../../../functional/functional/">Функционал</a></li></ul></li><li><a class="tocitem" href="../../../reference/">Справочник</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>-</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>-</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl/blob/master/docs/src/direct/check/dt_direct.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h2 id="Непосредственная-реализация-проверки-1"><a class="docs-heading-anchor" href="#Непосредственная-реализация-проверки-1">Непосредственная реализация проверки</a><a class="docs-heading-anchor-permalink" href="#Непосредственная-реализация-проверки-1" title="Permalink"></a></h2><pre><code class="language-julia">using Test;
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>- · NonLinearReactionAdvectionDiffusionWithFrontData.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">NonLinearReactionAdvectionDiffusionWithFrontData.jl</span></div><form class="docs-search" action="../../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../../">Главная</a></li><li><span class="tocitem">Прямая задача</span><ul><li><a class="tocitem" href="../../../direct/direct/">Прямая задача</a></li><li><a class="tocitem" href="../../../direct/experimental_data/">Генерация экспериментальной информации</a></li><li><a class="tocitem" href="../../docexample_direct/">Примеры</a></li><li><a class="tocitem" href="../../final_direct_check/">Проверка корректности решения прямой задачи</a></li></ul></li><li><span class="tocitem">Сопряженная задача</span><ul><li><a class="tocitem" href="../../../adjoint/adjoint/">Сопряженная задача</a></li><li><a class="tocitem" href="../../final_adjoint_check/">Проверка корректности решения сопряженной задачи</a></li><li><a class="tocitem" href="../../docexample_adjoint/">Примеры</a></li></ul></li><li><span class="tocitem">Обратная задача</span><ul><li><a class="tocitem" href="../../../functional/functional/">Обратная задача</a></li></ul></li><li><a class="tocitem" href="../../../reference/">Справочник</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>-</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>-</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl/blob/master/docs/src/direct/check/dt_direct.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h2 id="Непосредственная-реализация-проверки-1"><a class="docs-heading-anchor" href="#Непосредственная-реализация-проверки-1">Непосредственная реализация проверки</a><a class="docs-heading-anchor-permalink" href="#Непосредственная-реализация-проверки-1" title="Permalink"></a></h2><pre><code class="language-julia">using Test;
 using LaTeXStrings;
 using Plots;
 
@@ -66,126 +66,126 @@ make_gif(u, Xₙ, Tₘ, dd, dd, dd, d, d, u_model; name = &quot;dicrect_check.gi
 heatmap(Xₙ, Tₘ, err&#39;, xlabel=L&quot;X_n&quot;, ylabel=L&quot;T_m&quot;, title=&quot;Absolute Error&quot;, size=(1200, 800))</code></pre><?xml version="1.0" encoding="utf-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="800" viewBox="0 0 4800 3200">
 <defs>
-  <clipPath id="clip6500">
+  <clipPath id="clip7600">
     <rect x="0" y="0" width="4800" height="3200"/>
   </clipPath>
 </defs>
-<path clip-path="url(#clip6500)" d="
+<path clip-path="url(#clip7600)" d="
 M0 3200 L4800 3200 L4800 0 L0 0  Z
   " fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
 <defs>
-  <clipPath id="clip6501">
+  <clipPath id="clip7601">
     <rect x="960" y="0" width="3361" height="3200"/>
   </clipPath>
 </defs>
-<path clip-path="url(#clip6500)" d="
+<path clip-path="url(#clip7600)" d="
 M220.408 3055.73 L4272.76 3055.73 L4272.76 121.675 L220.408 121.675  Z
   " fill="#ffffff" fill-rule="evenodd" fill-opacity="1"/>
 <defs>
-  <clipPath id="clip6502">
+  <clipPath id="clip7602">
     <rect x="220" y="121" width="4053" height="2935"/>
   </clipPath>
 </defs>
-<polyline clip-path="url(#clip6502)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
+<polyline clip-path="url(#clip7602)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
   260.137,3055.73 260.137,121.675 
   "/>
-<polyline clip-path="url(#clip6502)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
+<polyline clip-path="url(#clip7602)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
   1253.36,3055.73 1253.36,121.675 
   "/>
-<polyline clip-path="url(#clip6502)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
+<polyline clip-path="url(#clip7602)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
   2246.58,3055.73 2246.58,121.675 
   "/>
-<polyline clip-path="url(#clip6502)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
+<polyline clip-path="url(#clip7602)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
   3239.8,3055.73 3239.8,121.675 
   "/>
-<polyline clip-path="url(#clip6502)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
+<polyline clip-path="url(#clip7602)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
   4233.03,3055.73 4233.03,121.675 
   "/>
-<polyline clip-path="url(#clip6502)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
+<polyline clip-path="url(#clip7602)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
   220.408,3037.62 4272.76,3037.62 
   "/>
-<polyline clip-path="url(#clip6502)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
+<polyline clip-path="url(#clip7602)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
   220.408,2313.16 4272.76,2313.16 
   "/>
-<polyline clip-path="url(#clip6502)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
+<polyline clip-path="url(#clip7602)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
   220.408,1588.7 4272.76,1588.7 
   "/>
-<polyline clip-path="url(#clip6502)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
+<polyline clip-path="url(#clip7602)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
   220.408,864.244 4272.76,864.244 
   "/>
-<polyline clip-path="url(#clip6502)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
+<polyline clip-path="url(#clip7602)" style="stroke:#000000; stroke-width:2; stroke-opacity:0.1; fill:none" points="
   220.408,139.787 4272.76,139.787 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   220.408,3055.73 4272.76,3055.73 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   220.408,3055.73 220.408,121.675 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   260.137,3055.73 260.137,3020.52 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   1253.36,3055.73 1253.36,3020.52 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   2246.58,3055.73 2246.58,3020.52 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   3239.8,3055.73 3239.8,3020.52 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   4233.03,3055.73 4233.03,3020.52 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   220.408,3037.62 269.037,3037.62 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   220.408,2313.16 269.037,2313.16 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   220.408,1588.7 269.037,1588.7 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   220.408,864.244 269.037,864.244 
   "/>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   220.408,139.787 269.037,139.787 
   "/>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:middle;" transform="rotate(0, 260.137, 3121.73)" x="260.137" y="3121.73">0.00</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:middle;" transform="rotate(0, 1253.36, 3121.73)" x="1253.36" y="3121.73">0.25</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:middle;" transform="rotate(0, 2246.58, 3121.73)" x="2246.58" y="3121.73">0.50</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:middle;" transform="rotate(0, 3239.8, 3121.73)" x="3239.8" y="3121.73">0.75</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:middle;" transform="rotate(0, 4233.03, 3121.73)" x="4233.03" y="3121.73">1.00</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:end;" transform="rotate(0, 172.408, 3055.12)" x="172.408" y="3055.12">0.00</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:end;" transform="rotate(0, 172.408, 2330.66)" x="172.408" y="2330.66">0.25</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:end;" transform="rotate(0, 172.408, 1606.2)" x="172.408" y="1606.2">0.50</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:end;" transform="rotate(0, 172.408, 881.744)" x="172.408" y="881.744">0.75</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:end;" transform="rotate(0, 172.408, 157.287)" x="172.408" y="157.287">1.00</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:82px; text-anchor:middle;" transform="rotate(0, 2246.58, 72)" x="2246.58" y="72">Absolute Error</text>
 </g>
-<g clip-path="url(#clip6502)">
+<g clip-path="url(#clip7602)">
 <image width="4052" height="2934" xlink:href="data:image/png;base64,
 iVBORw0KGgoAAAANSUhEUgAAD9QAAAt2CAYAAAAh9R3BAAAgAElEQVR4nOzdb44dxRXGYZdtIOBE
 CSKKCESID9lH9r+SfMEQCB7PTP+pbIFUCR2dd55nBUdHdd19u+9vPL7547/mK5Z9f/+zeoS2vv/s
@@ -1352,11 +1352,11 @@ E4UhAAAAAElFTkSuQmCC
 " transform="translate(220, 122)"/>
 </g>
 <defs>
-  <clipPath id="clip6503">
+  <clipPath id="clip7603">
     <rect x="4368" y="121" width="145" height="2935"/>
   </clipPath>
 </defs>
-<g clip-path="url(#clip6503)">
+<g clip-path="url(#clip7603)">
 <image width="144" height="2934" xlink:href="data:image/png;base64,
 iVBORw0KGgoAAAANSUhEUgAAAJAAAAt2CAYAAAAlXE7dAAAdN0lEQVR4nO3dwQ3lNhAFQX5j8o/C
 WXqX4xzUB0FAVQQ6NN6FIPX7c//dAw/98/YH8G0CIhEQiYBIBEQiIBIBkQiIREAkAiIREMnc/fP2
@@ -1493,44 +1493,44 @@ ERCJgEgERCIgEgGRCIhEQCQCIvG3HhILRCIgEgGRCIhEQCQCIhEQiYBIBEQiIJL/Ab0o+/uinFev
 AAAAAElFTkSuQmCC
 " transform="translate(4369, 122)"/>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:start;" transform="rotate(0, 4584.76, 3051.6)" x="4584.76" y="3051.6">-</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:start;" transform="rotate(0, 4612.87, 3051.6)" x="4612.87" y="3051.6">0.001</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:start;" transform="rotate(0, 4584.76, 2752.3)" x="4584.76" y="2752.3">0</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:start;" transform="rotate(0, 4584.76, 2452.99)" x="4584.76" y="2452.99">0.001</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:start;" transform="rotate(0, 4584.76, 2153.69)" x="4584.76" y="2153.69">0.002</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:start;" transform="rotate(0, 4584.76, 1854.39)" x="4584.76" y="1854.39">0.003</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:start;" transform="rotate(0, 4584.76, 1555.08)" x="4584.76" y="1555.08">0.004</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:start;" transform="rotate(0, 4584.76, 1255.78)" x="4584.76" y="1255.78">0.005</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:start;" transform="rotate(0, 4584.76, 956.476)" x="4584.76" y="956.476">0.006</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:start;" transform="rotate(0, 4584.76, 657.172)" x="4584.76" y="657.172">0.007</text>
 </g>
-<g clip-path="url(#clip6500)">
+<g clip-path="url(#clip7600)">
 <text style="fill:#000000; fill-opacity:1; font-family:Arial,Helvetica Neue,Helvetica,sans-serif; font-size:48px; text-anchor:start;" transform="rotate(0, 4584.76, 357.869)" x="4584.76" y="357.869">0.008</text>
 </g>
-<polyline clip-path="url(#clip6500)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
+<polyline clip-path="url(#clip7600)" style="stroke:#000000; stroke-width:4; stroke-opacity:1; fill:none" points="
   4512.76,3055.73 4512.76,3037.95 4560.76,3037.95 4512.76,3037.95 4512.76,2738.65 4560.76,2738.65 4512.76,2738.65 4512.76,2439.34 4560.76,2439.34 4512.76,2439.34 
   4512.76,2140.04 4560.76,2140.04 4512.76,2140.04 4512.76,1840.74 4560.76,1840.74 4512.76,1840.74 4512.76,1541.43 4560.76,1541.43 4512.76,1541.43 4512.76,1242.13 
   4560.76,1242.13 4512.76,1242.13 4512.76,942.825 4560.76,942.825 4512.76,942.825 4512.76,643.521 4560.76,643.521 4512.76,643.521 4512.76,344.218 4560.76,344.218 
   4512.76,344.218 4512.76,121.675 
   "/>
 </svg>
-<hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 7 May 2020 21:03">Thursday 7 May 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 11 May 2020 15:11">Monday 11 May 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
