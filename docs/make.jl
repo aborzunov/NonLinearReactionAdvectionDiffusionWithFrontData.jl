@@ -38,6 +38,8 @@ function replace_includes(str)
                 "examples/example_direct_nonuniform_dparams.jl",
                 "test/direct_check.jl",
                 "test/adjoint_check.jl",
+                "examples/example_adjoint.jl",
+                "examples/example_adjoint_nonuniform.jl",
                 ]
 
     # `prefix` -- путь к нашему пакету
@@ -57,6 +59,10 @@ end
 Literate.markdown("src/direct/direct_examples.jl",
                   "src/generated/";
                   name = "docexample_direct",
+                  preprocess = replace_includes, documenter = true)
+Literate.markdown("src/adjoint/adjoint_examples.jl",
+                  "src/generated/";
+                  name = "docexample_adjoint",
                   preprocess = replace_includes, documenter = true)
 
 @info "\tGenerating scripts from `tests/` folder"
@@ -124,8 +130,9 @@ makedocs(
                               ],
         "Сопряженная задача" => Any["adjoint/adjoint.md",
                                     "generated/final_adjoint_check.md",
+                                    "generated/docexample_adjoint.md",
                                    ],
-        "Функционал, Градиент, Минимизация" => Any["Функционал" => "functional/functional.md",
+        "Обратная задача" => Any["functional/functional.md",
                                                    #"Пример" => "generated/example_functional.md",
                                                   ],
         "Справочник" => "reference.md",

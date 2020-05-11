@@ -16,11 +16,6 @@
 *.png
 *.m
 
-# Здесь хранятся сгенерированные md файлы
-# Внутри есть .gitkeep чтобы каталог существовал в git-e
-/docs/src/generated/*.md
-
-
 # Локальные рабочие файлы
 news.md
 src/test_workflow.jl
