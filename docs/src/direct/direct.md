@@ -223,9 +223,25 @@ x_n = n h \rbrace``.
 \end{aligned}
 ```
 
-## Случай динамической сеткe
+## Случай динамической сетки
 
 В дальнейшем, мы построим алгоритм определения положения переходного слоя.
 !!! tip
     Изменение алгоритма при динамической сетке
     Ну собственно здесь нужно нормально всё описать
+
+## Программная реализация
+
+*   Функция правой части
+    [`NonLinearReactionAdvectionDiffusionWithFrontData.directRP`](@ref).
+
+*   Функция якобиана
+    [`NonLinearReactionAdvectionDiffusionWithFrontData.∂DRP_∂y`](@ref),
+    возвращает матрицу типа `Tridiagonal` (см. [официальную
+    документацию](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.Tridiagonal))
+
+*   Функция якобиана, вычисляемого автоматическим дифференцированием
+    [`NonLinearReactionAdvectionDiffusionWithFrontData.∂directRP_∂y`](@ref)
+    [ForwardDiff.jl](http://www.juliadiff.org/ForwardDiff.jl/stable/user/api/#ForwardDiff.jacobian)
+
+*   Функция поиска решения по схеме CROS1 [`solve`](@ref).

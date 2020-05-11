@@ -144,8 +144,9 @@
 ## Программная реализация
 
 *   Функция неоднородности
-    [`NonLinearReactionAdvectionDiffusionWithFrontData.heterogeneity`](@ref),
-    конечно-разностная аппроксимация дельта функции
+    [`NonLinearReactionAdvectionDiffusionWithFrontData.heterogeneity`](@ref).
+
+*   Конечно-разностная аппроксимация дельта функции
     [`NonLinearReactionAdvectionDiffusionWithFrontData.deltaw`](@ref).
 
 *   Функция правой части
@@ -157,6 +158,7 @@
     документацию](https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/#LinearAlgebra.Tridiagonal))
 
 *   Функция якобиана, вычисляемого автоматическим дифференцированием
+    [`NonLinearReactionAdvectionDiffusionWithFrontData.∂adjointRP_∂y`](@ref)
     [ForwardDiff.jl](http://www.juliadiff.org/ForwardDiff.jl/stable/user/api/#ForwardDiff.jacobian)
 
 *   Функция поиска решение по схеме CROS1 [`solve_adjoint`](@ref).
