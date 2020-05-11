@@ -48,7 +48,9 @@ cd docs
 julia --color=yes make.jl
 python3 -m http.server --bind localhost > /dev/null 2>&1 &
 ```
-После, откройте `http://localhost:8000/docs/build/` в браузере.
+После, откройте [http://localhost:8000/build/](http://localhost:8000/build/)
+в своем браузере (точный адрес может зависеть от `$(pwd)` в которой вы запустили
+сервер).
 
 ## Содержание
 
@@ -70,6 +72,18 @@ Depth = 1
 Pages = [
     "adjoint/adjoint.md",
     "generated/final_adjoint_check.md",
+    "generated/docexample_adjoint.md",
+]
+Depth = 1
+```
+
+### Обратная задача
+
+
+```@contents
+Pages = [
+    "functional/functional.md",
+    "functional/numerical_expirements.md",
 ]
 Depth = 1
 ```
