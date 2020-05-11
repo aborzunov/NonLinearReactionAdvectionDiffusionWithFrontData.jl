@@ -89,9 +89,18 @@ doc_prefix = "docs/src/";
 generated_prefix = "docs/src/generated/helpers";
 output_prefix = "docs/src/generated"
 #
-formulas_pages = ["direct/check/direct_check.md"; "adjoint/check/adjoint_check.md"]
-generated_pages = ["doctest_direct.md"; "doctest_adjoint.md"]
-output_pages = ["final_direct_check.md"; "final_adjoint_check.md"]
+formulas_pages = [
+                  "direct/check/direct_check.md";
+                  "adjoint/check/adjoint_check.md"
+                 ];
+generated_pages = [
+                   "doctest_direct.md";
+                   "doctest_adjoint.md"
+                  ];
+output_pages = [
+                "final_direct_check.md";
+                "final_adjoint_check.md"
+               ];
 #
 fp = map( x-> joinpath(prefix, doc_prefix, x), formulas_pages);
 gp = map( x-> joinpath(prefix, generated_prefix, x), generated_pages);
