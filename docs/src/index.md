@@ -32,26 +32,6 @@ end
 x_{t.p} = f_1(t), \qquad u(x_{t.p}(t),t) = f_2(t), \qquad t \in [0, T].
 ```
 
-## Документация
-
-Документация на `gh-pages` может не содержать анимированных решений в форматах
-`gif` и `mp4` или содержать их урезанную по FPS версию.
-
-Вы можете сгенерировать документацию локально:
-```bash
-git clone
-https://github.com/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl
-cd NonLinearReactionAdvectionDiffusionWithFrontData.jl
-julia --color=yes -e "Pkg.build(verbose=true);"
-julia --color=yes -e "Pkg.test"
-cd docs
-julia --color=yes make.jl
-python3 -m http.server --bind localhost > /dev/null 2>&1 &
-```
-После, откройте [http://localhost:8000/build/](http://localhost:8000/build/)
-в своем браузере (точный адрес может зависеть от `$(pwd)` в которой вы запустили
-сервер).
-
 ## Содержание
 
 ### Прямая задача
@@ -87,3 +67,23 @@ Pages = [
 ]
 Depth = 1
 ```
+
+## Локальная документация
+
+Документация на `gh-pages` может не содержать анимированных решений в форматах
+`gif` и `mp4` или содержать их урезанную по FPS версию.
+
+Вы можете сгенерировать документацию локально:
+```bash
+git clone
+https://github.com/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl
+cd NonLinearReactionAdvectionDiffusionWithFrontData.jl
+julia --color=yes -e "Pkg.build(verbose=true);"
+julia --color=yes -e "Pkg.test"
+cd docs
+julia --color=yes make.jl
+python3 -m http.server --bind localhost > /dev/null 2>&1 &
+```
+После, откройте [http://localhost:8000/build/](http://localhost:8000/build/)
+в своем браузере (точный адрес может зависеть от `$(pwd)` в которой вы запустили
+сервер).

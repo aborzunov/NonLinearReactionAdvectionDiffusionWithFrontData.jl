@@ -8,6 +8,7 @@ using ForwardDiff, LaTeXStrings, Plots
 cd(@__DIR__)
 # activates null device as output for GR
 ENV["GKSwstype"] = "100"
+ENV["GKS_ENCODING"] = "utf-8"
 istravis = in("TRAVIS", keys(ENV))
 
 
