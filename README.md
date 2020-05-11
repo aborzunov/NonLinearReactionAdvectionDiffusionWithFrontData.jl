@@ -7,3 +7,7 @@
 [![Coveralls](https://coveralls.io/repos/github/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl/badge.svg?branch=master)](https://coveralls.io/github/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl?branch=master)
 
 ## Численные методы решения обратных задач для нелинейных сингулярно возмущённых уравнений типа реакция-диффузия-адвекция с данными о положении фронта реакции
+
+![problem](assets/problem.png?raw=True)
+
+![directGif](assets/readme_direct.gif?raw=True)
