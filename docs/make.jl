@@ -133,12 +133,17 @@ makedocs(
     format=Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     pages= Any[
         "index.md",
-        "Прямая задача" => Any["direct/direct.md",
+        "Прямая задача" => Any[
+                               "direct/direct.md",
                                "direct/experimental_data.md",
                                "generated/docexample_direct.md",
                                "generated/final_direct_check.md",
                               ],
-        "Сопряженная задача" => Any["adjoint/adjoint.md",
+        "Асимптотические методы" => Any[
+                                        "asymptotics/initial_guess.md",
+                                       ],
+        "Сопряженная задача" => Any[
+                                    "adjoint/adjoint.md",
                                     "generated/final_adjoint_check.md",
                                     "generated/docexample_adjoint.md",
                                    ],
