@@ -21,11 +21,14 @@
 \end{array}
 \right.
 ```
+
 Эти обыкновенные дифференциальные уравнения решим интегрированием:
 ```math
 \left\{
-\varphi_0 = \varphi_b \\
-\varphi_{n+1}^m = \varphi_{n}^m + (q_{n+1} - q_{n})(x_{n+1} - x_{n}) / 2
+\begin{aligned}
+    \varphi_0 = \varphi_b \\
+    \varphi_{n+1}^m = \varphi_{n}^m + (q_{n+1} - q_{n})(x_{n+1} - x_{n}) / 2
+\end{aligned}
 \right.
 ```
 Где ``\varphi_b`` -- это соответствующее граничное условие, а ``x_n`` узлы сетки

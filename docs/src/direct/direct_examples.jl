@@ -55,7 +55,7 @@ include("examples/example_direct_nonuniform.jl")
 
 # ### Визуализация
 # Так выглядит решение для динамической сетке
-ftw = [1; 2:div(M+1, 80):M+1];
+ftw = isTravis ? range(1, stop = M+1, length=15) : [1; 2:div(M+1, 80):M+1];
 make_gif(u, XX, Tₘ, ϕl, ϕr, ϕ, f1_data, f2_data; name="solution_direct_ex3.gif", frames_to_write = ftw)
 
 
