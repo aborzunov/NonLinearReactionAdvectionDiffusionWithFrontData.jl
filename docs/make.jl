@@ -41,6 +41,7 @@ function replace_includes(str)
                 "test/adjoint_check.jl",
                 "examples/example_adjoint.jl",
                 "examples/example_adjoint_nonuniform.jl",
+                "examples/example_initial_guess.jl",
                 ]
 
     # `prefix` -- путь к нашему пакету
@@ -64,6 +65,10 @@ Literate.markdown("src/direct/direct_examples.jl",
 Literate.markdown("src/adjoint/adjoint_examples.jl",
                   "src/generated/";
                   name = "docexample_adjoint",
+                  preprocess = replace_includes, documenter = true)
+Literate.markdown("src/asymptotics/initial_guess_example.jl",
+                  "src/generated/";
+                  name = "docexample_initial_guess",
                   preprocess = replace_includes, documenter = true)
 
 @info "\tGenerating scripts from `tests/` folder"
@@ -141,6 +146,7 @@ makedocs(
                               ],
         "Асимптотические методы" => Any[
                                         "asymptotics/initial_guess.md",
+                                        "generated/docexample_initial_guess.md",
                                        ],
         "Сопряженная задача" => Any[
                                     "adjoint/adjoint.md",
