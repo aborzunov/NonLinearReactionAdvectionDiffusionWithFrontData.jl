@@ -91,8 +91,6 @@ end
 @doc raw"""
     minimize(q₀::Vector, u₀::Vector,
              ulₘ::Vector, urₘ::Vector,
-             ψ₀::Vector,
-             ψl::Vector, ψr::Vector,
              Xₙ, N,
              Tₘ::Vector, M,
              ε,
@@ -107,8 +105,6 @@ end
 """
 function minimize(q₀::Vector, u₀::Vector,
                   ulₘ::Vector, urₘ::Vector,
-                  ψ₀::Vector,
-                  ψl::Vector, ψr::Vector,
                   Xₙ, N,
                   Tₘ::Vector, M,
                   ε,
@@ -117,6 +113,10 @@ function minimize(q₀::Vector, u₀::Vector,
                   β::Real = 0.01,
                   w::Real = 0.0001,
                   create_mesh::Function = x -> [NaN, NaN])
+
+    ψ₀ = zero(Xₙ);
+    ψl = zero(Tₘ);
+    ψr = zero(Tₘ);
 
     isDynamicMesh = all(isnan.(create_mesh(Xₙ[end - div(end,2)])))
     @info isDynamicMesh ? "Используем оригинальную сетку Xₙ для q₀" : "Используем отдельную сетку для q₀"
@@ -128,7 +128,11 @@ function minimize(q₀::Vector, u₀::Vector,
     # для прямой и сопряженной задачи.
     qspl = Spline1D(Xₙ, q₀)
     k = 100;                                 # Кол-во интервалов в вспомогательной сетке
-    X_q = [ first(Xₙ) + n * (last(Xₙ) - first(Xₙ))/Float64(k) for n in 0:k]
+    if isDynamicMesh
+        X_q = Xₙ;
+    else
+        X_q = [ first(Xₙ) + n * (last(Xₙ) - first(Xₙ))/Float64(k) for n in 0:k]
+    end
     # вектор сеточных значений q на вспомогательной сетке.
     q_aux = qspl(X_q);
 
