@@ -45,6 +45,7 @@ ENV["GKS_ENCODING"] = "utf-8"
 include("utils.jl")
 include("direct.jl")
 include("degenerated.jl")
+include("initial_guess.jl")
 include("adjoint.jl")
 include("functional.jl")
 include("plotting.jl")
