@@ -331,3 +331,24 @@ function dparams_nonuniform()
 
     return a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀, meshf;
 end
+
+@doc raw"""
+    heterogeneity_map(XX::Matrix, N::Integer,
+                      Tₘ::Vector, M::Integer,
+                      u::Matrix,
+                      f1_data::Vector, f2_data::Vector,
+                      w::Real) --> ::Matrix
+
+Возвращает матрицу неоднородности ``-\delta(x - f_1(t))(u - f_2(t))``.
+Следует использовать для контроля выбора параметра аппроксимации ``w`` в
+дельта-функции.
+"""
+function heterogeneity_map(XX::Matrix, N::Integer,
+                           Tₘ::Vector, M::Integer,
+                           u::Matrix,
+                           f1_data::Vector, f2_data::Vector,
+                           w::Real)
+    out = [ - heterogeneity(n, m, XX[2:N, m], N, Tₘ, M, u[2:N, :], f1_data, f2_data, w) for n in 1:N-1, m in 1:M+1]
+
+    return out
+end

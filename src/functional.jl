@@ -112,7 +112,8 @@ function minimize(q₀::Vector, u₀::Vector,
                   S::Int = 10,
                   β::Real = 0.01,
                   w::Real = 0.0001,
-                  create_mesh::Function = x -> [NaN, NaN])
+                  create_mesh::Function = x -> [NaN, NaN],
+                  showProgress = false)
 
     ψ₀ = zero(Xₙ);
     ψl = zero(Tₘ);
@@ -148,7 +149,11 @@ function minimize(q₀::Vector, u₀::Vector,
     J_values = zeros(S);        # История значений градиента.
     Q_values = zeros(N+1, S);   # История вектора `q`.
 
-    @showprogress "Iterating minimization loop S=$(S)... " for s in 1:S
+    p = showProgress ? Progress(S, 5, "Iterating minimization loop S=$(S)... ") : nothing;
+
+    for s in 1:S
+
+        showProgress && next!(p);
 
         Q_values[:, s] .= qˢ; # Сохраним вектор q на текущей итерации
 

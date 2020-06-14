@@ -31,14 +31,18 @@ using Printf
 using Missings
 using ProgressMeter
 
-export u_init, solve;
+export u_init, dparams;
 export make_plot, make_gif, make_minimzation_gif;
+export minimization_draft, draft;
+
+export solve, solve_adjoint;
 export phidetermination, Φ;
 export apply_on_dynamic_mesh;
 export f1, f2;
-export generate_obs_data;
 export initial_guess;
-export delta, solve_adjoint;
+export generate_obs_data;
+
+export delta;
 export J, J_q, minimize;
 
 ENV["GKS_ENCODING"] = "utf-8"
