@@ -36,5 +36,5 @@ nothing # hide
 
 q_guess = initial_guess(f1_data, Xₙ, N, Tₘ, M, ulₘ, urₘ, 0.005);
 
-# !!! note
-#   Работает, только с постоянными ГУ!
+#md !!! note
+#md   Работает, только с постоянными ГУ!

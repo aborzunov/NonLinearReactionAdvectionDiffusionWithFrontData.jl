@@ -57,6 +57,16 @@ function replace_includes(str)
 return str
 end
 
+@info "\tGenerating md for numerical expirements"
+Literate.markdown(joinpath(prefix, "numerical_expirements/minimization_with_guess.jl"),
+                  "src/generated/";
+                  name = "numexpirement_low_w",
+                  documenter = true)
+Literate.markdown(joinpath(prefix, "numerical_expirements/minimization_with_guess2.jl"),
+                  "src/generated/";
+                  name = "numexpirement_high_w",
+                  documenter = true)
+
 @info "\tGenerating sripts from `examples/` folder"
 Literate.markdown("src/direct/direct_examples.jl",
                   "src/generated/";
@@ -138,25 +148,40 @@ makedocs(
     format=Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
     pages= Any[
         "index.md",
-        "Прямая задача" => Any[
-                               "direct/direct.md",
-                               "direct/experimental_data.md",
-                               "generated/docexample_direct.md",
-                               "generated/final_direct_check.md",
-                              ],
-        "Асимптотические методы" => Any[
-                                        "asymptotics/initial_guess.md",
-                                        "generated/docexample_initial_guess.md",
-                                       ],
-        "Сопряженная задача" => Any[
-                                    "adjoint/adjoint.md",
-                                    "generated/final_adjoint_check.md",
-                                    "generated/docexample_adjoint.md",
-                                   ],
-        "Обратная задача" => Any["functional/functional.md",
-                                                   #"Пример" => "generated/example_functional.md",
-                                                  ],
-        "Справочник" => "reference.md",
+        "Прямая задача" =>
+            Any[
+                    "direct/direct.md",
+                    "direct/experimental_data.md",
+                    "generated/docexample_direct.md",
+                    "generated/final_direct_check.md",
+                ],
+
+        "Асимптотические методы" =>
+            Any[
+                    "asymptotics/initial_guess.md",
+                    "generated/docexample_initial_guess.md",
+               ],
+
+        "Сопряженная задача" =>
+            Any[
+                    "adjoint/adjoint.md",
+                    "generated/final_adjoint_check.md",
+                    "generated/docexample_adjoint.md",
+               ],
+
+        "Обратная задача" =>
+            Any[
+                    "functional/functional.md",
+                    #"Пример" => "generated/example_functional.md",
+               ],
+
+        "Эксперименты" =>
+            Any[
+                    "generated/numexpirement_low_w.md",
+                    "generated/numexpirement_high_w.md",
+               ],
+
+        "reference.md",
     ],
     sitename    = "NonLinearReactionAdvectionDiffusionWithFrontData.jl",
     authors     = "Andrey Borzunov",
