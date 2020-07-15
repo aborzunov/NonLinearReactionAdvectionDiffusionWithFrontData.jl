@@ -3,29 +3,34 @@
 # Здесь, выберем эмпирический параметр ``w`` в аппроксимации
 # дельта-функции так, чтобы на каждом временном шаге в неоднородности были
 # ненулевые элементы.
+#
+# **UPD: Увеличили пробег фронта**
+# **UPD: Увеличили густоту сеток**
 
 # ## Набор параметров
 α       = 0.005;        # Параметр регуляризации
 w       = 0.005;        # Эмпирический параметр регуляризации
-S       = 5000;         # Количество итераций
+S       = 10000;        # Количество итераций
 β       = 0.001;        # Шаг минимизации
 #
-x_tp    = 0.1;          # Стартовое местоположение фронта
-T_end   = 0.42;         # Регулируем конечное местоположение фронта
+x_tp    = 0.05;         # Стартовое местоположение фронта
+T_end   = 0.48;         # Регулируем конечное местоположение фронта
 ε       = 0.03;         # Крутизна фронта
+Nx      = 500;          # Число интервалов по ``X``
+Mt      = 1000;         # Число интервалов по ``T``
 
-in("Travis", keys(ENV)) && S = 300
 
 # -----------------------------------------------------------------------------
 using NonLinearReactionAdvectionDiffusionWithFrontData
 using NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity_map;
 using Plots; gr();
+using Serialization;
 
-a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ = dparams(x_tp=0.1,
-                                                        ε = 0.03,
-                                                        Nx = 200,
-                                                        Mt = 250,
-                                                        T_end = 0.42);
+a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ = dparams(x_tp = x_tp,
+                                                         ε = ε,
+                                                         Nx = Nx,
+                                                         Mt = Mt,
+                                                         T_end = T_end);
 u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
 ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 directP = draft(u, Xₙ, N, Tₘ, M, title = "Эскиз прямого решения")
@@ -66,9 +71,21 @@ heterogeneityP = heatmap(hmap, yflip=true)
 # -----------------------------------------------------------------------------
 q₀ = zero(q_guess);
 @time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data, S = S, β = β, w = w)
+serialize("2_qs_noguess.jld", qs);
+serialize("2_Js_noguess.jld", Js);
+serialize("2_Qs_noguess.jld", Qs);
 
 # эскиз
-noguessP = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true, annotate_string = params)
+a, b, c = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true,
+                              annotate_string = params, zoom_chunk = 17//18)
+plot(a)
+# -----------------------------------------------------------------------------
+plot(b)
+# -----------------------------------------------------------------------------
+plot(c)
+# -----------------------------------------------------------------------------
+noguessP = plot(a, b, c);
+nothing; #hide
 # -----------------------------------------------------------------------------
 
 
@@ -78,10 +95,21 @@ noguessP = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true, annotate_strin
 # -----------------------------------------------------------------------------
 q₀ = q_guess;
 @time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data, S = S, β = β, w = w)
+serialize("2_qs_withguess.jld", qs);
+serialize("2_Js_withguess.jld", Js);
+serialize("2_Qs_withguess.jld", Qs);
 
 # эскиз
-withguessP = minimization_draft(qₙ, Qs, Xₙ, N, Js,
-                        zoom = true, annotate_string = params)
+a, b, c = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true,
+                              annotate_string = params, zoom_chunk = 17//18)
+plot(a)
+# -----------------------------------------------------------------------------
+plot(b)
+# -----------------------------------------------------------------------------
+plot(c)
+# -----------------------------------------------------------------------------
+withguessP = plot(a, b, c);
+nothing; #hide
 # -----------------------------------------------------------------------------
 
 
