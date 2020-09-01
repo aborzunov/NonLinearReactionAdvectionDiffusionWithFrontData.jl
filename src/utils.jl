@@ -276,7 +276,7 @@ end
 # Return
     `a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ `
 """
-function dparams(;x_tp = 0.1, qfunc = x -> 4*sin(3pi*x),
+function dparams(;x_tp = 0.1, qfunc = x -> sin(3pi*x),
                  ε = 0.2,
                  a = 0.0, b = 1.0,
                  t_start = 0.0, T_end = 0.36,
@@ -305,31 +305,31 @@ end
 # Return
     return a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀, meshf;
 """
-function dparams_nonuniform()
+function dparams_nonuniform(;x_tp = 0.1, qfunc = x -> sin(3pi*x),
+                 ε = 0.2,
+                 a = 0.0, b = 1.0,
+                 t_start = 0.0, T_end = 0.36,
+                 Nx = 50,
+                 Mt = 100,
+                 ul_func = x-> -8.0, ur_func = x -> 4.0
+                           )
 
-    u_l(t) = -8;                    # ГУ
-    u_r(t) =  4;                    #
-    qf(x) = 4*sin(3 * π * x);       # Коэффициент линейного усиления
-    ε = 0.01;                       # Малый параметр при старшей производной
-    a, b = 0, 1;                    # Область по X
-    t₀, T = 0, 0.30;                # Область по T
-    x_tp = 0.12;                    # Положение переходного слоя
-    M = 500;                        # Кол-во разбиений по T
-    τ = (T-t₀)/M;                   # шаг по T
-    Tₘ = [t₀ + m*τ for m in 0:M];   # Сетка по Т
-    ulₘ=    u_l.(Tₘ);               # Сеточные значения левого  ГУ
-    urₘ=    u_r.(Tₘ);               # Сеточные значения правого ГУ
-    nothing #hide
+    qf = qfunc;       # Коэффициент линейного усиления
+    h = (b-a)/Nx;
+    τ = (T_end-t_start)/Mt;
+    Tₘ = [t_start + m*τ for m in 0:Mt];   # Сетка по Т
+    ulₘ=    ul_func.(Tₘ);
+    urₘ=    ur_func.(Tₘ);
 
     # Замыкание функции формирования сетки по положению переходного слоя
-    meshf(x_tp) = shishkin_mesh(a, b, x_tp, ε, 40, 0.5, 1.0, 1.0, 0.25);
+    meshf(x_tp) = shishkin_mesh(a, b, x_tp, ε, Nx, 0.5, 1.0, 0.5, 1.0);
 
     Xₙ  = meshf(x_tp); ;                 # Сетка по Х
     N   = length(Xₙ) - 1                 # Кол-во интервалов
     qₙ  = qf.(Xₙ);                       # Коэффициент линейного усиления
     u₀  = u_init.(Xₙ, ε=ε, x_tp = x_tp); # Начальные условия
 
-    return a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀, meshf;
+    return a, b, t_start, T_end, N, Mt, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀, meshf;
 end
 
 @doc raw"""
