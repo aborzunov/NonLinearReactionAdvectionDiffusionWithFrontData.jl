@@ -96,4 +96,3 @@ function initial_guess(f1_data, Xₙ, N, Tₘ, M, ulₘ, urₘ, α = 0.001)
 
     return q_guess;
 end
-

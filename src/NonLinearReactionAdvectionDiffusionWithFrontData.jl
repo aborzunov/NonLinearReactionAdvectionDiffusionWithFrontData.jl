@@ -31,7 +31,7 @@ using Printf
 using Missings
 using ProgressMeter
 
-export u_init, dparams;
+export u_init, dparams, dparams_nonuniform;
 export make_plot, make_gif, make_minimzation_gif;
 export minimization_draft, draft;
 

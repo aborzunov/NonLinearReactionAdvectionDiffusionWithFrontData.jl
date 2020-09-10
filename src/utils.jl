@@ -36,8 +36,8 @@ function shishkin_mesh(a::Real, b::Real,
         throw(ArgumentError("``a, x_tp, b`` должна образовывать строго упорядоченную тройку: $((a, x_tp, b))"))
     end
 
-    N_i = Int(K_i * N);
-    N_b = Int(K_b * N);
+    N_i = Int(round(K_i * N));
+    N_b = Int(round(K_b * N));
     x = zeros(N + N_i + 2*N_b + 1);
 
     if all( x -> x<10, [N_i, N_b, N] )
