@@ -1,0 +1,139 @@
+# # Эксперимент №1
+
+# ## Набор параметров
+α       = 0.004;        # Параметр регуляризации
+w       = 0.0005;       # Эмпирический параметр регуляризации
+S       = 35000;        # Количество итераций
+β       = 0.003;        # Шаг минимизации
+#
+x_tp    = 0.25;         # Стартовое местоположение фронта
+T_end   = 0.2;          # Регулируем конечное местоположение фронта
+ε       = 10^(-1.5);    # Крутизна фронта
+Nx      = 500;          # Число интервалов по ``X``
+Mt      = 1000;         # Число интервалов по ``T``
+
+# -----------------------------------------------------------------------------
+using NonLinearReactionAdvectionDiffusionWithFrontData
+using NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity_map;
+using Serialization;
+using Plots; pyplot();
+# -----------------------------------------------------------------------------
+
+# ## Решение на точных данных
+
+# ### Решение прямой задачи для генерирования экспериментальной информации
+# -----------------------------------------------------------------------------
+a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ = dparams(x_tp = x_tp,
+                                                         ε = ε,
+                                                         Nx = Nx,
+                                                         Mt = Mt,
+                                                         T_end = T_end);
+u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
+directP = draft(u, Xₙ, N, Tₘ, M, title = "Эскиз прямого решения")
+savefig(directP, "direct1.png");
+# -----------------------------------------------------------------------------
+
+# ### Найдем начальное приближение
+# -----------------------------------------------------------------------------
+q_guess = initial_guess(f1_data, Xₙ, N, Tₘ, M, ulₘ, urₘ, α);
+plot(Xₙ, qₙ, label="Истинное");
+plot!(Xₙ, q_guess, label="Найденное")
+# -----------------------------------------------------------------------------
+
+
+# -----------------------------------------------------------------------------
+# В следующей строке, мы записываем все параметры в latex формате,
+# не забываем экранировать все спецсимволы.
+# Дальше, мы отобразим все эти параметры на графике.
+using Printf;
+params = "\$w = $(w), \\varepsilon = $(ε), "*
+"\\beta = $(β), f_1 \\in $(@sprintf("[%.2f, %.2f]", extrema(f1_data)...)), "*
+"\\alpha = $(α)\$"
+nothing #hide
+# -----------------------------------------------------------------------------
+
+
+# ### Старт с найденного приближения на точных данных
+# -----------------------------------------------------------------------------
+q₀ = q_guess;
+@time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
+                            S = S, β = β, w = w, showProgress = true)
+serialize("qs.jld", qs);
+serialize("Js.jld", Js);
+serialize("Qs.jld", Qs);
+
+# ### Эскиз процесса минимизации
+# -----------------------------------------------------------------------------
+a, b, c = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true,
+                              annotate_string = params, zoom_chunk = 17//18)
+plot(a, size = (800, 800))
+plot(b)
+plot(c)
+withguessP = plot(a, b, c, layout = (3,1), size = (800, 2400));
+savefig(withguessP, "withguess1.png")
+nothing; #hide
+# -----------------------------------------------------------------------------
+
+
+# ## Слабо зашумленные данные
+# -----------------------------------------------------------------------------
+using Random
+using NonLinearReactionAdvectionDiffusionWithFrontData: front_velocity;
+rng = MersenneTwister(1234)
+
+# Создадим мелкий шум.
+f1_data_noised = f1_data + randn(rng, length(f1_data)) .* 0.00008
+f2_data_noised = f2_data + randn(rng, length(f2_data)) .* 0.00008
+plot(Tₘ, f1_data_noised, label="Зашумленные \$f_1\$")
+plot!(Tₘ, f2_data_noised, label="Зашумленные \$f_2\$")
+
+# Убедимся, что численное дифференцирование зашумленных функций --- это плохо.
+v_f1 = front_velocity(f1_data_noised, Tₘ, M);
+plot(Tₘ, v_f1[5:end-5], label="Скорость зашумленного \$f_1\$")
+
+# Регуляризация во время поиска начального приближения справляется
+q_guess = initial_guess(f1_data_noised, Xₙ, N, Tₘ, M, ulₘ, urₘ, α*3);
+plot(Xₙ, qₙ, label="Истинное");
+plot!(Xₙ, q_guess, label="Найденное")
+
+
+# ### Старт с найденного приближения на зашумленных данных
+# -----------------------------------------------------------------------------
+q₀ = q_guess;
+@time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
+                            S = S, β = β, w = w, showProgress = true)
+serialize("qs_noised.jld", qs);
+serialize("Js_noised.jld", Js);
+serialize("Qs_noised.jld", Qs);
+
+# ### Эскиз процесса минимизации
+a, b, c = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true,
+                              annotate_string = params, zoom_chunk = 17//18)
+plot(a)
+plot(b)
+plot(c)
+noisedP = plot(a, b, c);
+savefig(noisedP, "noised.png");
+nothing; #hide
+# -----------------------------------------------------------------------------
+
+# ### Старт с найденного приближения на точных данных
+# -----------------------------------------------------------------------------
+q₀ = q_guess;
+@time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
+                            S = S, β = β, w = w, showProgress = true)
+serialize("qs_noised.jld", qs);
+serialize("Js_noised.jld", Js);
+serialize("Qs_noised.jld", Qs);
+
+# ### Эскиз процесса минимизации
+a, b, c = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true,
+                              annotate_string = params, zoom_chunk = 17//18)
+plot(a)
+plot(b)
+plot(c)
+noisedP = plot(a, b, c);
+savefig(noisedP, "noised.png");
+nothing; #hide
+# -----------------------------------------------------------------------------
