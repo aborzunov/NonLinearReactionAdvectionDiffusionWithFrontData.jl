@@ -48,7 +48,7 @@ savefig("initial_guess.png");
 # не забываем экранировать все спецсимволы.
 # Дальше, мы отобразим все эти параметры на графике.
 using Printf;
-params = "\$w = $(w), \\varepsilon = $(ε), "*
+params = "\$w = $(w), \\varepsilon = $(@sprintf("%.4f", ε)), "*
 "\\beta = $(β), f_1 \\in $(@sprintf("[%.2f, %.2f]", extrema(f1_data)...)), "*
 "\\alpha = $(α)\$"
 nothing #hide
