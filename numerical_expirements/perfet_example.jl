@@ -3,20 +3,21 @@
 # ## Набор параметров
 α       = 0.004;        # Параметр регуляризации
 w       = 0.0001;       # Эмпирический параметр регуляризации
-S       = 1000;         # Количество итераций
-β       = 0.0001;       # Шаг минимизации
+S       = 150000;       # Количество итераций
+β       = 0.001;        # Шаг минимизации
 #
-x_tp    = 0.02;         # Стартовое местоположение фронта
-T_end   = 0.45;         # Регулируем конечное местоположение фронта
-ε       = 10^1.5;       # Крутизна фронта
-Nx      = 500;          # Число интервалов по ``X``
-Mt      = 1000;        j# Число интервалов по ``T``
+x_tp    = 0.05;         # Стартовое местоположение фронта
+T_end   = 0.47;         # Регулируем конечное местоположение фронта
+ε       = 10^(-1.5);    # Крутизна фронта
+Nx      = 15000;          # Число интервалов по ``X``
+Mt      = 30000;         # Число интервалов по ``T``
 
 # -----------------------------------------------------------------------------
 using NonLinearReactionAdvectionDiffusionWithFrontData
 using NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity_map;
 using Serialization;
 using Plots; pyplot();
+using Dierckx;
 # -----------------------------------------------------------------------------
 
 # ## Решение на точных данных
@@ -37,9 +38,9 @@ savefig(directP, "direct1.png");
 # ### Найдем начальное приближение
 # -----------------------------------------------------------------------------
 q_guess = initial_guess(f1_data, Xₙ, N, Tₘ, M, ulₘ, urₘ, 0.005);
-initial_guessP = plot(Xₙ, qₙ, label="Истинное");
+initial_guessP = plot(Xₙ, qₙ, xlabel = "X", ylabel = "q(x)", label="Истинное");
 initial_guessP = plot!(Xₙ, q_guess, label="Найденное")
-savefig("initial_guess.png");
+#savefig("initial_guess.svg");
 # -----------------------------------------------------------------------------
 
 
@@ -56,13 +57,25 @@ nothing #hide
 
 
 # ### Старт с найденного приближения на точных данных
+spl = Spline1D(Xₙ, q_guess);
+Nx      = 500;          # Число интервалов по ``X``
+Mt      = 1000;         # Число интервалов по ``T``
+a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ = dparams(x_tp = x_tp,
+                                                         ε = ε,
+                                                         Nx = Nx,
+                                                         Mt = Mt,
+                                                         T_end = T_end);
+u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
+q₀ = spl(Xₙ);
+
 # -----------------------------------------------------------------------------
-q₀ = q_guess;
 @time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
                             S = S, β = β, w = w, showProgress = true)
-serialize("qs.jld", qs);
-serialize("Js.jld", Js);
-serialize("Qs.jld", Qs);
+#serialize("qs_withguess.jld", qs);
+#serialize("Js_withguess.jld", Js);
+#serialize("Qs_withguess.jld", Qs);
+# -----------------------------------------------------------------------------
 
 # ### Эскиз процесса минимизации
 # -----------------------------------------------------------------------------
@@ -71,7 +84,31 @@ a, b, c = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true,
 plot(a, size = (800, 800))
 plot(b)
 plot(c)
-withguessP = plot(a, b, c, layout = (3,1), size = (800, 2400));
+withguessP = plot(a, b, c, layout = (3,1), size = (1000, 2400));
+#savefig(withguessP, "withguess1.png")
+nothing; #hide
+# -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# ------------------ Старт с нулевого приближения -----------------------------
+# -----------------------------------------------------------------------------
+q₀ = zero(Xₙ)
+# -----------------------------------------------------------------------------
+@time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
+                            S = S, β = β, w = w, showProgress = true)
+#serialize("qs_zero.jld", qs);
+#serialize("Js_zero.jld", Js);
+#serialize("QQs_zero.jld", Qs);
+# -----------------------------------------------------------------------------
+
+# ### Эскиз процесса минимизации
+# -----------------------------------------------------------------------------
+a, b, c = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true,
+                              annotate_string = params, zoom_chunk = 17//18)
+plot(a, size = (800, 800))
+plot(b)
+plot(c)
+#withguessP = plot(a, b, c, layout = (3,1), size = (1000, 2400));
 savefig(withguessP, "withguess1.png")
 nothing; #hide
 # -----------------------------------------------------------------------------

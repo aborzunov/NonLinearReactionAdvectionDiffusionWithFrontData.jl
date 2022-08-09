@@ -248,7 +248,7 @@ function make_minimzation_gif(Js::Vector, Qs::Matrix,
     @showprogress "Composing minimization.." for s in frames_to_write
         pQs = plot(xlabel = "x", ylabel="q(x)", ylims=yl, size = (800, 800) )
         pQs = plot!(Xₙ, qₙ, label="q(x)")
-        pQs = scatter!(Xₙ, Qs[:,s], title="Искомая qˢ(x) при s = $(s)", label=L"q^s(x)")
+        pQs = scatter!(Xₙ, Qs[:,s], ylims = (-1.1, 1.1), xlims = (0, 1), title="Искомая qˢ(x) при s = $(s)", label=L"q^s(x)")
         pQs = plot!(Xₙ, Qs[:,1], line = :dash, label=L"q^0(x)")
 
         pJs = plot(title="Значение функционала на шаге s = $(s)", size = (800, 800),

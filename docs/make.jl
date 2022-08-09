@@ -58,13 +58,13 @@ return str
 end
 
 @info "\tGenerating md for numerical expirements"
-Literate.markdown(joinpath(prefix, "numerical_expirements/minimization_with_guess.jl"),
+Literate.markdown(joinpath(prefix, "numerical_expirements/data_generation.jl"),
                   "src/generated/";
-                  name = "numexpirement_low_w",
+                  name = "data_generation",
                   documenter = true)
-Literate.markdown(joinpath(prefix, "numerical_expirements/minimization_with_guess2.jl"),
+Literate.markdown(joinpath(prefix, "numerical_expirements/same_params.jl"),
                   "src/generated/";
-                  name = "numexpirement_high_w",
+                  name = "same_params",
                   documenter = true)
 
 @info "\tGenerating sripts from `examples/` folder"
@@ -172,13 +172,13 @@ makedocs(
         "Обратная задача" =>
             Any[
                     "functional/functional.md",
-                    #"Пример" => "generated/example_functional.md",
+                    "generated/example_functional.md",
                ],
 
         "Эксперименты" =>
             Any[
-                    "generated/numexpirement_low_w.md",
-                    "generated/numexpirement_high_w.md",
+                    "generated/data_generation.md",
+                    "generated/same_params.md",
                ],
 
         "reference.md",

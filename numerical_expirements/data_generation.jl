@@ -44,11 +44,11 @@ for (eps, x_tp) in [(0.03, 0.04), (0.01, 0.03), (0.001,0.02)]
     writedlm("xn_qn_eps_$(ε).txt",[Xₙ qₙ])
 #+
     # Находим начальные приближения
-    #  q_guess = initial_guess(f1_data, Xₙ, N, Tₘ, M, ulₘ, urₘ, α);
-    #  p = plot(Xₙ, qₙ, label="Истинное",  title = "Начальное приближение, \\varepsilon = $(ε)");
-    #  p = plot!(Xₙ, q_guess, label="Найденное")
-    #  savefig("guess_eps_$(ε)_sin.png");
-    #  push!(plts, p);
+    q_guess = initial_guess(f1_data, Xₙ, N, Tₘ, M, ulₘ, urₘ, α);
+    p = plot(Xₙ, qₙ, label="Истинное",  title = "Начальное приближение, \\varepsilon = $(ε)");
+    p = plot!(Xₙ, q_guess, label="Найденное")
+    savefig("guess_eps_$(ε)_sin.png");
+    push!(plts, p);
 #+
     # Два гаусиана разной высоты, которые частично перекрываются
     gauss_init(x) = 2 * exp(-((x-5.0/13.0)^2)/(1.5/13.0^2)) +
@@ -66,11 +66,11 @@ for (eps, x_tp) in [(0.03, 0.04), (0.01, 0.03), (0.001,0.02)]
     writedlm("xn_qn_eps_$(ε)_gauss.txt",[Xₙ qₙ])
 #+
     # Находим начальные приближения
-    #  q_guess = initial_guess(f1_data, Xₙ, N, Tₘ, M, ulₘ, urₘ, α);
-    #  p = plot(Xₙ, qₙ, label="Истинное",  title = "Начальное приближение, \\varepsilon = $(ε)");
-    #  p = plot!(Xₙ, q_guess, label="Найденное")
-    #  savefig("guess_eps_$(ε)_gauss.png");
-    #  push!(plts, p);
+    q_guess = initial_guess(f1_data, Xₙ, N, Tₘ, M, ulₘ, urₘ, α);
+    p = plot(Xₙ, qₙ, label="Истинное",  title = "Начальное приближение, \\varepsilon = $(ε)");
+    p = plot!(Xₙ, q_guess, label="Найденное")
+    savefig("guess_eps_$(ε)_gauss.png");
+    push!(plts, p);
 
 end
 
