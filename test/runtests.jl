@@ -18,3 +18,6 @@ using SafeTestsets
 @time @safetestset "Вырожденые корни                                 " begin include("degenerated_check.jl") end
 
 @time @safetestset "Градиент, функционал                             " begin include("functional.jl") end
+
+@time @safetestset "Градиентный чек и тест Тейлора                   " begin include("gradient_check.jl") end
+@time @safetestset "Убывание функционала при минимизации              " begin include("minimization.jl") end

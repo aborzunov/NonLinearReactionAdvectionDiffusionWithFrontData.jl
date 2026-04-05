@@ -57,14 +57,33 @@ function replace_includes(str)
 return str
 end
 
+# Подменяем тяжёлые параметры лёгкими для быстрой сборки документации.
+# Исходные файлы в numerical_expirements/ остаются без изменений.
+function docs_params(str)
+    str = replace(str, "Nx      = 15000;" => "Nx      = 50;   # (reduced for docs)")
+    str = replace(str, "Mt      = 30000;" => "Mt      = 100;  # (reduced for docs)")
+    str = replace(str, "S       = 35000;" => "S       = 10;   # (reduced for docs)")
+    str = replace(str, "Nx      = 500;"   => "Nx      = 50;   # (reduced for docs)")
+    str = replace(str, "Mt      = 1000;"  => "Mt      = 100;  # (reduced for docs)")
+    return str
+end
+
 @info "\tGenerating md for numerical expirements"
 Literate.markdown(joinpath(prefix, "numerical_expirements/data_generation.jl"),
                   "src/generated/";
                   name = "data_generation",
+                  preprocess = docs_params,
                   documenter = true)
 Literate.markdown(joinpath(prefix, "numerical_expirements/same_params.jl"),
                   "src/generated/";
                   name = "same_params",
+                  preprocess = docs_params,
+                  documenter = true)
+
+@info "\tGenerating md for functional section"
+Literate.markdown("src/functional/numerical_expirements.jl",
+                  "src/generated/";
+                  name = "example_functional",
                   documenter = true)
 
 @info "\tGenerating sripts from `examples/` folder"
@@ -146,6 +165,7 @@ DocMeta.setdocmeta!( NonLinearReactionAdvectionDiffusionWithFrontData,
 makedocs(
     modules=[NonLinearReactionAdvectionDiffusionWithFrontData],
     format=Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true"),
+    warnonly = [:example_block, :autodocs_block],
     pages= Any[
         "index.md",
         "Прямая задача" =>
@@ -179,6 +199,14 @@ makedocs(
             Any[
                     "generated/data_generation.md",
                     "generated/same_params.md",
+               ],
+
+        "Методология тестирования" =>
+            Any[
+                    "testing/testing_mms.md",
+                    "testing/testing_gradient.md",
+                    "testing/testing_adjoint.md",
+                    "testing/testing_convergence.md",
                ],
 
         "reference.md",

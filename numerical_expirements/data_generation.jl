@@ -4,9 +4,10 @@
 # Подразумевается, что скрипт будет исполнятся очень редко. Все свои результаты
 # он запишет в соответствующие файлы в текущей папке.
 
+
 using NonLinearReactionAdvectionDiffusionWithFrontData;
 using DelimitedFiles;
-using Plots; pyplot();
+using Plots; gr();
 
 
 # Выберем параметры таким образом, чтобы решение точно было хорошим.
@@ -34,6 +35,7 @@ for (eps, x_tp) in [(0.03, 0.04), (0.01, 0.03), (0.001,0.02)]
                                                             T_end = T_end,
                                                             qfunc = x -> sin(3pi*x)
                                                             );
+    @info "data_generation: solve #1 для ε=$(eps), sin-коэффициент (Nx=$(Nx), Mt=$(Mt))..."
     u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
     ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 #+
@@ -56,6 +58,7 @@ for (eps, x_tp) in [(0.03, 0.04), (0.01, 0.03), (0.001,0.02)]
     qₙ = [gauss_init(x) for x in Xₙ]
     plot(Xₙ, qₙ)
 #+
+    @info "data_generation: solve #2 для ε=$(eps), gauss-коэффициент (Nx=$(Nx), Mt=$(Mt))..."
     u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
     ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 #+

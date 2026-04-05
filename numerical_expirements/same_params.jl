@@ -16,7 +16,7 @@ Mt      = 1000;         # Число интервалов по ``T``
 using NonLinearReactionAdvectionDiffusionWithFrontData
 using NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity_map;
 using Serialization;
-using Plots; pyplot();
+using Plots; gr();
 # -----------------------------------------------------------------------------
 
 # ## Решение на точных данных
@@ -28,6 +28,7 @@ a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ = dparams(x_tp = x
                                                          Nx = Nx,
                                                          Mt = Mt,
                                                          T_end = T_end);
+@info "same_params: решение прямой задачи (Nx=$(Nx), Mt=$(Mt))..."
 u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
 ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 directP = draft(u, Xₙ, N, Tₘ, M, title = "Эскиз прямого решения")
@@ -57,6 +58,7 @@ nothing #hide
 # ### Старт с найденного приближения на точных данных
 # -----------------------------------------------------------------------------
 q₀ = q_guess;
+@info "same_params: минимизация #1 — точные данные, S=$(S) итераций..."
 @time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
                             S = S, β = β, w = w, showProgress = true)
 serialize("qs.jld", qs);
@@ -101,6 +103,7 @@ plot!(Xₙ, q_guess, label="Найденное")
 # ### Старт с найденного приближения на зашумленных данных
 # -----------------------------------------------------------------------------
 q₀ = q_guess;
+@info "same_params: минимизация #2 — зашумленные данные, S=$(S) итераций..."
 @time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
                             S = S, β = β, w = w, showProgress = true)
 serialize("qs_noised.jld", qs);
@@ -121,6 +124,7 @@ nothing; #hide
 # ### Старт с найденного приближения на точных данных
 # -----------------------------------------------------------------------------
 q₀ = q_guess;
+@info "same_params: минимизация #3 — повтор на точных данных, S=$(S) итераций..."
 @time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
                             S = S, β = β, w = w, showProgress = true)
 serialize("qs_noised.jld", qs);

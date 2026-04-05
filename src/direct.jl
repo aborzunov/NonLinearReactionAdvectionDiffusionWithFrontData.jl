@@ -123,7 +123,7 @@ julia> y = y₀[2:N];
 julia> dl, d, du = NonLinearReactionAdvectionDiffusionWithFrontData.DRP_y(y, 1, Xₙ, N, ε, ulₘ, urₘ, qq);
 
 julia> Tridiagonal( dl, d, du )
-49×49 Tridiagonal{Float64,Array{Float64,1}}:
+49×49 Tridiagonal{Float64, Vector{Float64}}:
  -991.038   305.462      ⋅         ⋅         ⋅         ⋅         ⋅     …       ⋅         ⋅         ⋅         ⋅         ⋅        ⋅
 [...]
 ```

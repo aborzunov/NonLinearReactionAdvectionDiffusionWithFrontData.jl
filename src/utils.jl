@@ -146,7 +146,7 @@ end
 julia> N = 10; a = collect(1:N+1);
 
 julia> NonLinearReactionAdvectionDiffusionWithFrontData.strip_borderPoints(a, N)
-9-element Array{Int64,1}:
+9-element Vector{Int64}:
   2
   3
   4
@@ -183,7 +183,7 @@ end
 # Example
 ```jldoctest
 julia> NonLinearReactionAdvectionDiffusionWithFrontData.u_init.(0:0.1:1)
-11-element Array{Float64,1}:
+11-element Vector{Float64}:
  -7.868156688432881
  -5.900893714323723
   1.650893714323725
