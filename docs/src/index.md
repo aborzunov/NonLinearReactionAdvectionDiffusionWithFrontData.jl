@@ -70,20 +70,22 @@ Depth = 1
 
 ## Локальная документация
 
-Документация на `gh-pages` может не содержать анимированных решений в форматах
-`gif` и `mp4` или содержать их урезанную по FPS версию.
+Документация на `gh-pages` собирается в режиме `ci` — примеры показываются
+как статический код без графиков и анимаций.
 
-Вы можете сгенерировать документацию локально:
+Чтобы сгенерировать полную документацию с графиками и GIF локально:
 ```bash
-git clone
-https://github.com/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl
+git clone https://github.com/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl
 cd NonLinearReactionAdvectionDiffusionWithFrontData.jl
-julia --color=yes -e "Pkg.build(verbose=true);"
-julia --color=yes -e "Pkg.test"
-cd docs
-julia --color=yes make.jl
-python3 -m http.server --bind localhost > /dev/null 2>&1 &
+julia --project=docs -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
+DOCS_MODE=full julia --project=docs docs/make.jl
+python3 -m http.server 8000 --directory docs/build
 ```
-После, откройте [http://localhost:8000/build/](http://localhost:8000/build/)
-в своем браузере (точный адрес может зависеть от `$(pwd)` в которой вы запустили
-сервер).
+После, откройте [http://localhost:8000](http://localhost:8000) в браузере.
+
+Тяжёлые численные эксперименты (для статьи) вынесены в отдельный каталог `reports/`
+и запускаются отдельно:
+```bash
+julia --project=reports -e 'using Pkg; Pkg.develop(path="."); Pkg.instantiate()'
+julia --project=reports reports/run.jl
+```

@@ -21,3 +21,5 @@ news.md
 src/test_workflow.jl
 results/*
 talks/*
+reports/output/*
+!reports/output/.gitkeep

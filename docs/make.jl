@@ -9,7 +9,12 @@ cd(@__DIR__)
 # activates null device as output for GR
 ENV["GKSwstype"] = "100"
 ENV["GKS_ENCODING"] = "utf-8"
-istravis = in("TRAVIS", keys(ENV))
+
+# Режим сборки документации:
+#   "ci"   (по умолчанию) — все примеры как статический код, без исполнения
+#   "full" — примеры исполняются, генерируются графики и GIF
+const FULL_BUILD = get(ENV, "DOCS_MODE", "ci") == "full"
+@info "\tDocs build mode: $(FULL_BUILD ? "full" : "ci")"
 
 
 # package prefix
@@ -42,6 +47,7 @@ function replace_includes(str)
                 "examples/example_adjoint.jl",
                 "examples/example_adjoint_nonuniform.jl",
                 "examples/example_initial_guess.jl",
+                "examples/example_functional.jl",
                 ]
 
     # `prefix` -- путь к нашему пакету
@@ -57,58 +63,47 @@ function replace_includes(str)
 return str
 end
 
-# Подменяем тяжёлые параметры лёгкими для быстрой сборки документации.
-# Исходные файлы в numerical_expirements/ остаются без изменений.
-function docs_params(str)
-    str = replace(str, "Nx      = 15000;" => "Nx      = 50;   # (reduced for docs)")
-    str = replace(str, "Mt      = 30000;" => "Mt      = 100;  # (reduced for docs)")
-    str = replace(str, "S       = 35000;" => "S       = 10;   # (reduced for docs)")
-    str = replace(str, "Nx      = 500;"   => "Nx      = 50;   # (reduced for docs)")
-    str = replace(str, "Mt      = 1000;"  => "Mt      = 100;  # (reduced for docs)")
-    return str
-end
-
 @info "\tGenerating md for numerical expirements"
-Literate.markdown(joinpath(prefix, "numerical_expirements/data_generation.jl"),
+# documenter=false всегда: это архивные расчёты (Nx=15000, S=35000),
+# предназначены для ручного запуска через reports/run.jl
+Literate.markdown(joinpath(prefix, "reports/experiments/data_generation.jl"),
                   "src/generated/";
                   name = "data_generation",
-                  preprocess = docs_params,
-                  documenter = true)
-Literate.markdown(joinpath(prefix, "numerical_expirements/same_params.jl"),
+                  documenter = false)
+Literate.markdown(joinpath(prefix, "reports/experiments/same_params.jl"),
                   "src/generated/";
                   name = "same_params",
-                  preprocess = docs_params,
-                  documenter = true)
+                  documenter = false)
 
 @info "\tGenerating md for functional section"
 Literate.markdown("src/functional/numerical_expirements.jl",
                   "src/generated/";
                   name = "example_functional",
-                  documenter = true)
+                  preprocess = replace_includes, documenter = FULL_BUILD)
 
 @info "\tGenerating sripts from `examples/` folder"
 Literate.markdown("src/direct/direct_examples.jl",
                   "src/generated/";
                   name = "docexample_direct",
-                  preprocess = replace_includes, documenter = true)
+                  preprocess = replace_includes, documenter = FULL_BUILD)
 Literate.markdown("src/adjoint/adjoint_examples.jl",
                   "src/generated/";
                   name = "docexample_adjoint",
-                  preprocess = replace_includes, documenter = true)
+                  preprocess = replace_includes, documenter = FULL_BUILD)
 Literate.markdown("src/asymptotics/initial_guess_example.jl",
                   "src/generated/";
                   name = "docexample_initial_guess",
-                  preprocess = replace_includes, documenter = true)
+                  preprocess = replace_includes, documenter = FULL_BUILD)
 
 @info "\tGenerating scripts from `tests/` folder"
 Literate.markdown("src/direct/check/dt_direct.jl",
                   "src/generated/helpers";
                   name = "doctest_direct",
-                  preprocess = replace_includes, documenter = true)
+                  preprocess = replace_includes, documenter = FULL_BUILD)
 Literate.markdown("src/adjoint/check/dt_adjoint.jl",
                   "src/generated/helpers";
                   name = "doctest_adjoint",
-                  preprocess = replace_includes, documenter = true)
+                  preprocess = replace_includes, documenter = FULL_BUILD)
 
 @info "\tComposing final check .md files"
 # Нам нужно, чтобы Literate сделал предобработку, но это возможно только
@@ -218,4 +213,6 @@ makedocs(
 
 deploydocs(;
     repo="github.com/aborzunov/NonLinearReactionAdvectionDiffusionWithFrontData.jl",
+    devbranch = "master",
+    push_preview = true,
 )

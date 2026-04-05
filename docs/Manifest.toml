@@ -594,7 +594,7 @@ version = "1.3.0"
 
 [[NonLinearReactionAdvectionDiffusionWithFrontData]]
 deps = ["Dates", "Dierckx", "Documenter", "ForwardDiff", "LaTeXStrings", "LinearAlgebra", "Missings", "Plots", "Printf", "ProgressMeter", "SafeTestsets"]
-path = ".."
+path = "/Users/aborzunov/Programming/NonLinearReactionAdvectionDiffusionWithFrontData"
 uuid = "db403dc9-80bf-46d2-a311-18f56bc0e108"
 version = "0.1.0"
 
