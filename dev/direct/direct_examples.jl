@@ -22,11 +22,10 @@ include("examples/example_direct.jl")
 
 # ### Визуализация
 
-# Мы не можем строить большие анимации на стороне `Travis`-a.
-# Если мы на CI, то будем рисовать только 10 кадров.
-# Если мы генерируем документацию локально, то рисуем 80 кадров.
-isTravis = in("Travis", keys(ENV))
-ftw = isTravis ? range(1, stop = M+1, length=9) : [1; 2:div(M+1, 80):M+1];
+# На CI строим только 10 кадров анимации (экономим время).
+# Локально рисуем 80 кадров.
+isCI = get(ENV, "CI", "false") == "true"
+ftw = isCI ? range(1, stop = M+1, length=9) : [1; 2:div(M+1, 80):M+1];
 
 ## Запись gif одного только решения
 make_gif(u, XX, Tₘ; name="solution_direct_ex1.gif", frames_to_write = ftw)
@@ -55,7 +54,7 @@ include("examples/example_direct_nonuniform.jl")
 
 # ### Визуализация
 # Так выглядит решение для динамической сетке
-ftw = isTravis ? range(1, stop = M+1, length=15) : [1; 2:div(M+1, 80):M+1];
+ftw = isCI ? range(1, stop = M+1, length=15) : [1; 2:div(M+1, 80):M+1];
 make_gif(u, XX, Tₘ, ϕl, ϕr, ϕ, f1_data, f2_data; name="solution_direct_ex3.gif", frames_to_write = ftw)
 
 

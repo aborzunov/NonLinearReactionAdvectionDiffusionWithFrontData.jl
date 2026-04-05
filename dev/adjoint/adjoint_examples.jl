@@ -25,11 +25,10 @@ include("examples/example_adjoint.jl")
 
 # ### Визуализация
 
-# Мы не можем строить большие анимации на стороне `Travis`-a.
-# Если мы на CI, то будем рисовать только 10 кадров.
-# Если мы генерируем документацию локально, то рисуем 80 кадров.
-isTravis = in("Travis", keys(ENV))
-ftw = isTravis ? range(1, stop = M+1, length=9) : [1; 2:div(M+1, 80):M+1];
+# На CI строим только 10 кадров анимации (экономим время).
+# Локально рисуем 80 кадров.
+isCI = get(ENV, "CI", "false") == "true"
+ftw = isCI ? range(1, stop = M+1, length=9) : [1; 2:div(M+1, 80):M+1];
 
 # На отрисовку, решение сопряженной задачи передадим в инвертированном времени.
 # Передадим свою подпись к графиками с помощью keyword `label="\\psi"`,
@@ -75,7 +74,7 @@ H = [  - heterogeneity(n, m, X[:, m], N, Tₘ, M, Uₙₘ, f1_data, f2_data, w) 
 heatmap(H', title=L"-2 δ( x - f_1(t))(u(f1(t), t) - f2(t) ")
 
 # ### Визуализация
-ftw = isTravis ? range(1, stop = M+1, length=9) : [1; 2:div(M+1, 80):M+1];
+ftw = isCI ? range(1, stop = M+1, length=9) : [1; 2:div(M+1, 80):M+1];
 
 make_gif(reverse(ψ, dims=2), XX, Tₘ;
          label="\\psi",
