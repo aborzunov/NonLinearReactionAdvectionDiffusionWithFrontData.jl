@@ -73,7 +73,7 @@ run(`cd $(wdir)`)
 using NonLinearReactionAdvectionDiffusionWithFrontData
 using NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity_map;
 using Serialization;
-using Plots; pyplot();
+using Plots; gr();
 using Dierckx;
 # -----------------------------------------------------------------------------
 
@@ -86,7 +86,8 @@ a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ = dparams(x_tp = x
                                                          Nx = Nx,
                                                          Mt = Mt,
                                                          T_end = T_end);
-u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+@info "solve() (Nx=$(Nx), Mt=$(Mt))..."
+@time u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
 ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 directP = draft(u, Xₙ, N, Tₘ, M, title = "Эскиз прямого решения")
 make_gif(u, Xₙ, Tₘ, ϕl, ϕr, ϕ, f1_data, f2_data, name = n_direct_gif);
@@ -124,7 +125,7 @@ savefig(n_noised_data);
 
 # Убедимся, что численное дифференцирование зашумленных функций --- это плохо.
 v_f1 = front_velocity(f1_data_noised, Tₘ, M);
-plot(Tₘ, v_f1[5:end-5], label="Скорость зашумленного фронта \$\\dfrac{df_1}{dt}\$")
+plot(Tₘ[5:end-5], v_f1[5:end-5], label="Скорость зашумленного фронта \$\\dfrac{df_1}{dt}\$")
 savefig(n_noised_velocity);
 
 # ### Найдем начальное приближение

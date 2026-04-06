@@ -293,8 +293,8 @@ function solve(y₀::Vector, Xₙ::Vector, N::Int,
         Массив qₙ должен иметь размерность N+1."""))
     end
     if length(y₀) != N+1
-        throw(ArgumentError("""length(y) == $(length(y)), N == $(N)
-        Массив `y` должен иметь размерность N+1."""))
+        throw(ArgumentError("""length(y₀) == $(length(y₀)), N == $(N)
+        Массив `y₀` должен иметь размерность N+1."""))
     end
 
     if length(Tₘ) != M+1
@@ -306,8 +306,8 @@ function solve(y₀::Vector, Xₙ::Vector, N::Int,
         Массив `ulₘ` должен иметь размерность M+1"""))
     end
     if length(urₘ) != M+1
-        throw(ArgumentError("""length(y) == $(length(y)), M == $(M)
-        Массив `ulₘ` должен иметь размерность M+1"""))
+        throw(ArgumentError("""length(urₘ) == $(length(urₘ)), M == $(M)
+        Массив `urₘ` должен иметь размерность M+1"""))
     end
 
     u = zeros(N+1, M+1);                # Решение на всей сетке ``Xₙ x Tₘ``

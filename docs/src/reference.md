@@ -4,7 +4,7 @@
 Modules = [NonLinearReactionAdvectionDiffusionWithFrontData]
 Pages = [
     "direct.jl",
-    degenerated.jl",
+    "degenerated.jl",
     "adjoint.jl",
     "functional.jl",
     "utils.jl",
@@ -16,7 +16,7 @@ Pages = [
 Modules = [NonLinearReactionAdvectionDiffusionWithFrontData]
 Pages = [
     "direct.jl",
-    degenerated.jl",
+    "degenerated.jl",
     "adjoint.jl",
     "functional.jl",
     "utils.jl",

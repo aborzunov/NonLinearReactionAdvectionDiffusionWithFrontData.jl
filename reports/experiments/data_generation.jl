@@ -8,6 +8,7 @@
 using NonLinearReactionAdvectionDiffusionWithFrontData;
 using DelimitedFiles;
 using Plots; gr();
+using ProgressMeter;
 
 
 # Выберем параметры таким образом, чтобы решение точно было хорошим.
@@ -24,7 +25,7 @@ Mt      = 30000;        # Число интервалов по ``T``
 
 plts = Any[];           # Вектор для хранения графиков Plots
 
-for (eps, x_tp) in [(0.03, 0.04), (0.01, 0.03), (0.001,0.02)]
+@showprogress "ε-итерации: " for (eps, x_tp) in [(0.03, 0.04), (0.01, 0.03), (0.001,0.02)]
     @info "Генерируем данные для ε = $(eps), x_tp = $(x_tp)"
     ε       = eps;          # Крутизна фронта
 #+
@@ -36,7 +37,7 @@ for (eps, x_tp) in [(0.03, 0.04), (0.01, 0.03), (0.001,0.02)]
                                                             qfunc = x -> sin(3pi*x)
                                                             );
     @info "data_generation: solve #1 для ε=$(eps), sin-коэффициент (Nx=$(Nx), Mt=$(Mt))..."
-    u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+    @time u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
     ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 #+
     # Убеждаемся в корректности прямого решения на глаз и пишем данные в txt
@@ -59,7 +60,7 @@ for (eps, x_tp) in [(0.03, 0.04), (0.01, 0.03), (0.001,0.02)]
     plot(Xₙ, qₙ)
 #+
     @info "data_generation: solve #2 для ε=$(eps), gauss-коэффициент (Nx=$(Nx), Mt=$(Mt))..."
-    u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+    @time u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
     ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 #+
     # Убеждаемся в корректности прямого решения на глаз и пишем данные в text

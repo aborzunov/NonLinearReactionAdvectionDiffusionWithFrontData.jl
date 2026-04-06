@@ -16,7 +16,7 @@ Mt      = 30000;         # Число интервалов по ``T``
 using NonLinearReactionAdvectionDiffusionWithFrontData
 using NonLinearReactionAdvectionDiffusionWithFrontData: heterogeneity_map;
 using Serialization;
-using Plots; pyplot();
+using Plots; gr();
 using Dierckx;
 # -----------------------------------------------------------------------------
 
@@ -29,7 +29,8 @@ a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ = dparams(x_tp = x
                                                          Nx = Nx,
                                                          Mt = Mt,
                                                          T_end = T_end);
-u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+@info "solve() #1 (Nx=$(Nx), Mt=$(Mt))..."
+@time u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
 ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 directP = draft(u, Xₙ, N, Tₘ, M, title = "Эскиз прямого решения")
 savefig(directP, "direct1.png");
@@ -65,7 +66,8 @@ a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ = dparams(x_tp = x
                                                          Nx = Nx,
                                                          Mt = Mt,
                                                          T_end = T_end);
-u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+@info "solve() #2 (Nx=$(Nx), Mt=$(Mt))..."
+@time u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
 ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 q₀ = spl(Xₙ);
 

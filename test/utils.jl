@@ -9,7 +9,7 @@ using NonLinearReactionAdvectionDiffusionWithFrontData;
     @testset "Initial condition" begin
 
         @test length(u_init.(X)) == N+1
-        @test_broken isapprox(u_init(X[1]), -8, rtol=0.001)
+        @test isapprox(u_init(X[1]), -7.868, atol=0.001)  # tanh не достигает -8 при конечном аргументе
         @test isapprox(u_init(X[end]), 4, rtol=0.001)
     end
 

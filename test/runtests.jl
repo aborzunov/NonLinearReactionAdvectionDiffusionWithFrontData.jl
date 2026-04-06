@@ -21,3 +21,4 @@ using SafeTestsets
 
 @time @safetestset "Градиентный чек и тест Тейлора                   " begin include("gradient_check.jl") end
 @time @safetestset "Убывание функционала при минимизации              " begin include("minimization.jl") end
+@time @safetestset "Начальное приближение                             " begin include("initial_guess_check.jl") end
