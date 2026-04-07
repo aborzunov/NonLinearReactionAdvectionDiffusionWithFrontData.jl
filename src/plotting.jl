@@ -51,8 +51,8 @@ function minimization_draft(qₙ::Vector, Qs::Matrix,
     pQs = plot!(Xₙ, Qs[:, end], label="Последнее")
 
     # Функционал на всём пути минимизации
-    pJs = plot(Js, ylims = (0, maximum(Js)), title = "Значение функционала", size = (800, 800))
-    pJs = annotate!( div(S, 10), 7*maximum(Js)/8, Plots.text(annotate_string, :left))
+    pJs = plot(Js, yaxis=:log, title = "Значение функционала", xlabel = "Итерация s", ylabel = "J", size = (800, 800))
+    pJs = annotate!( div(S, 10), exp(log(maximum(Js))*7/8 + log(minimum(Js[Js .> 0]))*1/8), Plots.text(annotate_string, :left))
 
     # Если нужно, добавляем третий график с функционалам в конце пути
     if zoom
@@ -60,7 +60,10 @@ function minimization_draft(qₙ::Vector, Qs::Matrix,
                             denominator(zoom_chunk)):S;     # Выбираем участок
         zoommed_data = Js[range_to_zoom];                   # И данные на нём
 
-        pJs_zoom = plot(range_to_zoom, zoommed_data, ylims = (0, maximum(zoommed_data)), size = (800, 800));
+        pJs_zoom = plot(range_to_zoom, zoommed_data, yaxis=:log,
+                        title = "Сходимость функционала (конец пути)",
+                        xlabel = "Итерация s", ylabel = "J",
+                        size = (800, 800));
         return pQs, pJs, pJs_zoom;
     else
         return pQs, pJs;

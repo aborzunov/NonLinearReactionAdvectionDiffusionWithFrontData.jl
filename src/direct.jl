@@ -34,7 +34,7 @@
 
 """
 function directRP(y::Vector, m::Int,
-                  Xₙ::Vector, N::Int,
+                  Xₙ::AbstractVector, N::Int,
                   ε::Real,
                   ulₘ::Vector, urₘ::Vector,
                   qₙ::Vector)
@@ -45,7 +45,17 @@ function directRP(y::Vector, m::Int,
     @assert m < length(ulₘ)
 
     RP = zero(y)                    # Создаем нулевой вектор того же типа и размера
+    directRP!(RP, y, m, Xₙ, N, ε, ulₘ, urₘ, qₙ)
+    return RP
+end
 
+# In-place версия `directRP`. Записывает правую часть в предаллоцированный `RP`.
+# Используется в горячем цикле `solve` для устранения аллокации на каждом шаге.
+function directRP!(RP::AbstractVector, y::Vector, m::Int,
+                   Xₙ::AbstractVector, N::Int,
+                   ε::Real,
+                   ulₘ::Vector, urₘ::Vector,
+                   qₙ::Vector)
     # Здесь нужно применить сдвиг индексов в `Xₙ` на +1!
     # Xₙ[1] соответствует первому узлу нашей сетки — ``x_0``
     # Xₙ[2] — ``x_1``
@@ -129,7 +139,7 @@ julia> Tridiagonal( dl, d, du )
 ```
 """
 function DRP_y(y::Vector, m::Int,
-             Xₙ::Vector, N::Int,
+             Xₙ::AbstractVector, N::Int,
              ε::Real,
              ulₘ::Vector, urₘ::Vector,
              qₙ::Vector)
@@ -142,7 +152,17 @@ function DRP_y(y::Vector, m::Int,
     dl = zeros(N-2);        # Поддиагональные элементы
     d = zeros(N-1);         #    Диагональные элементы
     du = zeros(N-2);        # Наддиагональные элементы
+    DRP_y!(dl, d, du, y, m, Xₙ, N, ε, ulₘ, urₘ, qₙ)
+    return dl, d, du
+end
 
+# In-place версия `DRP_y`: записывает диагонали в предаллоцированные `dl`, `d`, `du`.
+function DRP_y!(dl::AbstractVector, d::AbstractVector, du::AbstractVector,
+                y::Vector, m::Int,
+                Xₙ::AbstractVector, N::Int,
+                ε::Real,
+                ulₘ::Vector, urₘ::Vector,
+                qₙ::Vector)
     # Здесь нужно применить сдвиг индексов на +1 для Xₙ!
     # Xₙ[1] соответствует ПЕРВОМУ узлу нашей сетки — ``x_0``
     # Xₙ[2] — ``x_1``
@@ -206,7 +226,7 @@ end
      - `Xₙ` размера `N+1`.
 """
 function ∂DRP_∂y(y::Vector, m::Int,
-               Xₙ::Vector, N::Int,
+               Xₙ::AbstractVector, N::Int,
                ε::Real,
                ulₘ::Vector, urₘ::Vector,
                qₙ::Vector)
@@ -230,7 +250,7 @@ end
      - `Xₙ` размера `N+1`.
 """
 function ∂directRP_∂y(y::Vector, m::Int,
-                  Xₙ::Vector, N::Int,
+                  Xₙ::AbstractVector, N::Int,
                   ε::Real,
                   ulₘ::Vector, urₘ::Vector,
                   qₙ::Vector)
@@ -245,7 +265,8 @@ end
           RP::Function = directRP,
           jac::Function = ∂directRP_∂y;
           α::Complex = complex(0.5, 0.5),
-          create_mesh::Function = x -> [NaN, NaN]) -> Matrix, Matrix, Vector
+          create_mesh::Function = x -> [NaN, NaN],
+          showProgress::Bool = false) -> Matrix, Matrix, Vector
 
 Функция, которая находит решение прямой задачи с помощью
 одностадийной схемы Розенброка с комплексным коэффициентом.
@@ -264,6 +285,7 @@ end
 - `jac::Function`:      Якобиан правой части по вектору `y` — `∂DRP_∂y`.
 - `α::Complex`:         Коэффициент схемы. При `α = 0` — схема Эйлера, при `α = complex(0.5, 0.5)` — схема Розенброка с комплексным коэффициентом.
 - `create_mesh::Function`: Принимает один аргумент `x_tp` положение переходного слоя и формирует подходяющую сетку.
+- `showProgress::Bool`:    Отображать прогресс-бар по шагам времени (по умолчанию `false`).
 
 # Return
 Тройку:
@@ -282,7 +304,8 @@ function solve(y₀::Vector, Xₙ::Vector, N::Int,
                RP::Function = directRP,
                jac::Function = ∂DRP_∂y;
                α::Complex = complex(0.5, 0.5),
-               create_mesh::Function = x -> [NaN, NaN])
+               create_mesh::Function = x -> [NaN, NaN],
+               showProgress::Bool = false)
 
     if length(Xₙ) != N+1
         throw(ArgumentError("""length(Xₙ) == $(length(Xₙ)), N == $(N)
@@ -339,16 +362,38 @@ function solve(y₀::Vector, Xₙ::Vector, N::Int,
 
     shouldupdate_mesh = all(!, isnan.(create_mesh(x_tp)));  # Проверяем, передали ли нам функцию
 
+    # Быстрый путь: если RP/jac — стандартные, используем in-place версии
+    # с предаллоцированными буферами, что убирает ~6 аллокаций/шаг.
+    use_fast = (RP === directRP) && (jac === ∂DRP_∂y)
+    rp_buf = Vector{Float64}(undef, N-1)
+    dl_buf = Vector{Float64}(undef, N-2)
+    d_buf  = Vector{Float64}(undef, N-1)
+    du_buf = Vector{Float64}(undef, N-2)
+    dl_c   = Vector{ComplexF64}(undef, N-2)
+    d_c    = Vector{ComplexF64}(undef, N-1)
+    du_c   = Vector{ComplexF64}(undef, N-2)
+
+    p = showProgress ? Progress(M, 1, "solve() M=$(M)... ") : nothing
+
     for m in 1:M
-        X = zeros(N+1);                         # Создаем новый массив, чтобы точно все обнулилось
-        X = XX[:, m];                           # Используем соответствующую текущему шагу по времени сетку
+        X = @view XX[:, m];                     # Используем соответствующую текущему шагу по времени сетку
         τ = (Tₘ[m+1] - Tₘ[m]);                  # Шаг по времени
 
-        j = jac(y, m, X, N, ε, ulₘ, urₘ, q);    # Якобиан от текущего решения
-        rp = RP(y, m, X, N, ε, ulₘ, urₘ, q);    # Правая часть от текущего решения
-
-        W = (I - α * τ * j) \ rp;
-        y = y .+ τ * real(W);
+        if use_fast
+            directRP!(rp_buf, y, m, X, N, ε, ulₘ, urₘ, q)
+            DRP_y!(dl_buf, d_buf, du_buf, y, m, X, N, ε, ulₘ, urₘ, q)
+            ατ = α * τ
+            @. dl_c = -ατ * dl_buf
+            @. d_c  = 1 - ατ * d_buf
+            @. du_c = -ατ * du_buf
+            W = Tridiagonal(dl_c, d_c, du_c) \ rp_buf
+            @. y = y + τ * real(W)
+        else
+            j = jac(y, m, X, N, ε, ulₘ, urₘ, q);    # Якобиан от текущего решения
+            rp = RP(y, m, X, N, ε, ulₘ, urₘ, q);    # Правая часть от текущего решения
+            W = (I - α * τ * j) \ rp;
+            y = y .+ τ * real(W);
+        end
 
         u[2:N, m+1] = y       # Сохраним вектор решения на следующем шаге
 
@@ -382,6 +427,7 @@ function solve(y₀::Vector, Xₙ::Vector, N::Int,
             XX[:, m+1] = X                          # Если сетку обновлять не нужно, примем за следующую — текущую
         end
 
+        p !== nothing && next!(p; showvalues = [(:m, "$(m)/$(M)")])
     end
 
     return u, XX, Xₜₚ;

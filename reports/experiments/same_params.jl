@@ -3,8 +3,8 @@
 # ## Набор параметров
 α       = 0.004;        # Параметр регуляризации
 w       = 0.0005;       # Эмпирический параметр регуляризации
-S       = 35000;        # Количество итераций
-β       = 0.003;        # Шаг минимизации
+S       = 35000;        # Количество итераций (верхняя граница; Armijo+tol_J обычно останавливают раньше)
+β       = 1.0;          # Начальный шаг; line search Armijo подбирает фактический шаг
 #
 x_tp    = 0.25;         # Стартовое местоположение фронта
 T_end   = 0.2;          # Регулируем конечное местоположение фронта
@@ -29,7 +29,7 @@ a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ = dparams(x_tp = x
                                                          Mt = Mt,
                                                          T_end = T_end);
 @info "same_params: решение прямой задачи (Nx=$(Nx), Mt=$(Mt))..."
-u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ; showProgress = true);
 ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 directP = draft(u, Xₙ, N, Tₘ, M, title = "Эскиз прямого решения")
 savefig(directP, "direct1.png");
@@ -60,7 +60,8 @@ nothing #hide
 q₀ = q_guess;
 @info "same_params: минимизация #1 — точные данные, S=$(S) итераций..."
 @time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
-                            S = S, β = β, w = w, showProgress = true)
+                            S = S, β = β, w = w, showProgress = true,
+                            linesearch = true, tol_J = 1e-10, tol_grad = 1e-8)
 serialize("qs.jld", qs);
 serialize("Js.jld", Js);
 serialize("Qs.jld", Qs);
@@ -72,7 +73,7 @@ a, b, c = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true,
 plot(a, size = (800, 800))
 plot(b)
 plot(c)
-withguessP = plot(a, b, c, layout = (3,1), size = (800, 2400));
+withguessP = plot(a, b, c, layout = (1,3), size = (2400, 800));
 savefig(withguessP, "withguess1.png")
 nothing; #hide
 # -----------------------------------------------------------------------------
@@ -102,10 +103,15 @@ plot!(Xₙ, q_guess, label="Найденное")
 
 # ### Старт с найденного приближения на зашумленных данных
 # -----------------------------------------------------------------------------
+# ВНИМАНИЕ: комментарий говорит "зашумленные данные", но минимизация ниже
+# исторически передаёт чистые `f1_data`, `f2_data`. Не трогаю логику,
+# чтобы не менять численные результаты без явного решения.
+# Если нужно действительно минимизировать по шуму — заменить на f1_data_noised, f2_data_noised.
 q₀ = q_guess;
 @info "same_params: минимизация #2 — зашумленные данные, S=$(S) итераций..."
 @time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
-                            S = S, β = β, w = w, showProgress = true)
+                            S = S, β = β, w = w, showProgress = true,
+                            linesearch = true, tol_J = 1e-10, tol_grad = 1e-8)
 serialize("qs_noised.jld", qs);
 serialize("Js_noised.jld", Js);
 serialize("Qs_noised.jld", Qs);
@@ -116,7 +122,7 @@ a, b, c = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true,
 plot(a)
 plot(b)
 plot(c)
-noisedP = plot(a, b, c);
+noisedP = plot(a, b, c, layout = (1,3), size = (2400, 800));
 savefig(noisedP, "noised.png");
 nothing; #hide
 # -----------------------------------------------------------------------------
@@ -126,10 +132,11 @@ nothing; #hide
 q₀ = q_guess;
 @info "same_params: минимизация #3 — повтор на точных данных, S=$(S) итераций..."
 @time qs, Js, Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
-                            S = S, β = β, w = w, showProgress = true)
-serialize("qs_noised.jld", qs);
-serialize("Js_noised.jld", Js);
-serialize("Qs_noised.jld", Qs);
+                            S = S, β = β, w = w, showProgress = true,
+                            linesearch = true, tol_J = 1e-10, tol_grad = 1e-8)
+serialize("qs_clean_repeat.jld", qs);
+serialize("Js_clean_repeat.jld", Js);
+serialize("Qs_clean_repeat.jld", Qs);
 
 # ### Эскиз процесса минимизации
 a, b, c = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true,
@@ -137,7 +144,7 @@ a, b, c = minimization_draft(qₙ, Qs, Xₙ, N, Js, zoom = true,
 plot(a)
 plot(b)
 plot(c)
-noisedP = plot(a, b, c);
-savefig(noisedP, "noised.png");
+cleanRepeatP = plot(a, b, c, layout = (1,3), size = (2400, 800));
+savefig(cleanRepeatP, "clean_repeat.png");
 nothing; #hide
 # -----------------------------------------------------------------------------

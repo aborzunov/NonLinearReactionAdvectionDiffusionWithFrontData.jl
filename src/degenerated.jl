@@ -4,27 +4,43 @@
     generate_obs_data(u::Matrix, Xₙ::Vector, N::Int,
                       Tₘ::Vector, M::Int,
                       qₙ::Vector,
-                      ulₘ::Vector, urₘ::Vector)
+                      ulₘ::Vector, urₘ::Vector;
+                      showProgress = false)
 
-Фнукция-сокращение.
+Функция-сокращение: последовательно вычисляет вырожденные корни, серединный корень,
+положение переходного слоя и значение решения на нём.
 
-#Return
-Левый вырожденный корень, правый, их полуразность, положение переходного слоя,
-значение `u` на переходном слое.
-`ϕl, ϕr, ϕ, f1_data, f2_data`
+# Keyword Arguments
+- `showProgress::Bool`: отображать прогресс-бар по 5 шагам вычисления (по умолчанию `false`).
+
+# Return
+`ϕl, ϕr, ϕ, f1_data, f2_data` — левый вырожденный корень, правый, их полуразность,
+положение переходного слоя, значение `u` на переходном слое.
 
 See also: [`phidetermination`](@ref), [`Φ`](@ref), [`f1`](@ref), [`f2`](@ref).
 """
 function generate_obs_data(u::Matrix, Xₙ::Vector, N::Int,
                            Tₘ::Vector, M::Int,
                            qₙ::Vector,
-                           ulₘ::Vector, urₘ::Vector)
+                           ulₘ::Vector, urₘ::Vector;
+                           showProgress = false)
+
+    p = showProgress ? Progress(5, 1, "generate_obs_data... ") : nothing
 
     ϕl      = phidetermination(qₙ, ulₘ, Xₙ, N, Tₘ, M);                      # Левый вырожденный корень
+    showProgress && next!(p; showvalues = [(:step, "ϕl (phidetermination left)")])
+
     ϕr      = phidetermination(qₙ, urₘ, Xₙ, N, Tₘ, M, reverseX = true);     # Правый вырожденный корень
+    showProgress && next!(p; showvalues = [(:step, "ϕr (phidetermination right)")])
+
     ϕ       = Φ(ϕl, ϕr, N, M);                                              # Серединный корень
+    showProgress && next!(p; showvalues = [(:step, "Φ (midpoint)")])
+
     f1_data = f1(ϕ, u, Xₙ, N, M);                                           # Положение переходного слоя
+    showProgress && next!(p; showvalues = [(:step, "f1 (front position)")])
+
     f2_data = f2(f1_data, u, Xₙ, N, M);                                     # Значение функции на переходном слое
+    showProgress && next!(p; showvalues = [(:step, "f2 (front value)")])
 
     return ϕl, ϕr, ϕ, f1_data, f2_data
 end
@@ -60,7 +76,7 @@ function phidetermination(qₙ::Vector, ub::Vector,
 
     phi = zeros(N + 1, M + 1);
 
-    for m in 1:M+1
+    Threads.@threads for m in 1:M+1
 
         # Граничное условие на ϕ
         phi[1,m] = ub[m];
@@ -135,7 +151,7 @@ end
      - Возвращает только аргуент реализующий **первый** ноль.
      - Решение ищется аппроксимацией.
 """
-function find_f_zeros(f::Vector, Xₙ::Vector)
+function find_f_zeros(f::AbstractVector, Xₙ::AbstractVector)
 
     N = length(f);
     @assert length(f) == length(Xₙ) "Массивы f, Xₙ разной длины: $((length(f), length(Xₙ)))"
@@ -217,11 +233,11 @@ function f1(ϕ::Matrix, u::Matrix, Xₙ::Array, N::Int, M::Int)
 
     # Необходимо найти абсциссу пересечения Φ и u(x, t), т.е. аргумент х на каждом временном шаге
     if typeof(Xₙ) <: Vector
-        for m in 1:M+1
+        Threads.@threads for m in 1:M+1
             f1[m] = find_f_zeros(u[:,m] - ϕ[:,m], Xₙ);
         end
     elseif typeof(Xₙ) <: Matrix
-        for m in 1:M+1
+        Threads.@threads for m in 1:M+1
             # Только в отличии от прошлого случая, здесь `ϕ, u` — определены на динамической сетке
             # Мы должны подавать соответствующую сетку на каждом шаге
             f1[m] = find_f_zeros(u[:,m] - ϕ[:,m], Xₙ[:,m]);
@@ -249,11 +265,11 @@ function f2(f1::Vector, u::Matrix, Xₙ::Array, N::Int, M::Int)
 
     # находим значение функции на каждом временном шаге
     if typeof(Xₙ) <: Vector
-        for m in 1:M+1
+        Threads.@threads for m in 1:M+1
             f2[m] = find_f_zeros(Xₙ .- f1[m], u[:, m]); # Передадим аргументы в обратном порядке
         end
     elseif typeof(Xₙ) <: Matrix
-        for m in 1:M+1
+        Threads.@threads for m in 1:M+1
             # Только в отличии от прошлого случая, здесь `ϕ, u` — определены на динамической сетке
             # Мы должны подавать соответствующую сетку на каждом шаге
             f2[m] = find_f_zeros(Xₙ[:, m] .- f1[m], u[:, m]); # Передадим аргументы в обратном порядке

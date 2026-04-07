@@ -4,8 +4,8 @@
 # ## Набор параметров
 α       = 0.004;        # Параметр регуляризации
 w       = 0.0001;       # Эмпирический параметр регуляризации
-S       = 50000;        # Количество итераций
-β       = 0.001;        # Шаг минимизации
+S       = 50000;        # Количество итераций (верхняя граница; Armijo+tol_J обычно останавливают раньше)
+β       = 1.0;          # Начальный шаг; line search Armijo подбирает фактический шаг
 #
 x_tp    = 0.05;         # Стартовое местоположение фронта
 T_end   = 0.47;         # Регулируем конечное местоположение фронта
@@ -18,7 +18,6 @@ using Dates;
 timestamp           = String(Dates.format(now(), "yyyy-mm-dd_HH-MM"));
 wdir                = String("Expirement2___" * timestamp);
 prefix              = String("Exp2_" * timestamp * "_");
-n_direct_draft      = prefix * "direct_draft.png";
 n_direct_gif        = prefix * "direct.gif";
 n_noised_data       = prefix * "noised_data.png";
 n_noised_velocity   = prefix * "noised_velocity.png";
@@ -42,9 +41,7 @@ info = """Вы зпустили эксперимент №2. Сценарий с
   - Перейдем в него и все результаты поместим там.
   - Все файлы будем сохранять с префиксом `$(prefix)`
   - Сгенерируем экспериментальные данные на сетке `$(Nx+1) × $(Mt+1)`
-    * Сохраним эскиз прямого решения `$(n_direct_draft)`
-    * Сохраним анимацию решения прямой задачи, с помощью которой генерировали
-        экспериментальные даные `$(n_direct_gif)`.
+    * Сохраним анимацию решения прямой задачи `$(n_direct_gif)`.
   - Зашумим экспериментальные данные f₁, f₂ равномерным распределение с модулем `$(δ)`
     * Сохраним график зашумленных экспериментальных данных `$(n_noised_data)`
     * Сохраним график скорости фронта из зашумленных данных `$(n_noised_velocity)`
@@ -87,7 +84,7 @@ a, b, t₀, T, N, M, ε, Xₙ, Tₘ, qₙ, ulₘ, urₘ, u₀ = dparams(x_tp = x
                                                          Mt = Mt,
                                                          T_end = T_end);
 @info "solve() (Nx=$(Nx), Mt=$(Mt))..."
-@time u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+@time u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ; showProgress = true);
 ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 directP = draft(u, Xₙ, N, Tₘ, M, title = "Эскиз прямого решения")
 make_gif(u, Xₙ, Tₘ, ϕl, ϕr, ϕ, f1_data, f2_data, name = n_direct_gif);
@@ -150,7 +147,8 @@ q₀ = spl(Xₙ);
 # ### Старт с найденного приближения на точных данных
 # -----------------------------------------------------------------------------
 @time qs, noised_guess_Js, noised_guess_Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data_noised, f2_data_noised,
-                            S = S, β = β, w = w, showProgress = true)
+                            S = S, β = β, w = w, showProgress = true,
+                            linesearch = true, tol_J = 1e-10, tol_grad = 1e-8)
 serialize(n_Js_min_data_guess, noised_guess_Js);
 serialize(n_Qs_min_data_guess, noised_guess_Qs);
 # -----------------------------------------------------------------------------
@@ -162,11 +160,11 @@ a, b, c = minimization_draft(qₙ, noised_guess_Qs, Xₙ, N, noised_guess_Js, zo
 plot(a, size = (800, 800))
 plot(b)
 plot(c)
-withguessP = plot(a, b, c, layout = (3,1), size = (1000, 2400));
+withguessP = plot(a, b, c, layout = (1,3), size = (2400, 800));
 savefig(withguessP, n_guess_draft)
 nothing; #hide
 # -----------------------------------------------------------------------------
-frames = collect(1:div(S, 500):S);
+frames = collect(1:max(1, div(length(noised_guess_Js), 500)):length(noised_guess_Js));
 make_minimzation_gif(
     noised_guess_Js, noised_guess_Qs, qₙ, Xₙ,
     name = n_minim_gif_guess,
@@ -183,7 +181,8 @@ run(`ffmpeg -i  $(n_minim_gif_guess) $(n_minim_avi_guess) -vcodec copy -acodec c
 q₀ = zero(Xₙ)
 # -----------------------------------------------------------------------------
 @time qs, noised_noguess_Js, noised_noguess_Qs = minimize(q₀, u₀, ulₘ, urₘ, Xₙ, N, Tₘ, M, ε, f1_data, f2_data,
-                            S = S, β = β, w = w, showProgress = true)
+                            S = S, β = β, w = w, showProgress = true,
+                            linesearch = true, tol_J = 1e-10, tol_grad = 1e-8)
 serialize(n_Js_min_data, noised_noguess_Js);
 serialize(n_Qs_min_data, noised_noguess_Qs);
 # -----------------------------------------------------------------------------
@@ -195,10 +194,10 @@ a, b, c = minimization_draft(qₙ, noised_noguess_Qs, Xₙ, N, noised_noguess_Js
 plot(a, size = (800, 800))
 plot(b)
 plot(c)
-withguessP = plot(a, b, c, layout = (3,1), size = (1000, 2400));
+withguessP = plot(a, b, c, layout = (1,3), size = (2400, 800));
 savefig(withguessP, n_noguess_draft)
 nothing; #hide
-frames = collect(1:div(S, 500):S);
+frames = collect(1:max(1, div(length(noised_noguess_Js), 500)):length(noised_noguess_Js));
 make_minimzation_gif(
     noised_noguess_Js, noised_noguess_Qs, qₙ, Xₙ,
     name = n_minim_gif_noguess,

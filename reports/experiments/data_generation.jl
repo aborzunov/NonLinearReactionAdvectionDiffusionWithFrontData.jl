@@ -37,7 +37,7 @@ plts = Any[];           # Вектор для хранения графиков 
                                                             qfunc = x -> sin(3pi*x)
                                                             );
     @info "data_generation: solve #1 для ε=$(eps), sin-коэффициент (Nx=$(Nx), Mt=$(Mt))..."
-    @time u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+    @time u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ; showProgress = true);
     ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 #+
     # Убеждаемся в корректности прямого решения на глаз и пишем данные в txt
@@ -60,7 +60,7 @@ plts = Any[];           # Вектор для хранения графиков 
     plot(Xₙ, qₙ)
 #+
     @info "data_generation: solve #2 для ε=$(eps), gauss-коэффициент (Nx=$(Nx), Mt=$(Mt))..."
-    @time u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ);
+    @time u, XX, TP = solve(u₀, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ; showProgress = true);
     ϕl, ϕr, ϕ, f1_data, f2_data = generate_obs_data(u, Xₙ, N, Tₘ, M, qₙ, ulₘ, urₘ);
 #+
     # Убеждаемся в корректности прямого решения на глаз и пишем данные в text

@@ -55,4 +55,11 @@ include("adjoint.jl")
 include("functional.jl")
 include("plotting.jl")
 
+# Отключаем BLAS-многопоточность: трёхдиагональные системы (N≈500) решаются
+# алгоритмом прогонки (обходит BLAS), поэтому BLAS-потоки создают только overhead.
+# Julia thread pool остаётся доступным для @threads-циклов в degenerated.jl / functional.jl.
+function __init__()
+    LinearAlgebra.BLAS.set_num_threads(1)
+end
+
 end # module

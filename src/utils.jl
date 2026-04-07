@@ -241,7 +241,7 @@ end
 Использует более точную конечно разностную аппроксимацию дельта функции,
 `w` — априорный параметр, см. [`δw`](@ref).
 """
-function deltaw(n::Int, x₀::Real, Xₙ::Vector, N::Int, w::Real)
+function deltaw(n::Int, x₀::Real, Xₙ::AbstractVector, N::Int, w::Real)
 
     @assert length(Xₙ) == N-1
     @assert 1 <= n <= N-1 "`n` вне корректного отрезка"

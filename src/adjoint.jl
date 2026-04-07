@@ -22,7 +22,7 @@
 `` 2 \delta( x - f_1(t) ) ( u^s(x,t) - f_2(t) ) ``.
 """
 function heterogeneity(n::Int, m::Int,
-                      Xₙ::Vector, N::Int,
+                      Xₙ::AbstractVector, N::Int,
                       Tₘ::Vector, M::Int,
                       Uₙₘ::Matrix,
                       f1::Vector, f2::Vector,
@@ -75,7 +75,7 @@ end
      - `Uₙₘ`        размера `N-1, M+1`
 """
 function adjointRP(y::Vector, m::Int,
-                   Xₙ::Vector, N::Int,
+                   Xₙ::AbstractVector, N::Int,
                    Tₘ::Vector, M::Int,
                    ε::Real,
                    ulₘ::Vector, urₘ::Vector,
@@ -100,7 +100,20 @@ function adjointRP(y::Vector, m::Int,
     @assert m < length(ulₘ)
 
     RP = zero(y)                # Создаем нулевой вектор того же типа и размера
-    X = Xₙ[2:N];                # Передается внутрь **только** `heterogeneity`
+    adjointRP!(RP, y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, Uₙₘ, f1, f2, w)
+    return RP
+end
+
+# In-place версия `adjointRP`: записывает правую часть в `RP`.
+function adjointRP!(RP::AbstractVector, y::Vector, m::Int,
+                    Xₙ::AbstractVector, N::Int,
+                    Tₘ::Vector, M::Int,
+                    ε::Real,
+                    ulₘ::Vector, urₘ::Vector,
+                    qₙ::Vector,
+                    Uₙₘ::AbstractMatrix, f1::Vector, f2::Vector,
+                    w::Real)
+    X = @view Xₙ[2:N];          # Передается внутрь **только** `heterogeneity`
 
     # Здесь нужно применить сдвиг индексов в `Xₙ` на +1!
     # Xₙ[1] соответствует первому узлу нашей сетки — ``x_0``
@@ -168,7 +181,7 @@ end
      - `Uₙₘ`        размера `N-1, M+1`
 """
 function ARP_y(y::Vector, m::Int,
-               Xₙ::Vector, N::Int,
+               Xₙ::AbstractVector, N::Int,
                Tₘ::Vector, M::Int,
                ε::Real,
                ulₘ::Vector, urₘ::Vector,
@@ -183,8 +196,19 @@ function ARP_y(y::Vector, m::Int,
     d = zeros(N-1);
     dl = zeros(N-2);
     du = zeros(N-2);
+    ARP_y!(dl, d, du, y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, qₙ, Uₙₘ, f1, f2)
+    return dl, d, du
+end
 
-
+# In-place версия `ARP_y`.
+function ARP_y!(dl::AbstractVector, d::AbstractVector, du::AbstractVector,
+                y::Vector, m::Int,
+                Xₙ::AbstractVector, N::Int,
+                Tₘ::Vector, M::Int,
+                ε::Real,
+                ulₘ::Vector, urₘ::Vector,
+                qₙ::Vector,
+                Uₙₘ::AbstractMatrix, f1::Vector, f2::Vector)
     # Здесь нужно применить сдвиг индексов на +1 для Xₙ!
     # Xₙ[1] соответствует ПЕРВОМУ узлу нашей сетки — ``x_0``
     # Xₙ[2] — ``x_1``
@@ -244,7 +268,7 @@ end
 трехдиагональную матрицы из векторов, которые возвращает `ARP_y`.
 """
 function ∂ARP_∂y(y::Vector, m::Int,
-               Xₙ::Vector, N::Int,
+               Xₙ::AbstractVector, N::Int,
                Tₘ::Vector, M::Int,
                ε::Real,
                ulₘ::Vector, urₘ::Vector,
@@ -274,7 +298,7 @@ end
      - `Uₙₘ`        размера `N-1, M+1`
 """
 function ∂adjointRP_∂y(y::Vector, m::Int,
-                       Xₙ::Vector, N::Int,
+                       Xₙ::AbstractVector, N::Int,
                        Tₘ::Vector, M::Int,
                        ε::Real,
                        ulₘ::Vector, urₘ::Vector,
@@ -293,7 +317,8 @@ end
                   RP::Function = adjointRP,
                   jac::Function = ∂ARP_∂y;
                   α::Complex = complex(0.5, 0.5),
-                  w::Real = 0.00001) -> Matrix
+                  w::Real = 0.00001,
+                  showProgress::Bool = false) -> Matrix
 
 Решает сопряженную задачу **назад по времени**, возвращая матрицу ``\psi(x, t)``
 размера `(N+1, M+1)`. Используется для вычисления градиента функционала через [`J_q`](@ref).
@@ -332,6 +357,7 @@ end
 - `jac::Function`:  Якобиан правой части (по умолчанию [`∂ARP_∂y`](@ref)).
 - `α::Complex`:     Параметр метода Розенброка (по умолчанию `0.5 + 0.5i`).
 - `w::Real`:        Ширина аппроксимации ``\delta``-функции в неоднородности; меньше — точнее, но жёстче. Типичное значение: `1e-4`–`1e-5`.
+- `showProgress::Bool`: Отображать прогресс-бар по шагам времени (по умолчанию `false`).
 
 # Return
 Матрица ``\psi`` размера `(N+1, M+1)` в **обратном** порядке по времени.
@@ -344,7 +370,8 @@ function solve_adjoint(y₀::Vector, Xₙ::Array, N::Int,
                        RP::Function = adjointRP,
                        jac::Function = ∂ARP_∂y;
                        α::Complex = complex(0.5, 0.5),
-                       w::Real = 0.00001)
+                       w::Real = 0.00001,
+                       showProgress::Bool = false)
     # Checking lengths
     # {{{
     if (typeof(Xₙ) <: Vector)
@@ -431,44 +458,108 @@ function solve_adjoint(y₀::Vector, Xₙ::Array, N::Int,
     q = qspl(X);
     q = strip_borderPoints(q,  N);         # Сетка без граничных точек
 
-    for m in 1:M
-
-        X = zeros(N+1);
-        if ( typeof(Xₙ) <: Vector )
-            X = Xₙ;
-        else
-            X = Xₙ[:, m]
-        end
-
-        τ = (Tₘ[m+1] - Tₘ[m]);
-
-        rp = RP(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2, w)
-
-        # Вычисляем матрицу Якоби.
-        # Если это наш стандартный якобиан, то вызываем его.
-        # Если это НЕ наш стандартный якобиан, то это должен быть
-        # функция якобиана, созданная через автоматическое дифференцирование,
-        # она требует сигнатуру вызова идентичную `adjointRP`.
-        if jac === ∂ARP_∂y
-            j = jac(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
-        else
-            j = jac(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2, w)
-        end
-
-
-        W = (I - α * τ * j) \ rp;
-        y = y .+ τ * real(W);
-
-        u[2:N, m+1] = y       # Сохраним вектор решения на следующем шаге
-        y1 = u[:,m+1];
-
-        if typeof(Xₙ) <: Matrix
-            q = qspl(Xₙ[2:end-1, m+1]);
-
-            yspl = Spline1D(X, y1);
-            y = yspl(Xₙ[2:end-1, m+1]);
-        end
-
-    end
+    # Быстрый путь: стандартные RP/jac — работаем с in-place версиями и
+    # предаллоцированными буферами.
+    use_fast = (RP === adjointRP) && (jac === ∂ARP_∂y)
+    p = showProgress ? Progress(M, 1, "solve_adjoint() M=$(M)... ") : nothing
+    _solve_adjoint_loop!(u, y, q, qspl, Xₙ, M, N, Tₘ, ε, ulₘ, urₘ, U, f1, f2, w, α,
+                         RP, jac, Val(use_fast), p)
     return u
+end
+
+# Буферы для горячего цикла (одна аллокация на запуск).
+@inline function _adjoint_buffers(N::Int)
+    return (
+        rp  = Vector{Float64}(undef, N-1),
+        dl  = Vector{Float64}(undef, N-2),
+        d   = Vector{Float64}(undef, N-1),
+        du  = Vector{Float64}(undef, N-2),
+        dlc = Vector{ComplexF64}(undef, N-2),
+        dc  = Vector{ComplexF64}(undef, N-1),
+        duc = Vector{ComplexF64}(undef, N-2),
+    )
+end
+
+# Горячий цикл сопряженной задачи. Специализируется компилятором по конкретному
+# типу `Xₙ` (Vector или Matrix) и флагу fast/slow.
+function _solve_adjoint_loop!(u, y, q, qspl, Xₙ::AbstractVector, M, N, Tₘ, ε,
+                              ulₘ, urₘ, U, f1, f2, w, α, RP, jac, ::Val{true}, p)
+    B = _adjoint_buffers(N)
+    @inbounds for m in 1:M
+        τ = (Tₘ[m+1] - Tₘ[m])
+        adjointRP!(B.rp, y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2, w)
+        ARP_y!(B.dl, B.d, B.du, y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
+        ατ = α * τ
+        @. B.dlc = -ατ * B.dl
+        @. B.dc  = 1 - ατ * B.d
+        @. B.duc = -ατ * B.du
+        W = Tridiagonal(B.dlc, B.dc, B.duc) \ B.rp
+        @. y = y + τ * real(W)
+        u[2:N, m+1] = y
+        p !== nothing && next!(p; showvalues = [(:m, "$(m)/$(M)")])
+    end
+    return nothing
+end
+
+function _solve_adjoint_loop!(u, y, q, qspl, Xₙ::AbstractVector, M, N, Tₘ, ε,
+                              ulₘ, urₘ, U, f1, f2, w, α, RP, jac, ::Val{false}, p)
+    @inbounds for m in 1:M
+        τ = (Tₘ[m+1] - Tₘ[m])
+        rp = RP(y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2, w)
+        j  = jac === ∂ARP_∂y ?
+             jac(y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2) :
+             jac(y, m, Xₙ, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2, w)
+        W  = (I - α * τ * j) \ rp
+        y  = y .+ τ * real(W)
+        u[2:N, m+1] = y
+        p !== nothing && next!(p; showvalues = [(:m, "$(m)/$(M)")])
+    end
+    return nothing
+end
+
+function _solve_adjoint_loop!(u, y, q, qspl, Xₙ::AbstractMatrix, M, N, Tₘ, ε,
+                              ulₘ, urₘ, U, f1, f2, w, α, RP, jac, ::Val{true}, p)
+    B = _adjoint_buffers(N)
+    @inbounds for m in 1:M
+        X = @view Xₙ[:, m]
+        τ = (Tₘ[m+1] - Tₘ[m])
+        adjointRP!(B.rp, y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2, w)
+        ARP_y!(B.dl, B.d, B.du, y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2)
+        ατ = α * τ
+        @. B.dlc = -ατ * B.dl
+        @. B.dc  = 1 - ατ * B.d
+        @. B.duc = -ατ * B.du
+        W = Tridiagonal(B.dlc, B.dc, B.duc) \ B.rp
+        @. y = y + τ * real(W)
+        u[2:N, m+1] = y
+        y1 = u[:, m+1]
+
+        q = qspl(@view Xₙ[2:end-1, m+1])
+        yspl = Spline1D(X, y1)
+        y = yspl(@view Xₙ[2:end-1, m+1])
+        p !== nothing && next!(p; showvalues = [(:m, "$(m)/$(M)")])
+    end
+    return nothing
+end
+
+function _solve_adjoint_loop!(u, y, q, qspl, Xₙ::AbstractMatrix, M, N, Tₘ, ε,
+                              ulₘ, urₘ, U, f1, f2, w, α, RP, jac, ::Val{false}, p)
+    @inbounds for m in 1:M
+        X = @view Xₙ[:, m]
+        τ = (Tₘ[m+1] - Tₘ[m])
+        rp = RP(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2, w)
+        j  = jac === ∂ARP_∂y ?
+             jac(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2) :
+             jac(y, m, X, N, Tₘ, M, ε, ulₘ, urₘ, q, U, f1, f2, w)
+        W  = (I - α * τ * j) \ rp
+        y  = y .+ τ * real(W)
+        u[2:N, m+1] = y
+        y1 = u[:, m+1]
+
+        q = qspl(@view Xₙ[2:end-1, m+1])
+        yspl = Spline1D(X, y1)
+        y = yspl(@view Xₙ[2:end-1, m+1])
+        p !== nothing && next!(p; showvalues = [(:m, "$(m)/$(M)")])
+    end
+    return nothing
 end

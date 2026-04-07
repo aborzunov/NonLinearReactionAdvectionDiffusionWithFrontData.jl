@@ -21,7 +21,7 @@ const AVAILABLE = Dict(
     "same_params"     => "same_params.jl",
     "noised"          => "noised.jl",
     "non_noised"      => "non_noised.jl",
-    "perfet_example"  => "perfet_example.jl",
+    "perfect_example" => "perfect_example.jl",
     "qualitative"     => "qualitative.jl",
 )
 

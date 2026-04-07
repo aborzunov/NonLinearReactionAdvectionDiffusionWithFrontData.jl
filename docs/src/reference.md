@@ -12,6 +12,10 @@ Pages = [
 ]
 ```
 
+```@docs
+NonLinearReactionAdvectionDiffusionWithFrontData
+```
+
 ```@autodocs
 Modules = [NonLinearReactionAdvectionDiffusionWithFrontData]
 Pages = [
@@ -19,6 +23,7 @@ Pages = [
     "degenerated.jl",
     "adjoint.jl",
     "functional.jl",
+    "initial_guess.jl",
     "utils.jl",
     "plotting.jl"
 ]
